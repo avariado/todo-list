@@ -5,14 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Organizador de Tarefas</title>
     <style>
-        /* (Manter o CSS anterior igual) */
         :root {
             --primary-color: #4a6987;
             --secondary-color: #f0f0f0;
             --border-color: #ccc;
             --completed-color: gray;
-            --highlight-red: red;
-            --highlight-blue: blue;
+            --highlight-red: #ff4444;
+            --highlight-blue: #4444ff;
+            --highlight-red-bg: #fff0f0;
+            --highlight-blue-bg: #f0f0ff;
             --hover-color: #e9e9e9;
         }
         
@@ -25,7 +26,7 @@
         
         body {
             background-color: #f5f5f5;
-            padding: 20px;
+            padding: 10px;
             color: #333;
         }
         
@@ -35,33 +36,35 @@
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 20px;
+            padding: 15px;
         }
         
         h1 {
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             color: var(--primary-color);
+            font-size: 1.5rem;
         }
         
         .input-section {
             display: flex;
+            flex-direction: column;
             gap: 10px;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         
         #taskInput {
             flex: 1;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid var(--border-color);
             border-radius: 4px;
             font-size: 16px;
             resize: vertical;
-            min-height: 60px;
+            min-height: 80px;
         }
         
         button {
-            padding: 10px 15px;
+            padding: 12px 15px;
             background-color: var(--primary-color);
             color: white;
             border: none;
@@ -84,8 +87,8 @@
             border: 1px solid var(--border-color);
             border-radius: 4px;
             overflow: hidden;
-            margin-bottom: 20px;
-            max-height: 400px;
+            margin-bottom: 15px;
+            max-height: 50vh;
             overflow-y: auto;
         }
         
@@ -94,12 +97,13 @@
         }
         
         .task-item {
-            padding: 10px 15px;
+            padding: 12px 15px;
             border-bottom: 1px solid var(--border-color);
             cursor: pointer;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             gap: 10px;
+            transition: background-color 0.2s;
         }
         
         .task-item:hover {
@@ -114,23 +118,40 @@
         .task-item.completed {
             color: var(--completed-color);
             text-decoration: line-through;
+            opacity: 0.7;
         }
         
         .task-item.highlight-red {
-            color: var(--highlight-red);
+            background-color: var(--highlight-red-bg);
+            border-left: 4px solid var(--highlight-red);
         }
         
         .task-item.highlight-blue {
-            color: var(--highlight-blue);
+            background-color: var(--highlight-blue-bg);
+            border-left: 4px solid var(--highlight-blue);
+        }
+        
+        .task-item.selected.highlight-red {
+            background-color: var(--highlight-red);
+            color: white;
+        }
+        
+        .task-item.selected.highlight-blue {
+            background-color: var(--highlight-blue);
+            color: white;
         }
         
         .task-icons {
             display: flex;
             gap: 5px;
+            flex-shrink: 0;
+            margin-top: 2px;
         }
         
         .task-text {
             flex: 1;
+            word-break: break-word;
+            line-height: 1.4;
         }
         
         .separator {
@@ -138,18 +159,21 @@
             text-align: center;
             font-weight: bold;
             color: #666;
+            padding: 8px 15px;
         }
         
         .controls {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 20px;
+            gap: 8px;
+            margin-bottom: 15px;
         }
         
         .controls button {
             flex: 1;
-            min-width: 120px;
+            min-width: calc(50% - 4px);
+            font-size: 13px;
+            padding: 10px 8px;
         }
         
         .modal {
@@ -163,14 +187,15 @@
             z-index: 1000;
             justify-content: center;
             align-items: center;
+            padding: 20px;
         }
         
         .modal-content {
             background-color: white;
             padding: 20px;
             border-radius: 8px;
-            width: 90%;
-            max-width: 600px;
+            width: 100%;
+            max-width: 500px;
             max-height: 90vh;
             overflow-y: auto;
         }
@@ -193,6 +218,12 @@
             font-size: 24px;
             cursor: pointer;
             color: #666;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         
         .form-group {
@@ -208,13 +239,14 @@
         .form-group input,
         .form-group textarea {
             width: 100%;
-            padding: 8px;
+            padding: 10px;
             border: 1px solid var(--border-color);
             border-radius: 4px;
+            font-size: 16px;
         }
         
         .form-group textarea {
-            min-height: 100px;
+            min-height: 120px;
             resize: vertical;
         }
         
@@ -225,6 +257,10 @@
             margin-top: 20px;
         }
         
+        .modal-actions button {
+            min-width: 80px;
+        }
+        
         .file-input {
             display: none;
         }
@@ -232,29 +268,51 @@
         .search-container {
             margin-bottom: 15px;
             display: flex;
+            flex-direction: column;
             gap: 10px;
         }
         
-        .search-container input {
+        .search-input-group {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .search-input-group input {
             flex: 1;
-            padding: 8px;
+            padding: 10px;
             border: 1px solid var(--border-color);
             border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        .search-buttons {
+            display: flex;
+            gap: 8px;
+        }
+        
+        .search-buttons button {
+            flex: 1;
         }
         
         .context-menu {
             display: none;
-            position: absolute;
+            position: fixed;
             background-color: white;
             border: 1px solid var(--border-color);
             border-radius: 4px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             z-index: 1001;
+            max-width: 90vw;
         }
         
         .context-menu-item {
-            padding: 8px 15px;
+            padding: 12px 15px;
             cursor: pointer;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .context-menu-item:last-child {
+            border-bottom: none;
         }
         
         .context-menu-item:hover {
@@ -281,6 +339,7 @@
             border-radius: 4px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             min-width: 200px;
+            z-index: 1002;
         }
         
         .submenu:hover .submenu-content {
@@ -288,16 +347,22 @@
         }
         
         .notes-container {
-            margin-top: 20px;
+            margin-top: 15px;
+            display: none;
+        }
+        
+        .notes-container.visible {
+            display: block;
         }
         
         #notesTextarea {
             width: 100%;
             min-height: 150px;
-            padding: 10px;
+            padding: 12px;
             border: 1px solid var(--border-color);
             border-radius: 4px;
             resize: vertical;
+            font-size: 16px;
         }
         
         .status-bar {
@@ -305,6 +370,67 @@
             font-size: 12px;
             color: #666;
             text-align: center;
+            padding: 8px;
+        }
+
+        /* Melhorias para mobile */
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+            
+            .container {
+                padding: 10px;
+                border-radius: 6px;
+            }
+            
+            h1 {
+                font-size: 1.3rem;
+                margin-bottom: 12px;
+            }
+            
+            .task-item {
+                padding: 10px 12px;
+            }
+            
+            .controls {
+                gap: 6px;
+            }
+            
+            .controls button {
+                min-width: calc(50% - 3px);
+                font-size: 12px;
+                padding: 8px 6px;
+            }
+            
+            .modal {
+                padding: 10px;
+            }
+            
+            .modal-content {
+                padding: 15px;
+            }
+            
+            .search-buttons {
+                flex-direction: column;
+            }
+            
+            .submenu-content {
+                position: static;
+                box-shadow: none;
+                border: none;
+                border-top: 1px solid var(--border-color);
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .controls button {
+                min-width: 100%;
+            }
+            
+            .search-input-group {
+                flex-direction: column;
+            }
         }
     </style>
 </head>
@@ -318,9 +444,13 @@
         </div>
         
         <div class="search-container">
-            <input type="text" id="searchInput" placeholder="Procurar tarefas...">
-            <button id="searchBtn">Procurar</button>
-            <button id="nextResultBtn" disabled>Próximo</button>
+            <div class="search-input-group">
+                <input type="text" id="searchInput" placeholder="Procurar tarefas...">
+                <button id="searchBtn">Procurar</button>
+            </div>
+            <div class="search-buttons">
+                <button id="nextResultBtn" disabled>Próximo Resultado</button>
+            </div>
         </div>
         
         <div class="list-section">
@@ -338,7 +468,7 @@
             <button id="notesBtn">Notas</button>
         </div>
         
-        <div class="notes-container">
+        <div class="notes-container" id="notesContainer">
             <textarea id="notesTextarea" placeholder="Digite suas notas aqui..."></textarea>
         </div>
         
@@ -372,15 +502,19 @@
             </div>
             <div class="form-group">
                 <label>Destaque:</label>
-                <div>
-                    <input type="radio" id="highlightNone" name="highlight" value="none" checked>
-                    <label for="highlightNone">Nenhum</label>
-                    
-                    <input type="radio" id="highlightRed" name="highlight" value="red">
-                    <label for="highlightRed">Vermelho</label>
-                    
-                    <input type="radio" id="highlightBlue" name="highlight" value="blue">
-                    <label for="highlightBlue">Azul</label>
+                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="radio" id="highlightNone" name="highlight" value="none" checked>
+                        <span>Nenhum</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="radio" id="highlightRed" name="highlight" value="red">
+                        <span>Vermelho</span>
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 8px;">
+                        <input type="radio" id="highlightBlue" name="highlight" value="blue">
+                        <span>Azul</span>
+                    </label>
                 </div>
             </div>
             <div class="modal-actions">
@@ -461,6 +595,7 @@
         let searchResults = [];
         let currentSearchIndex = -1;
         let searchTerm = "";
+        let notesVisible = false;
         
         // Elementos DOM
         const taskInput = document.getElementById('taskInput');
@@ -478,6 +613,7 @@
         const searchBtn = document.getElementById('searchBtn');
         const nextResultBtn = document.getElementById('nextResultBtn');
         const notesTextarea = document.getElementById('notesTextarea');
+        const notesContainer = document.getElementById('notesContainer');
         const statusText = document.getElementById('statusText');
         
         // Modais
@@ -505,7 +641,7 @@
             clearAllBtn.addEventListener('click', clearAllTasks);
             exportBtn.addEventListener('click', exportToJSON);
             importBtn.addEventListener('click', () => fileInput.click());
-            notesBtn.addEventListener('click', openNotesModal);
+            notesBtn.addEventListener('click', toggleNotes);
             
             // Pesquisa
             searchBtn.addEventListener('click', executeSearch);
@@ -582,6 +718,29 @@
                     selectTask(-1);
                 }
             });
+
+            // Melhorar usabilidade em mobile
+            document.addEventListener('touchstart', function() {
+                // Fechar context menu ao tocar em qualquer lugar
+                if (contextMenu.style.display === 'block') {
+                    contextMenu.style.display = 'none';
+                }
+            });
+        }
+
+        // Alternar visibilidade das notas
+        function toggleNotes() {
+            notesVisible = !notesVisible;
+            if (notesVisible) {
+                notesContainer.classList.add('visible');
+                notesBtn.textContent = 'Ocultar Notas';
+                notesTextarea.focus();
+            } else {
+                notesContainer.classList.remove('visible');
+                notesBtn.textContent = 'Notas';
+                // Salvar notas ao ocultar
+                saveNotes();
+            }
         }
         
         // Normalizar estrutura de tarefa (compatibilidade com Python/HTML)
@@ -735,7 +894,7 @@
                 
                 if (task.text === '┈┈') {
                     li.classList.add('separator');
-                    li.textContent = '┈'.repeat(50);
+                    li.textContent = '┈'.repeat(30);
                 } else {
                     // Ícones
                     const iconsDiv = document.createElement('div');
@@ -776,6 +935,24 @@
                 
                 li.addEventListener('click', () => selectTask(index));
                 li.addEventListener('dblclick', () => openProperties());
+                
+                // Melhor suporte para touch
+                li.addEventListener('touchstart', function(e) {
+                    if (e.touches.length === 1) {
+                        selectTask(index);
+                    }
+                });
+                
+                li.addEventListener('touchend', function(e) {
+                    if (e.changedTouches.length === 1) {
+                        const touch = e.changedTouches[0];
+                        const now = Date.now();
+                        if (now - (this.lastTouch || 0) < 300) {
+                            openProperties();
+                        }
+                        this.lastTouch = now;
+                    }
+                });
                 
                 taskList.appendChild(li);
             });
@@ -1045,10 +1222,9 @@
         
         // Salvar notas
         function saveNotes() {
-            notes = document.getElementById('notesModalTextarea').value;
-            notesTextarea.value = notes;
+            notes = notesTextarea.value;
+            // Não é necessário salvar no textarea pois já está sincronizado
             saveTasks();
-            closeModals();
             updateStatus('Notas salvas com sucesso');
         }
         
@@ -1163,8 +1339,25 @@
             }
             
             // Posicionar e mostrar o menu
-            contextMenu.style.left = `${event.pageX}px`;
-            contextMenu.style.top = `${event.pageY}px`;
+            const rect = contextMenu.getBoundingClientRect();
+            const viewport = {
+                width: window.innerWidth,
+                height: window.innerHeight
+            };
+            
+            let x = event.pageX;
+            let y = event.pageY;
+            
+            // Ajustar posição para não sair da tela
+            if (x + rect.width > viewport.width) {
+                x = viewport.width - rect.width - 10;
+            }
+            if (y + rect.height > viewport.height) {
+                y = viewport.height - rect.height - 10;
+            }
+            
+            contextMenu.style.left = `${x}px`;
+            contextMenu.style.top = `${y}px`;
             contextMenu.style.display = 'block';
             
             // Configurar ações do menu
