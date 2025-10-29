@@ -12,8 +12,8 @@
             --completed-color: gray;
             --highlight-red: #ff4444;
             --highlight-blue: #4444ff;
-            --highlight-red-bg: #fff0f0;
-            --highlight-blue-bg: #f0f0ff;
+            --highlight-red-bg: #ffe0e0;
+            --highlight-blue-bg: #e0e0ff;
             --hover-color: #e9e9e9;
         }
         
@@ -28,6 +28,7 @@
             background-color: #f5f5f5;
             padding: 10px;
             color: #333;
+            touch-action: pan-y;
         }
         
         .container {
@@ -72,6 +73,7 @@
             cursor: pointer;
             font-size: 14px;
             transition: background-color 0.2s;
+            -webkit-tap-highlight-color: transparent;
         }
         
         button:hover {
@@ -104,6 +106,7 @@
             align-items: flex-start;
             gap: 10px;
             transition: background-color 0.2s;
+            -webkit-tap-highlight-color: transparent;
         }
         
         .task-item:hover {
@@ -121,23 +124,24 @@
             opacity: 0.7;
         }
         
+        /* DESTAQUES VISÍVEIS - CORRIGIDO */
         .task-item.highlight-red {
-            background-color: var(--highlight-red-bg);
-            border-left: 4px solid var(--highlight-red);
+            background-color: var(--highlight-red-bg) !important;
+            border-left: 4px solid var(--highlight-red) !important;
         }
         
         .task-item.highlight-blue {
-            background-color: var(--highlight-blue-bg);
-            border-left: 4px solid var(--highlight-blue);
+            background-color: var(--highlight-blue-bg) !important;
+            border-left: 4px solid var(--highlight-blue) !important;
         }
         
         .task-item.selected.highlight-red {
-            background-color: var(--highlight-red);
+            background-color: var(--highlight-red) !important;
             color: white;
         }
         
         .task-item.selected.highlight-blue {
-            background-color: var(--highlight-blue);
+            background-color: var(--highlight-blue) !important;
             color: white;
         }
         
@@ -300,15 +304,19 @@
             background-color: white;
             border: 1px solid var(--border-color);
             border-radius: 4px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             z-index: 1001;
             max-width: 90vw;
+            min-width: 200px;
         }
         
         .context-menu-item {
-            padding: 12px 15px;
+            padding: 15px 20px;
             cursor: pointer;
             border-bottom: 1px solid var(--border-color);
+            font-size: 16px;
+            -webkit-tap-highlight-color: transparent;
+            user-select: none;
         }
         
         .context-menu-item:last-child {
@@ -337,7 +345,7 @@
             background-color: white;
             border: 1px solid var(--border-color);
             border-radius: 4px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
             min-width: 200px;
             z-index: 1002;
         }
@@ -357,12 +365,15 @@
         
         #notesTextarea {
             width: 100%;
-            min-height: 150px;
+            min-height: 200px;
             padding: 12px;
             border: 1px solid var(--border-color);
             border-radius: 4px;
             resize: vertical;
             font-size: 16px;
+            line-height: 1.4;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
         .status-bar {
@@ -400,7 +411,7 @@
             .controls button {
                 min-width: calc(50% - 3px);
                 font-size: 12px;
-                padding: 8px 6px;
+                padding: 10px 6px;
             }
             
             .modal {
@@ -420,6 +431,15 @@
                 box-shadow: none;
                 border: none;
                 border-top: 1px solid var(--border-color);
+            }
+            
+            .context-menu {
+                min-width: 180px;
+            }
+            
+            .context-menu-item {
+                padding: 12px 15px;
+                font-size: 15px;
             }
         }
         
@@ -660,9 +680,14 @@
             document.getElementById('saveNotesBtn').addEventListener('click', saveNotes);
             document.getElementById('cancelNotesBtn').addEventListener('click', closeModals);
             
-            // Context menu
-            document.addEventListener('click', function() {
-                contextMenu.style.display = 'none';
+            // Context menu - CORREÇÃO PARA MOBILE
+            let contextMenuTimeout;
+            
+            document.addEventListener('click', function(e) {
+                // Fechar context menu apenas se não for um item do menu
+                if (!e.target.closest('.context-menu')) {
+                    contextMenu.style.display = 'none';
+                }
             });
             
             document.addEventListener('contextmenu', function(e) {
@@ -720,12 +745,21 @@
             });
 
             // Melhorar usabilidade em mobile
-            document.addEventListener('touchstart', function() {
-                // Fechar context menu ao tocar em qualquer lugar
-                if (contextMenu.style.display === 'block') {
+            document.addEventListener('touchstart', function(e) {
+                // Fechar context menu apenas se tocar fora dele
+                if (contextMenu.style.display === 'block' && !e.target.closest('.context-menu')) {
                     contextMenu.style.display = 'none';
                 }
-            });
+            }, { passive: true });
+
+            // Permitir scroll na textarea das notas
+            notesTextarea.addEventListener('touchstart', function(e) {
+                e.stopPropagation();
+            }, { passive: true });
+
+            notesTextarea.addEventListener('touchmove', function(e) {
+                e.stopPropagation();
+            }, { passive: true });
         }
 
         // Alternar visibilidade das notas
@@ -879,7 +913,7 @@
             };
         }
         
-        // Atualizar lista de tarefas
+        // Atualizar lista de tarefas - CORREÇÃO DOS DESTAQUES
         function updateTaskList() {
             taskList.innerHTML = '';
             
@@ -887,10 +921,20 @@
                 const li = document.createElement('li');
                 li.className = 'task-item';
                 
-                if (task.completed) li.classList.add('completed');
-                if (task.highlightColor === 'red') li.classList.add('highlight-red');
-                if (task.highlightColor === 'blue') li.classList.add('highlight-blue');
-                if (index === selectedTaskIndex) li.classList.add('selected');
+                if (task.completed) {
+                    li.classList.add('completed');
+                }
+                
+                // CORREÇÃO CRÍTICA: Aplicar destaques de forma mais robusta
+                if (task.highlightColor === 'red') {
+                    li.classList.add('highlight-red');
+                } else if (task.highlightColor === 'blue') {
+                    li.classList.add('highlight-blue');
+                }
+                
+                if (index === selectedTaskIndex) {
+                    li.classList.add('selected');
+                }
                 
                 if (task.text === '┈┈') {
                     li.classList.add('separator');
@@ -933,26 +977,62 @@
                     li.appendChild(textDiv);
                 }
                 
-                li.addEventListener('click', () => selectTask(index));
+                li.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    selectTask(index);
+                });
+                
                 li.addEventListener('dblclick', () => openProperties());
                 
                 // Melhor suporte para touch
+                let tapTimer;
                 li.addEventListener('touchstart', function(e) {
+                    e.stopPropagation();
                     if (e.touches.length === 1) {
-                        selectTask(index);
+                        tapTimer = setTimeout(() => {
+                            selectTask(index);
+                        }, 300);
                     }
-                });
+                }, { passive: true });
                 
                 li.addEventListener('touchend', function(e) {
-                    if (e.changedTouches.length === 1) {
-                        const touch = e.changedTouches[0];
-                        const now = Date.now();
-                        if (now - (this.lastTouch || 0) < 300) {
-                            openProperties();
-                        }
-                        this.lastTouch = now;
+                    e.stopPropagation();
+                    if (tapTimer) {
+                        clearTimeout(tapTimer);
                     }
-                });
+                }, { passive: true });
+                
+                li.addEventListener('touchmove', function(e) {
+                    e.stopPropagation();
+                    if (tapTimer) {
+                        clearTimeout(tapTimer);
+                    }
+                }, { passive: true });
+                
+                // Long press para menu de contexto em mobile
+                let pressTimer;
+                li.addEventListener('touchstart', function(e) {
+                    e.stopPropagation();
+                    if (e.touches.length === 1) {
+                        pressTimer = setTimeout(() => {
+                            showContextMenu(e);
+                        }, 500);
+                    }
+                }, { passive: true });
+                
+                li.addEventListener('touchend', function(e) {
+                    e.stopPropagation();
+                    if (pressTimer) {
+                        clearTimeout(pressTimer);
+                    }
+                }, { passive: true });
+                
+                li.addEventListener('touchmove', function(e) {
+                    e.stopPropagation();
+                    if (pressTimer) {
+                        clearTimeout(pressTimer);
+                    }
+                }, { passive: true });
                 
                 taskList.appendChild(li);
             });
@@ -1223,7 +1303,6 @@
         // Salvar notas
         function saveNotes() {
             notes = notesTextarea.value;
-            // Não é necessário salvar no textarea pois já está sincronizado
             saveTasks();
             updateStatus('Notas salvas com sucesso');
         }
@@ -1272,9 +1351,10 @@
             selectTask(searchResults[currentSearchIndex]);
         }
         
-        // Mostrar menu de contexto
+        // Mostrar menu de contexto - CORREÇÃO PARA MOBILE
         function showContextMenu(event) {
             event.preventDefault();
+            event.stopPropagation();
             
             const index = Array.from(taskList.children).indexOf(event.target.closest('.task-item'));
             if (index === -1) return;
@@ -1328,7 +1408,7 @@
             }
             
             const insertSeparatorItem = contextMenu.querySelector('[data-action="insertSeparator"]');
-            const removeSeparatorItem = contextMenu.querySelector('[data-action="removeSeparator"]');
+            const removeSeparatorItem = contextMenu.querySelector('[data-action="removeSeparator']");
             
             if (task.text === '┈┈') {
                 insertSeparatorItem.style.display = 'none';
@@ -1345,8 +1425,18 @@
                 height: window.innerHeight
             };
             
-            let x = event.pageX;
-            let y = event.pageY;
+            let x, y;
+            
+            if (event.type === 'touchstart') {
+                // Para eventos touch
+                const touch = event.touches[0];
+                x = touch.clientX;
+                y = touch.clientY;
+            } else {
+                // Para eventos mouse
+                x = event.clientX;
+                y = event.clientY;
+            }
             
             // Ajustar posição para não sair da tela
             if (x + rect.width > viewport.width) {
@@ -1360,13 +1450,28 @@
             contextMenu.style.top = `${y}px`;
             contextMenu.style.display = 'block';
             
-            // Configurar ações do menu
+            // CORREÇÃO CRÍTICA: Configurar eventos de clique para mobile
             contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
-                item.onclick = function() {
+                // Remover event listeners antigos
+                item.replaceWith(item.cloneNode(true));
+            });
+            
+            // Re-configurar eventos
+            contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.stopPropagation();
                     const action = this.getAttribute('data-action');
                     handleContextMenuAction(action, index);
                     contextMenu.style.display = 'none';
-                };
+                });
+                
+                // Suporte para touch
+                item.addEventListener('touchend', function(e) {
+                    e.stopPropagation();
+                    const action = this.getAttribute('data-action');
+                    handleContextMenuAction(action, index);
+                    contextMenu.style.display = 'none';
+                }, { passive: true });
             });
         }
         
