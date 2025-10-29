@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Organizador de Tarefas</title>
     <style>
+        /* (Manter o CSS anterior igual) */
         :root {
             --primary-color: #4a6987;
             --secondary-color: #f0f0f0;
@@ -583,6 +584,142 @@
             });
         }
         
+        // Normalizar estrutura de tarefa (compatibilidade com Python/HTML)
+        function normalizeTask(task) {
+            // Se já está no formato HTML, retornar como está
+            if (task.text !== undefined && task.completed !== undefined) {
+                return task;
+            }
+            
+            // Converter do formato Python para o formato HTML
+            return {
+                text: task.texto || '',
+                completed: task.completada || false,
+                folder: task.pasta || null,
+                link: task.link || null,
+                date: task.data || null,
+                highlightColor: task.destaque_cor || (task.destaque ? 'red' : null),
+                // Manter propriedades originais para exportação
+                _original: task
+            };
+        }
+        
+        // Converter tarefa para formato Python (exportação)
+        function taskToPythonFormat(task) {
+            // Se já temos propriedades originais, usá-las como base
+            const base = task._original || {};
+            
+            return {
+                texto: task.text,
+                completada: task.completed,
+                pasta: task.folder,
+                link: task.link,
+                data: task.date,
+                destaque: task.highlightColor === 'red', // Para compatibilidade com versões antigas
+                destaque_cor: task.highlightColor,
+                // Manter outras propriedades que possam existir no original
+                ...Object.fromEntries(
+                    Object.entries(base).filter(([key]) => 
+                        !['texto', 'completada', 'pasta', 'link', 'data', 'destaque', 'destaque_cor'].includes(key)
+                    )
+                )
+            };
+        }
+        
+        // Normalizar estrutura do menu de execução
+        function normalizeExecMenu(menu) {
+            if (!menu) {
+                return {
+                    programs: [],
+                    programsFolder: null,
+                    favorites: [],
+                    linksFolder: null,
+                    documents: [],
+                    documentsFolder: null
+                };
+            }
+            
+            // Se já está no formato HTML, retornar como está
+            if (menu.programs !== undefined) {
+                return menu;
+            }
+            
+            // Converter do formato Python para o formato HTML
+            return {
+                programs: (menu.programas || []).map(p => ({
+                    label: p.label || '',
+                    path: p.path || '',
+                    _original: p
+                })),
+                programsFolder: menu.pasta_programas || null,
+                favorites: (menu.favoritos || []).map(f => ({
+                    label: f.label || '',
+                    url: f.url || '',
+                    _original: f
+                })),
+                linksFolder: menu.pasta_links || null,
+                documents: (menu.documentos || []).map(d => ({
+                    label: d.label || '',
+                    path: d.path || '',
+                    _original: d
+                })),
+                documentsFolder: menu.pasta_documentos || null,
+                _original: menu
+            };
+        }
+        
+        // Converter menu de execução para formato Python (exportação)
+        function execMenuToPythonFormat(menu) {
+            const base = menu._original || {};
+            
+            return {
+                programas: (menu.programs || []).map(p => {
+                    const baseItem = p._original || {};
+                    return {
+                        label: p.label,
+                        path: p.path,
+                        ...Object.fromEntries(
+                            Object.entries(baseItem).filter(([key]) => 
+                                !['label', 'path'].includes(key)
+                            )
+                        )
+                    };
+                }),
+                pasta_programas: menu.programsFolder,
+                favoritos: (menu.favorites || []).map(f => {
+                    const baseItem = f._original || {};
+                    return {
+                        label: f.label,
+                        url: f.url,
+                        ...Object.fromEntries(
+                            Object.entries(baseItem).filter(([key]) => 
+                                !['label', 'url'].includes(key)
+                            )
+                        )
+                    };
+                }),
+                pasta_links: menu.linksFolder,
+                documentos: (menu.documents || []).map(d => {
+                    const baseItem = d._original || {};
+                    return {
+                        label: d.label,
+                        path: d.path,
+                        ...Object.fromEntries(
+                            Object.entries(baseItem).filter(([key]) => 
+                                !['label', 'path'].includes(key)
+                            )
+                        )
+                    };
+                }),
+                pasta_documentos: menu.documentsFolder,
+                ...Object.fromEntries(
+                    Object.entries(base).filter(([key]) => 
+                        !['programas', 'pasta_programas', 'favoritos', 'pasta_links', 'documentos', 'pasta_documentos'].includes(key)
+                    )
+                )
+            };
+        }
+        
         // Atualizar lista de tarefas
         function updateTaskList() {
             taskList.innerHTML = '';
@@ -816,13 +953,13 @@
             updateStatus('Todas as tarefas foram removidas');
         }
         
-        // Exportar para JSON
+        // Exportar para JSON (formato Python)
         function exportToJSON() {
             const data = {
-                tasks: tasks,
-                notes: notes,
-                lastWarningDate: lastWarningDate,
-                execMenu: execMenu
+                tarefas: tasks.map(taskToPythonFormat),
+                notas: notes,
+                ultimo_aviso_data: lastWarningDate,
+                executar_menu: execMenuToPythonFormat(execMenu)
             };
             
             const dataStr = JSON.stringify(data, null, 2);
@@ -837,7 +974,7 @@
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
             
-            updateStatus('Dados exportados com sucesso');
+            updateStatus('Dados exportados com sucesso (formato Python)');
         }
         
         // Importar de JSON
@@ -852,7 +989,7 @@
                     
                     if (Array.isArray(data)) {
                         // Formato antigo: apenas array de tarefas
-                        tasks = data;
+                        tasks = data.map(normalizeTask);
                         notes = "";
                         lastWarningDate = null;
                         execMenu = {
@@ -865,17 +1002,21 @@
                         };
                     } else if (typeof data === 'object') {
                         // Formato novo: objeto com várias propriedades
-                        tasks = data.tasks || [];
-                        notes = data.notes || "";
-                        lastWarningDate = data.lastWarningDate || null;
-                        execMenu = data.execMenu || {
-                            programs: [],
-                            programsFolder: null,
-                            favorites: [],
-                            linksFolder: null,
-                            documents: [],
-                            documentsFolder: null
-                        };
+                        
+                        // Detectar se é formato Python ou HTML
+                        if (data.tarefas) {
+                            // Formato Python
+                            tasks = (data.tarefas || []).map(normalizeTask);
+                            notes = data.notas || "";
+                            lastWarningDate = data.ultimo_aviso_data || null;
+                            execMenu = normalizeExecMenu(data.executar_menu);
+                        } else {
+                            // Formato HTML
+                            tasks = (data.tasks || []).map(normalizeTask);
+                            notes = data.notes || "";
+                            lastWarningDate = data.lastWarningDate || null;
+                            execMenu = normalizeExecMenu(data.execMenu);
+                        }
                     } else {
                         throw new Error('Formato inválido');
                     }
@@ -1245,17 +1386,10 @@
             if (saved) {
                 try {
                     const data = JSON.parse(saved);
-                    tasks = data.tasks || [];
+                    tasks = (data.tasks || []).map(normalizeTask);
                     notes = data.notes || "";
                     lastWarningDate = data.lastWarningDate || null;
-                    execMenu = data.execMenu || {
-                        programs: [],
-                        programsFolder: null,
-                        favorites: [],
-                        linksFolder: null,
-                        documents: [],
-                        documentsFolder: null
-                    };
+                    execMenu = normalizeExecMenu(data.execMenu);
                     
                     notesTextarea.value = notes;
                 } catch (e) {
