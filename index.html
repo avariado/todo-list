@@ -147,30 +147,11 @@
             flex-wrap: wrap;
             gap: 10px;
             margin-bottom: 20px;
-            justify-content: space-between;
         }
         
         .controls button {
             flex: 1;
             min-width: 120px;
-        }
-        
-        /* NOVO ESTILO PARA AGRUPAMENTO DOS BOTÕES */
-        .button-group {
-            display: flex;
-            gap: 10px;
-            flex: 1;
-            max-width: 60%;
-        }
-        
-        .button-group button {
-            flex: 1;
-            min-width: 130px;
-        }
-        
-        .notes-button {
-            flex: 0 0 auto;
-            width: 120px;
         }
         
         .modal {
@@ -382,15 +363,9 @@
             <button id="propertiesBtn">Propriedades</button>
             <button id="removeTaskBtn">Remover</button>
             <button id="clearAllBtn">Limpar Todas</button>
-            
-            <!-- MODIFICAÇÃO: Botões reorganizados conforme solicitado -->
-            <div class="button-group">
-                <button id="importBtn">Importar JSON</button>
-                <button id="exportBtn">Exportar JSON</button>
-                <button id="reloadBtn">Recarregar</button>
-            </div>
-            
-            <button id="notesBtn" class="notes-button">Notas</button>
+            <button id="exportBtn">Exportar JSON</button>
+            <button id="importBtn">Importar JSON</button>
+            <button id="notesBtn">Notas</button>
         </div>
         
         <div class="notes-container" id="notesContainer">
@@ -506,9 +481,6 @@
     <!-- File Input for Import -->
     <input type="file" id="fileInput" class="file-input" accept=".json">
     
-    <!-- Hidden file input for reload -->
-    <input type="file" id="reloadFileInput" class="file-input" accept=".json">
-    
     <script>
         // Dados da aplicação
         let tasks = [];
@@ -530,9 +502,6 @@
         let searchTerm = "";
         let notesVisible = false;
         
-        // Variável para armazenar o caminho do último ficheiro carregado
-        let lastLoadedFilePath = "";
-        
         // Elementos DOM
         const taskInput = document.getElementById('taskInput');
         const addTaskBtn = document.getElementById('addTaskBtn');
@@ -544,7 +513,6 @@
         const clearAllBtn = document.getElementById('clearAllBtn');
         const exportBtn = document.getElementById('exportBtn');
         const importBtn = document.getElementById('importBtn');
-        const reloadBtn = document.getElementById('reloadBtn'); // NOVO BOTÃO
         const notesBtn = document.getElementById('notesBtn');
         const searchInput = document.getElementById('searchInput');
         const searchBtn = document.getElementById('searchBtn');
@@ -557,12 +525,10 @@
         const propertiesModal = document.getElementById('propertiesModal');
         const contextMenu = document.getElementById('contextMenu');
         const fileInput = document.getElementById('fileInput');
-        const reloadFileInput = document.getElementById('reloadFileInput');
         
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
             loadTasks();
-            loadLastFileInfo();
             updateTaskList();
             setupEventListeners();
             updateStatus('Pronto');
@@ -579,7 +545,6 @@
             clearAllBtn.addEventListener('click', clearAllTasks);
             exportBtn.addEventListener('click', exportToJSON);
             importBtn.addEventListener('click', () => fileInput.click());
-            reloadBtn.addEventListener('click', () => reloadFileInput.click()); // NOVO EVENT LISTENER
             notesBtn.addEventListener('click', toggleNotes);
             
             // Pesquisa
@@ -613,7 +578,6 @@
             
             // File input
             fileInput.addEventListener('change', importFromJSON);
-            reloadFileInput.addEventListener('change', reloadLastFile);
             
             // Teclas de atalho para Windows
             document.addEventListener('keydown', function(e) {
@@ -642,112 +606,6 @@
                 notesBtn.textContent = 'Notas';
                 saveNotes();
             }
-        }
-        
-        // NOVA FUNÇÃO: Carregar informações do último ficheiro
-        function loadLastFileInfo() {
-            const saved = localStorage.getItem('organizadorTarefas_lastFile');
-            if (saved) {
-                try {
-                    const data = JSON.parse(saved);
-                    lastLoadedFilePath = data.filePath || "";
-                    
-                    // Atualizar o texto do botão Recarregar se houver um ficheiro salvo
-                    if (lastLoadedFilePath) {
-                        const fileName = lastLoadedFilePath.split('\\').pop().split('/').pop();
-                        reloadBtn.title = `Recarregar: ${fileName}`;
-                    }
-                } catch (e) {
-                    console.error('Erro ao carregar informações do último ficheiro:', e);
-                }
-            }
-        }
-        
-        // NOVA FUNÇÃO: Salvar informações do último ficheiro
-        function saveLastFileInfo(filePath) {
-            lastLoadedFilePath = filePath;
-            
-            const data = {
-                filePath: filePath
-            };
-            
-            localStorage.setItem('organizadorTarefas_lastFile', JSON.stringify(data));
-            
-            // Atualizar o texto do botão Recarregar
-            const fileName = filePath.split('\\').pop().split('/').pop();
-            reloadBtn.title = `Recarregar: ${fileName}`;
-        }
-        
-        // NOVA FUNÇÃO: Recarregar último ficheiro - AGORA COM DIÁLOGO INTELIGENTE
-        function reloadLastFile(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            
-            // Se temos um caminho guardado, verificar se é o mesmo ficheiro
-            if (lastLoadedFilePath) {
-                // Em ambiente web não podemos aceder ao caminho completo por segurança
-                // Mas podemos verificar pelo nome do ficheiro
-                const currentFileName = file.name;
-                const lastFileName = lastLoadedFilePath.split('\\').pop().split('/').pop();
-                
-                if (currentFileName !== lastFileName) {
-                    if (!confirm(`O ficheiro selecionado (${currentFileName}) é diferente do último carregado (${lastFileName}). Deseja carregar mesmo assim?`)) {
-                        reloadFileInput.value = '';
-                        return;
-                    }
-                }
-            }
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    
-                    if (Array.isArray(data)) {
-                        tasks = data.map(normalizeTask);
-                        notes = "";
-                        lastWarningDate = null;
-                        execMenu = {
-                            programs: [],
-                            programsFolder: null,
-                            favorites: [],
-                            linksFolder: null,
-                            documents: [],
-                            documentsFolder: null
-                        };
-                    } else if (typeof data === 'object') {
-                        if (data.tarefas) {
-                            tasks = (data.tarefas || []).map(normalizeTask);
-                            notes = data.notas || "";
-                            lastWarningDate = data.ultimo_aviso_data || null;
-                            execMenu = normalizeExecMenu(data.executar_menu);
-                        } else {
-                            tasks = (data.tasks || []).map(normalizeTask);
-                            notes = data.notes || "";
-                            lastWarningDate = data.lastWarningDate || null;
-                            execMenu = normalizeExecMenu(data.execMenu);
-                        }
-                    } else {
-                        throw new Error('Formato inválido');
-                    }
-                    
-                    // Salvar informações do ficheiro
-                    saveLastFileInfo(file.name);
-                    
-                    selectTask(-1);
-                    updateTaskList();
-                    notesTextarea.value = notes;
-                    saveTasks();
-                    
-                    updateStatus('Ficheiro recarregado com sucesso: ' + file.name);
-                } catch (error) {
-                    alert('Erro ao recarregar ficheiro: ' + error.message);
-                    updateStatus('Erro ao recarregar ficheiro');
-                }
-            };
-            
-            reader.readAsText(file);
-            reloadFileInput.value = '';
         }
         
         // Normalizar estrutura de tarefa - CORRIGIDA PARA COMPATIBILIDADE
@@ -1175,7 +1033,7 @@
             updateStatus('Dados exportados com sucesso');
         }
         
-        // Importar de JSON - MODIFICADO para armazenar o último ficheiro
+        // Importar de JSON
         function importFromJSON(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1213,15 +1071,12 @@
                         throw new Error('Formato inválido');
                     }
                     
-                    // Salvar informações do ficheiro
-                    saveLastFileInfo(file.name);
-                    
                     selectTask(-1);
                     updateTaskList();
                     notesTextarea.value = notes;
                     saveTasks();
                     
-                    updateStatus('Dados importados com sucesso: ' + file.name);
+                    updateStatus('Dados importados com sucesso');
                 } catch (error) {
                     alert('Erro ao importar ficheiro: ' + error.message);
                     updateStatus('Erro ao importar ficheiro');
