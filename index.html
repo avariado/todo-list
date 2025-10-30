@@ -606,41 +606,74 @@
             }
         }
         
-        // Normalizar estrutura de tarefa
+        // Normalizar estrutura de tarefa - CORRIGIDA PARA COMPATIBILIDADE
         function normalizeTask(task) {
+            // Se já está no formato correto, retorna como está
             if (task.text !== undefined && task.completed !== undefined) {
                 return task;
             }
             
-            return {
+            // Converte do formato Python/JSON para o formato interno
+            const normalizedTask = {
                 text: task.texto || '',
                 completed: task.completada || false,
                 folder: task.pasta || null,
                 link: task.link || null,
                 date: task.data || null,
-                highlightColor: task.destaque_cor || (task.destaque ? 'red' : null),
                 _original: task
             };
+            
+            // CORREÇÃO: Processa corretamente os destaques do ficheiro JSON
+            // Verifica primeiro se existe destaque_cor
+            if (task.destaque_cor) {
+                if (task.destaque_cor === 'vermelho') {
+                    normalizedTask.highlightColor = 'red';
+                } else if (task.destaque_cor === 'azul') {
+                    normalizedTask.highlightColor = 'blue';
+                } else {
+                    normalizedTask.highlightColor = task.destaque_cor; // mantém outros valores
+                }
+            } 
+            // Se não existe destaque_cor, verifica o campo destaque booleano
+            else if (task.destaque === true) {
+                normalizedTask.highlightColor = 'red'; // compatibilidade com versão antiga
+            } else {
+                normalizedTask.highlightColor = null;
+            }
+            
+            return normalizedTask;
         }
         
-        // Converter tarefa para formato Python
+        // Converter tarefa para formato Python - CORRIGIDA PARA COMPATIBILIDADE
         function taskToPythonFormat(task) {
             const base = task._original || {};
             
-            return {
+            const pythonTask = {
                 texto: task.text,
                 completada: task.completed,
                 pasta: task.folder,
                 link: task.link,
                 data: task.date,
-                destaque: task.highlightColor === 'red',
-                destaque_cor: task.highlightColor,
                 ...Object.fromEntries(
                     Object.entries(base).filter(([key]) => 
                         !['texto', 'completada', 'pasta', 'link', 'data', 'destaque', 'destaque_cor'].includes(key)
                     )
                 )
             };
+            
+            // CORREÇÃO: Converte corretamente para o formato do ficheiro JSON
+            if (task.highlightColor === 'red') {
+                pythonTask.destaque = true;
+                pythonTask.destaque_cor = 'vermelho';
+            } else if (task.highlightColor === 'blue') {
+                pythonTask.destaque = false; // azul não é considerado "destaque" no sentido booleano
+                pythonTask.destaque_cor = 'azul';
+            } else {
+                pythonTask.destaque = false;
+                pythonTask.destaque_cor = null;
+            }
+            
+            return pythonTask;
         }
         
         // Normalizar estrutura do menu de execução
