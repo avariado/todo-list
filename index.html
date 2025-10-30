@@ -158,18 +158,17 @@
         .button-group {
             display: flex;
             gap: 10px;
-            flex: 1;
+            flex: 2; /* Aumentei o flex para dar mais espaço aos botões */
         }
         
         .button-group button {
             flex: 1;
-            min-width: 120px;
+            min-width: 140px; /* Aumentei a largura mínima */
         }
         
         .notes-button {
-            flex: 0 0 auto;
-            width: auto;
-            min-width: 120px;
+            flex: 0.7; /* Reduzi o flex para o botão Notas */
+            min-width: 100px; /* Reduzi a largura mínima */
         }
         
         .modal {
@@ -528,6 +527,7 @@
         
         // Variável para armazenar o último ficheiro carregado
         let lastLoadedFile = null;
+        let lastLoadedFileName = "";
         
         // Elementos DOM
         const taskInput = document.getElementById('taskInput');
@@ -557,6 +557,7 @@
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
             loadTasks();
+            loadLastFileInfo();
             updateTaskList();
             setupEventListeners();
             updateStatus('Pronto');
@@ -637,14 +638,84 @@
             }
         }
         
+        // NOVA FUNÇÃO: Carregar informações do último ficheiro
+        function loadLastFileInfo() {
+            const saved = localStorage.getItem('organizadorTarefas_lastFile');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    lastLoadedFileName = data.fileName || "";
+                    
+                    // Atualizar o texto do botão Recarregar se houver um ficheiro salvo
+                    if (lastLoadedFileName) {
+                        reloadBtn.title = `Recarregar: ${lastLoadedFileName}`;
+                    }
+                } catch (e) {
+                    console.error('Erro ao carregar informações do último ficheiro:', e);
+                }
+            }
+        }
+        
+        // NOVA FUNÇÃO: Salvar informações do último ficheiro
+        function saveLastFileInfo(fileName) {
+            lastLoadedFileName = fileName;
+            const data = {
+                fileName: fileName
+            };
+            
+            localStorage.setItem('organizadorTarefas_lastFile', JSON.stringify(data));
+            
+            // Atualizar o texto do botão Recarregar
+            reloadBtn.title = `Recarregar: ${fileName}`;
+        }
+        
         // NOVA FUNÇÃO: Recarregar último ficheiro
         function reloadLastFile() {
-            if (!lastLoadedFile) {
+            if (!lastLoadedFileName) {
                 alert('Nenhum ficheiro foi carregado anteriormente.');
                 updateStatus('Nenhum ficheiro para recarregar');
                 return;
             }
             
+            // Tentar recarregar o ficheiro
+            fetchLastFile();
+        }
+        
+        // NOVA FUNÇÃO: Tentar carregar o último ficheiro
+        async function fetchLastFile() {
+            try {
+                // Em um ambiente web, não podemos acessar diretamente o sistema de ficheiros
+                // Então precisamos pedir ao utilizador para selecionar o ficheiro novamente
+                // Mas podemos facilitar sugerindo o nome do último ficheiro
+                
+                // Criar um input de ficheiro temporário
+                const tempFileInput = document.createElement('input');
+                tempFileInput.type = 'file';
+                tempFileInput.accept = '.json';
+                
+                // Se tivermos o nome do ficheiro, podemos tentar sugerir
+                if (lastLoadedFileName) {
+                    tempFileInput.setAttribute('data-last-filename', lastLoadedFileName);
+                }
+                
+                tempFileInput.addEventListener('change', function(e) {
+                    const file = e.target.files[0];
+                    if (file) {
+                        processFileImport(file);
+                    }
+                });
+                
+                // Disparar o clique no input de ficheiro
+                tempFileInput.click();
+                
+            } catch (error) {
+                alert('Erro ao tentar recarregar o ficheiro: ' + error.message);
+                updateStatus('Erro ao recarregar ficheiro');
+            }
+        }
+        
+        // NOVA FUNÇÃO: Processar importação de ficheiro (reutilizada)
+        function processFileImport(file) {
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
@@ -678,19 +749,22 @@
                         throw new Error('Formato inválido');
                     }
                     
+                    // Salvar informações do ficheiro
+                    saveLastFileInfo(file.name);
+                    
                     selectTask(-1);
                     updateTaskList();
                     notesTextarea.value = notes;
                     saveTasks();
                     
-                    updateStatus('Ficheiro recarregado com sucesso');
+                    updateStatus('Ficheiro recarregado com sucesso: ' + file.name);
                 } catch (error) {
                     alert('Erro ao recarregar ficheiro: ' + error.message);
                     updateStatus('Erro ao recarregar ficheiro');
                 }
             };
             
-            reader.readAsText(lastLoadedFile);
+            reader.readAsText(file);
         }
         
         // Normalizar estrutura de tarefa - CORRIGIDA PARA COMPATIBILIDADE
@@ -1123,55 +1197,7 @@
             const file = event.target.files[0];
             if (!file) return;
             
-            // Armazena o ficheiro para possível recarregamento
-            lastLoadedFile = file;
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    
-                    if (Array.isArray(data)) {
-                        tasks = data.map(normalizeTask);
-                        notes = "";
-                        lastWarningDate = null;
-                        execMenu = {
-                            programs: [],
-                            programsFolder: null,
-                            favorites: [],
-                            linksFolder: null,
-                            documents: [],
-                            documentsFolder: null
-                        };
-                    } else if (typeof data === 'object') {
-                        if (data.tarefas) {
-                            tasks = (data.tarefas || []).map(normalizeTask);
-                            notes = data.notas || "";
-                            lastWarningDate = data.ultimo_aviso_data || null;
-                            execMenu = normalizeExecMenu(data.executar_menu);
-                        } else {
-                            tasks = (data.tasks || []).map(normalizeTask);
-                            notes = data.notes || "";
-                            lastWarningDate = data.lastWarningDate || null;
-                            execMenu = normalizeExecMenu(data.execMenu);
-                        }
-                    } else {
-                        throw new Error('Formato inválido');
-                    }
-                    
-                    selectTask(-1);
-                    updateTaskList();
-                    notesTextarea.value = notes;
-                    saveTasks();
-                    
-                    updateStatus('Dados importados com sucesso');
-                } catch (error) {
-                    alert('Erro ao importar ficheiro: ' + error.message);
-                    updateStatus('Erro ao importar ficheiro');
-                }
-            };
-            
-            reader.readAsText(file);
+            processFileImport(file);
             fileInput.value = '';
         }
         
