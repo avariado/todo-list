@@ -242,6 +242,7 @@
             border-radius: 4px;
         }
         
+        /* Context Menu - CORRIGIDO */
         .context-menu {
             display: none;
             position: fixed;
@@ -250,11 +251,18 @@
             border-radius: 4px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             z-index: 1001;
+            min-width: 200px;
+            max-width: 300px;
+            max-height: 80vh;
+            overflow-y: auto;
         }
         
         .context-menu-item {
             padding: 8px 15px;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
         
         .context-menu-item:hover {
@@ -265,6 +273,26 @@
             height: 1px;
             background-color: var(--border-color);
             margin: 5px 0;
+        }
+        
+        .context-submenu {
+            display: none;
+            position: absolute;
+            left: 100%;
+            top: 0;
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            min-width: 180px;
+        }
+        
+        .context-menu-item.has-submenu {
+            position: relative;
+        }
+        
+        .context-menu-item.has-submenu:hover .context-submenu {
+            display: block;
         }
         
         .notes-container {
@@ -290,6 +318,45 @@
             font-size: 12px;
             color: #666;
             text-align: center;
+        }
+        
+        /* CORREÇÃO: Alinhamento das bolinhas de cor */
+        .highlight-options {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 5px;
+        }
+        
+        .highlight-option {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .highlight-option input[type="radio"] {
+            margin: 0;
+        }
+        
+        .highlight-dot {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+        
+        .highlight-none {
+            background-color: transparent;
+            border: 1px solid #ccc;
+        }
+        
+        .highlight-red {
+            background-color: var(--highlight-red);
+        }
+        
+        .highlight-blue {
+            background-color: var(--highlight-blue);
         }
     </style>
 </head>
@@ -332,7 +399,7 @@
         </div>
     </div>
     
-    <!-- Modal para Propriedades da Tarefa -->
+    <!-- Modal para Propriedades da Tarefa - CORRIGIDO -->
     <div id="propertiesModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -357,15 +424,28 @@
             </div>
             <div class="form-group">
                 <label>Destaque:</label>
-                <div>
-                    <input type="radio" id="highlightNone" name="highlight" value="none" checked>
-                    <label for="highlightNone">Nenhum</label>
-                    
-                    <input type="radio" id="highlightRed" name="highlight" value="red">
-                    <label for="highlightRed">Vermelho</label>
-                    
-                    <input type="radio" id="highlightBlue" name="highlight" value="blue">
-                    <label for="highlightBlue">Azul</label>
+                <div class="highlight-options">
+                    <div class="highlight-option">
+                        <input type="radio" id="highlightNone" name="highlight" value="none" checked>
+                        <label for="highlightNone">
+                            <span class="highlight-dot highlight-none"></span>
+                            Nenhum
+                        </label>
+                    </div>
+                    <div class="highlight-option">
+                        <input type="radio" id="highlightRed" name="highlight" value="red">
+                        <label for="highlightRed">
+                            <span class="highlight-dot highlight-red"></span>
+                            Vermelho
+                        </label>
+                    </div>
+                    <div class="highlight-option">
+                        <input type="radio" id="highlightBlue" name="highlight" value="blue">
+                        <label for="highlightBlue">
+                            <span class="highlight-dot highlight-blue"></span>
+                            Azul
+                        </label>
+                    </div>
                 </div>
             </div>
             <div class="modal-actions">
@@ -375,29 +455,61 @@
         </div>
     </div>
     
-    <!-- Context Menu -->
+    <!-- Context Menu - CORRIGIDO -->
     <div id="contextMenu" class="context-menu">
         <div class="context-menu-item" data-action="toggleComplete">Marcar como Completada</div>
         <div class="context-menu-item" data-action="edit">Editar Tarefa</div>
         <div class="context-menu-item" data-action="remove">Remover Tarefa</div>
         <div class="context-menu-separator"></div>
-        <div class="context-menu-item" data-action="openFolder">Abrir Pasta Associada</div>
-        <div class="context-menu-item" data-action="associateFolder">Associar Pasta</div>
-        <div class="context-menu-item" data-action="removeFolder">Remover Pasta</div>
-        <div class="context-menu-separator"></div>
-        <div class="context-menu-item" data-action="openLink">Abrir Link Associado</div>
-        <div class="context-menu-item" data-action="associateLink">Associar Link</div>
-        <div class="context-menu-item" data-action="removeLink">Remover Link</div>
-        <div class="context-menu-separator"></div>
-        <div class="context-menu-item" data-action="addDate">Adicionar Data</div>
-        <div class="context-menu-item" data-action="removeDate">Remover Data</div>
-        <div class="context-menu-separator"></div>
-        <div class="context-menu-item" data-action="highlightRed">Destacar a Vermelho</div>
-        <div class="context-menu-item" data-action="highlightBlue">Destacar a Azul</div>
-        <div class="context-menu-item" data-action="removeHighlight">Remover Destaque</div>
-        <div class="context-menu-separator"></div>
-        <div class="context-menu-item" data-action="insertSeparator">Inserir Separador</div>
-        <div class="context-menu-item" data-action="removeSeparator">Apagar Separador</div>
+        
+        <div class="context-menu-item has-submenu">
+            <span>Pastas</span>
+            <span>▶</span>
+            <div class="context-submenu">
+                <div class="context-menu-item" data-action="openFolder">Abrir Pasta Associada</div>
+                <div class="context-menu-item" data-action="associateFolder">Associar Pasta</div>
+                <div class="context-menu-item" data-action="removeFolder">Remover Pasta</div>
+            </div>
+        </div>
+        
+        <div class="context-menu-item has-submenu">
+            <span>Links</span>
+            <span>▶</span>
+            <div class="context-submenu">
+                <div class="context-menu-item" data-action="openLink">Abrir Link Associado</div>
+                <div class="context-menu-item" data-action="associateLink">Associar Link</div>
+                <div class="context-menu-item" data-action="removeLink">Remover Link</div>
+            </div>
+        </div>
+        
+        <div class="context-menu-item has-submenu">
+            <span>Data</span>
+            <span>▶</span>
+            <div class="context-submenu">
+                <div class="context-menu-item" data-action="addDate">Adicionar Data</div>
+                <div class="context-menu-item" data-action="removeDate">Remover Data</div>
+            </div>
+        </div>
+        
+        <div class="context-menu-item has-submenu">
+            <span>Destaque</span>
+            <span>▶</span>
+            <div class="context-submenu">
+                <div class="context-menu-item" data-action="highlightRed">Destacar a Vermelho</div>
+                <div class="context-menu-item" data-action="highlightBlue">Destacar a Azul</div>
+                <div class="context-menu-item" data-action="removeHighlight">Remover Destaque</div>
+            </div>
+        </div>
+        
+        <div class="context-menu-item has-submenu">
+            <span>Separadores</span>
+            <span>▶</span>
+            <div class="context-submenu">
+                <div class="context-menu-item" data-action="insertSeparator">Inserir Separador</div>
+                <div class="context-menu-item" data-action="removeSeparator">Apagar Separador</div>
+            </div>
+        </div>
+        
         <div class="context-menu-separator"></div>
         <div class="context-menu-item" data-action="generateReport">Relatório</div>
     </div>
