@@ -154,6 +154,24 @@
             min-width: 120px;
         }
         
+        /* NOVO ESTILO PARA AGRUPAMENTO DOS BOTÕES */
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex: 1;
+        }
+        
+        .button-group button {
+            flex: 1;
+            min-width: 120px;
+        }
+        
+        .notes-button {
+            flex: 0 0 auto;
+            width: auto;
+            min-width: 120px;
+        }
+        
         .modal {
             display: none;
             position: fixed;
@@ -363,9 +381,15 @@
             <button id="propertiesBtn">Propriedades</button>
             <button id="removeTaskBtn">Remover</button>
             <button id="clearAllBtn">Limpar Todas</button>
-            <button id="exportBtn">Exportar JSON</button>
-            <button id="importBtn">Importar JSON</button>
-            <button id="notesBtn">Notas</button>
+            
+            <!-- MODIFICAÇÃO: Botões reorganizados conforme solicitado -->
+            <div class="button-group">
+                <button id="importBtn">Importar JSON</button>
+                <button id="exportBtn">Exportar JSON</button>
+                <button id="reloadBtn">Recarregar</button>
+            </div>
+            
+            <button id="notesBtn" class="notes-button">Notas</button>
         </div>
         
         <div class="notes-container" id="notesContainer">
@@ -502,6 +526,9 @@
         let searchTerm = "";
         let notesVisible = false;
         
+        // Variável para armazenar o último ficheiro carregado
+        let lastLoadedFile = null;
+        
         // Elementos DOM
         const taskInput = document.getElementById('taskInput');
         const addTaskBtn = document.getElementById('addTaskBtn');
@@ -513,6 +540,7 @@
         const clearAllBtn = document.getElementById('clearAllBtn');
         const exportBtn = document.getElementById('exportBtn');
         const importBtn = document.getElementById('importBtn');
+        const reloadBtn = document.getElementById('reloadBtn'); // NOVO BOTÃO
         const notesBtn = document.getElementById('notesBtn');
         const searchInput = document.getElementById('searchInput');
         const searchBtn = document.getElementById('searchBtn');
@@ -545,6 +573,7 @@
             clearAllBtn.addEventListener('click', clearAllTasks);
             exportBtn.addEventListener('click', exportToJSON);
             importBtn.addEventListener('click', () => fileInput.click());
+            reloadBtn.addEventListener('click', reloadLastFile); // NOVO EVENT LISTENER
             notesBtn.addEventListener('click', toggleNotes);
             
             // Pesquisa
@@ -606,6 +635,62 @@
                 notesBtn.textContent = 'Notas';
                 saveNotes();
             }
+        }
+        
+        // NOVA FUNÇÃO: Recarregar último ficheiro
+        function reloadLastFile() {
+            if (!lastLoadedFile) {
+                alert('Nenhum ficheiro foi carregado anteriormente.');
+                updateStatus('Nenhum ficheiro para recarregar');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    
+                    if (Array.isArray(data)) {
+                        tasks = data.map(normalizeTask);
+                        notes = "";
+                        lastWarningDate = null;
+                        execMenu = {
+                            programs: [],
+                            programsFolder: null,
+                            favorites: [],
+                            linksFolder: null,
+                            documents: [],
+                            documentsFolder: null
+                        };
+                    } else if (typeof data === 'object') {
+                        if (data.tarefas) {
+                            tasks = (data.tarefas || []).map(normalizeTask);
+                            notes = data.notas || "";
+                            lastWarningDate = data.ultimo_aviso_data || null;
+                            execMenu = normalizeExecMenu(data.executar_menu);
+                        } else {
+                            tasks = (data.tasks || []).map(normalizeTask);
+                            notes = data.notes || "";
+                            lastWarningDate = data.lastWarningDate || null;
+                            execMenu = normalizeExecMenu(data.execMenu);
+                        }
+                    } else {
+                        throw new Error('Formato inválido');
+                    }
+                    
+                    selectTask(-1);
+                    updateTaskList();
+                    notesTextarea.value = notes;
+                    saveTasks();
+                    
+                    updateStatus('Ficheiro recarregado com sucesso');
+                } catch (error) {
+                    alert('Erro ao recarregar ficheiro: ' + error.message);
+                    updateStatus('Erro ao recarregar ficheiro');
+                }
+            };
+            
+            reader.readAsText(lastLoadedFile);
         }
         
         // Normalizar estrutura de tarefa - CORRIGIDA PARA COMPATIBILIDADE
@@ -1033,10 +1118,13 @@
             updateStatus('Dados exportados com sucesso');
         }
         
-        // Importar de JSON
+        // Importar de JSON - MODIFICADO para armazenar o último ficheiro
         function importFromJSON(event) {
             const file = event.target.files[0];
             if (!file) return;
+            
+            // Armazena o ficheiro para possível recarregamento
+            lastLoadedFile = file;
             
             const reader = new FileReader();
             reader.onload = function(e) {
