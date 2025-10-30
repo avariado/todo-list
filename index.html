@@ -12,8 +12,6 @@
             --completed-color: gray;
             --highlight-red: #ff4444;
             --highlight-blue: #4444ff;
-            --highlight-red-bg: #ffe0e0;
-            --highlight-blue-bg: #e0e0ff;
             --hover-color: #e9e9e9;
         }
         
@@ -26,9 +24,8 @@
         
         body {
             background-color: #f5f5f5;
-            padding: 10px;
+            padding: 20px;
             color: #333;
-            touch-action: pan-y;
         }
         
         .container {
@@ -37,43 +34,39 @@
             background-color: white;
             border-radius: 8px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            padding: 15px;
+            padding: 20px;
         }
         
         h1 {
             text-align: center;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             color: var(--primary-color);
-            font-size: 1.5rem;
         }
         
         .input-section {
             display: flex;
-            flex-direction: column;
             gap: 10px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
         }
         
         #taskInput {
             flex: 1;
-            padding: 12px;
+            padding: 10px;
             border: 1px solid var(--border-color);
             border-radius: 4px;
             font-size: 16px;
             resize: vertical;
-            min-height: 80px;
+            min-height: 60px;
         }
         
         button {
-            padding: 12px 15px;
+            padding: 10px 15px;
             background-color: var(--primary-color);
             color: white;
             border: none;
             border-radius: 4px;
             cursor: pointer;
             font-size: 14px;
-            transition: background-color 0.2s;
-            -webkit-tap-highlight-color: transparent;
         }
         
         button:hover {
@@ -89,8 +82,8 @@
             border: 1px solid var(--border-color);
             border-radius: 4px;
             overflow: hidden;
-            margin-bottom: 15px;
-            max-height: 50vh;
+            margin-bottom: 20px;
+            max-height: 400px;
             overflow-y: auto;
         }
         
@@ -99,14 +92,12 @@
         }
         
         .task-item {
-            padding: 12px 15px;
+            padding: 10px 15px;
             border-bottom: 1px solid var(--border-color);
             cursor: pointer;
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             gap: 10px;
-            transition: background-color 0.2s;
-            -webkit-tap-highlight-color: transparent;
         }
         
         .task-item:hover {
@@ -121,41 +112,25 @@
         .task-item.completed {
             color: var(--completed-color);
             text-decoration: line-through;
-            opacity: 0.7;
         }
         
-        /* DESTAQUES VISÍVEIS - CORRIGIDO */
         .task-item.highlight-red {
-            background-color: var(--highlight-red-bg) !important;
-            border-left: 4px solid var(--highlight-red) !important;
+            color: var(--highlight-red);
+            font-weight: bold;
         }
         
         .task-item.highlight-blue {
-            background-color: var(--highlight-blue-bg) !important;
-            border-left: 4px solid var(--highlight-blue) !important;
-        }
-        
-        .task-item.selected.highlight-red {
-            background-color: var(--highlight-red) !important;
-            color: white;
-        }
-        
-        .task-item.selected.highlight-blue {
-            background-color: var(--highlight-blue) !important;
-            color: white;
+            color: var(--highlight-blue);
+            font-weight: bold;
         }
         
         .task-icons {
             display: flex;
             gap: 5px;
-            flex-shrink: 0;
-            margin-top: 2px;
         }
         
         .task-text {
             flex: 1;
-            word-break: break-word;
-            line-height: 1.4;
         }
         
         .separator {
@@ -163,21 +138,18 @@
             text-align: center;
             font-weight: bold;
             color: #666;
-            padding: 8px 15px;
         }
         
         .controls {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 15px;
+            gap: 10px;
+            margin-bottom: 20px;
         }
         
         .controls button {
             flex: 1;
-            min-width: calc(50% - 4px);
-            font-size: 13px;
-            padding: 10px 8px;
+            min-width: 120px;
         }
         
         .modal {
@@ -191,15 +163,14 @@
             z-index: 1000;
             justify-content: center;
             align-items: center;
-            padding: 20px;
         }
         
         .modal-content {
             background-color: white;
             padding: 20px;
             border-radius: 8px;
-            width: 100%;
-            max-width: 500px;
+            width: 90%;
+            max-width: 600px;
             max-height: 90vh;
             overflow-y: auto;
         }
@@ -222,12 +193,6 @@
             font-size: 24px;
             cursor: pointer;
             color: #666;
-            padding: 0;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         
         .form-group {
@@ -243,14 +208,13 @@
         .form-group input,
         .form-group textarea {
             width: 100%;
-            padding: 10px;
+            padding: 8px;
             border: 1px solid var(--border-color);
             border-radius: 4px;
-            font-size: 16px;
         }
         
         .form-group textarea {
-            min-height: 120px;
+            min-height: 100px;
             resize: vertical;
         }
         
@@ -261,10 +225,6 @@
             margin-top: 20px;
         }
         
-        .modal-actions button {
-            min-width: 80px;
-        }
-        
         .file-input {
             display: none;
         }
@@ -272,55 +232,29 @@
         .search-container {
             margin-bottom: 15px;
             display: flex;
-            flex-direction: column;
             gap: 10px;
         }
         
-        .search-input-group {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .search-input-group input {
+        .search-container input {
             flex: 1;
-            padding: 10px;
+            padding: 8px;
             border: 1px solid var(--border-color);
             border-radius: 4px;
-            font-size: 16px;
-        }
-        
-        .search-buttons {
-            display: flex;
-            gap: 8px;
-        }
-        
-        .search-buttons button {
-            flex: 1;
         }
         
         .context-menu {
             display: none;
-            position: fixed;
+            position: absolute;
             background-color: white;
             border: 1px solid var(--border-color);
             border-radius: 4px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             z-index: 1001;
-            max-width: 90vw;
-            min-width: 200px;
         }
         
         .context-menu-item {
-            padding: 15px 20px;
+            padding: 8px 15px;
             cursor: pointer;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 16px;
-            -webkit-tap-highlight-color: transparent;
-            user-select: none;
-        }
-        
-        .context-menu-item:last-child {
-            border-bottom: none;
         }
         
         .context-menu-item:hover {
@@ -333,29 +267,8 @@
             margin: 5px 0;
         }
         
-        .submenu {
-            position: relative;
-        }
-        
-        .submenu-content {
-            display: none;
-            position: absolute;
-            left: 100%;
-            top: 0;
-            background-color: white;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-            min-width: 200px;
-            z-index: 1002;
-        }
-        
-        .submenu:hover .submenu-content {
-            display: block;
-        }
-        
         .notes-container {
-            margin-top: 15px;
+            margin-top: 20px;
             display: none;
         }
         
@@ -365,15 +278,11 @@
         
         #notesTextarea {
             width: 100%;
-            min-height: 200px;
-            padding: 12px;
+            min-height: 150px;
+            padding: 10px;
             border: 1px solid var(--border-color);
             border-radius: 4px;
             resize: vertical;
-            font-size: 16px;
-            line-height: 1.4;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
         }
         
         .status-bar {
@@ -381,76 +290,6 @@
             font-size: 12px;
             color: #666;
             text-align: center;
-            padding: 8px;
-        }
-
-        /* Melhorias para mobile */
-        @media (max-width: 768px) {
-            body {
-                padding: 5px;
-            }
-            
-            .container {
-                padding: 10px;
-                border-radius: 6px;
-            }
-            
-            h1 {
-                font-size: 1.3rem;
-                margin-bottom: 12px;
-            }
-            
-            .task-item {
-                padding: 10px 12px;
-            }
-            
-            .controls {
-                gap: 6px;
-            }
-            
-            .controls button {
-                min-width: calc(50% - 3px);
-                font-size: 12px;
-                padding: 10px 6px;
-            }
-            
-            .modal {
-                padding: 10px;
-            }
-            
-            .modal-content {
-                padding: 15px;
-            }
-            
-            .search-buttons {
-                flex-direction: column;
-            }
-            
-            .submenu-content {
-                position: static;
-                box-shadow: none;
-                border: none;
-                border-top: 1px solid var(--border-color);
-            }
-            
-            .context-menu {
-                min-width: 180px;
-            }
-            
-            .context-menu-item {
-                padding: 12px 15px;
-                font-size: 15px;
-            }
-        }
-        
-        @media (max-width: 480px) {
-            .controls button {
-                min-width: 100%;
-            }
-            
-            .search-input-group {
-                flex-direction: column;
-            }
         }
     </style>
 </head>
@@ -464,13 +303,9 @@
         </div>
         
         <div class="search-container">
-            <div class="search-input-group">
-                <input type="text" id="searchInput" placeholder="Procurar tarefas...">
-                <button id="searchBtn">Procurar</button>
-            </div>
-            <div class="search-buttons">
-                <button id="nextResultBtn" disabled>Próximo Resultado</button>
-            </div>
+            <input type="text" id="searchInput" placeholder="Procurar tarefas...">
+            <button id="searchBtn">Procurar</button>
+            <button id="nextResultBtn" disabled>Próximo</button>
         </div>
         
         <div class="list-section">
@@ -522,41 +357,20 @@
             </div>
             <div class="form-group">
                 <label>Destaque:</label>
-                <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px;">
-                    <label style="display: flex; align-items: center; gap: 8px;">
-                        <input type="radio" id="highlightNone" name="highlight" value="none" checked>
-                        <span>Nenhum</span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 8px;">
-                        <input type="radio" id="highlightRed" name="highlight" value="red">
-                        <span>Vermelho</span>
-                    </label>
-                    <label style="display: flex; align-items: center; gap: 8px;">
-                        <input type="radio" id="highlightBlue" name="highlight" value="blue">
-                        <span>Azul</span>
-                    </label>
+                <div>
+                    <input type="radio" id="highlightNone" name="highlight" value="none" checked>
+                    <label for="highlightNone">Nenhum</label>
+                    
+                    <input type="radio" id="highlightRed" name="highlight" value="red">
+                    <label for="highlightRed">Vermelho</label>
+                    
+                    <input type="radio" id="highlightBlue" name="highlight" value="blue">
+                    <label for="highlightBlue">Azul</label>
                 </div>
             </div>
             <div class="modal-actions">
                 <button id="savePropertiesBtn">Salvar</button>
                 <button id="cancelPropertiesBtn">Cancelar</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Modal para Notas -->
-    <div id="notesModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">Bloco de Notas</div>
-                <button class="close-btn">&times;</button>
-            </div>
-            <div class="form-group">
-                <textarea id="notesModalTextarea"></textarea>
-            </div>
-            <div class="modal-actions">
-                <button id="saveNotesBtn">Salvar</button>
-                <button id="cancelNotesBtn">Cancelar</button>
             </div>
         </div>
     </div>
@@ -578,14 +392,9 @@
         <div class="context-menu-item" data-action="addDate">Adicionar Data</div>
         <div class="context-menu-item" data-action="removeDate">Remover Data</div>
         <div class="context-menu-separator"></div>
-        <div class="context-menu-item submenu">
-            Destacar
-            <div class="submenu-content">
-                <div class="context-menu-item" data-action="highlightRed">Vermelho</div>
-                <div class="context-menu-item" data-action="highlightBlue">Azul</div>
-                <div class="context-menu-item" data-action="removeHighlight">Remover Destaque</div>
-            </div>
-        </div>
+        <div class="context-menu-item" data-action="highlightRed">Destacar a Vermelho</div>
+        <div class="context-menu-item" data-action="highlightBlue">Destacar a Azul</div>
+        <div class="context-menu-item" data-action="removeHighlight">Remover Destaque</div>
         <div class="context-menu-separator"></div>
         <div class="context-menu-item" data-action="insertSeparator">Inserir Separador</div>
         <div class="context-menu-item" data-action="removeSeparator">Apagar Separador</div>
@@ -638,7 +447,6 @@
         
         // Modais
         const propertiesModal = document.getElementById('propertiesModal');
-        const notesModal = document.getElementById('notesModal');
         const contextMenu = document.getElementById('contextMenu');
         const fileInput = document.getElementById('fileInput');
         
@@ -677,17 +485,10 @@
             
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
-            document.getElementById('saveNotesBtn').addEventListener('click', saveNotes);
-            document.getElementById('cancelNotesBtn').addEventListener('click', closeModals);
             
-            // Context menu - CORREÇÃO PARA MOBILE
-            let contextMenuTimeout;
-            
-            document.addEventListener('click', function(e) {
-                // Fechar context menu apenas se não for um item do menu
-                if (!e.target.closest('.context-menu')) {
-                    contextMenu.style.display = 'none';
-                }
+            // Context menu
+            document.addEventListener('click', function() {
+                contextMenu.style.display = 'none';
             });
             
             document.addEventListener('contextmenu', function(e) {
@@ -699,67 +500,6 @@
             
             // File input
             fileInput.addEventListener('change', importFromJSON);
-            
-            // Teclas de atalho
-            document.addEventListener('keydown', function(e) {
-                // Ctrl+F para pesquisa
-                if (e.ctrlKey && e.key === 'f') {
-                    e.preventDefault();
-                    searchInput.focus();
-                }
-                
-                // F3 para próximo resultado de pesquisa
-                if (e.key === 'F3') {
-                    e.preventDefault();
-                    nextSearchResult();
-                }
-                
-                // Teclas de navegação
-                if (e.key === 'ArrowUp' && selectedTaskIndex > 0) {
-                    e.preventDefault();
-                    selectTask(selectedTaskIndex - 1);
-                }
-                
-                if (e.key === 'ArrowDown' && selectedTaskIndex < tasks.length - 1) {
-                    e.preventDefault();
-                    selectTask(selectedTaskIndex + 1);
-                }
-                
-                // Enter para editar tarefa selecionada
-                if (e.key === 'Enter' && selectedTaskIndex !== -1) {
-                    e.preventDefault();
-                    openProperties();
-                }
-                
-                // Delete para remover tarefa selecionada
-                if (e.key === 'Delete' && selectedTaskIndex !== -1) {
-                    e.preventDefault();
-                    removeTask();
-                }
-                
-                // Escape para deselecionar
-                if (e.key === 'Escape') {
-                    e.preventDefault();
-                    selectTask(-1);
-                }
-            });
-
-            // Melhorar usabilidade em mobile
-            document.addEventListener('touchstart', function(e) {
-                // Fechar context menu apenas se tocar fora dele
-                if (contextMenu.style.display === 'block' && !e.target.closest('.context-menu')) {
-                    contextMenu.style.display = 'none';
-                }
-            }, { passive: true });
-
-            // Permitir scroll na textarea das notas
-            notesTextarea.addEventListener('touchstart', function(e) {
-                e.stopPropagation();
-            }, { passive: true });
-
-            notesTextarea.addEventListener('touchmove', function(e) {
-                e.stopPropagation();
-            }, { passive: true });
         }
 
         // Alternar visibilidade das notas
@@ -768,23 +508,19 @@
             if (notesVisible) {
                 notesContainer.classList.add('visible');
                 notesBtn.textContent = 'Ocultar Notas';
-                notesTextarea.focus();
             } else {
                 notesContainer.classList.remove('visible');
                 notesBtn.textContent = 'Notas';
-                // Salvar notas ao ocultar
                 saveNotes();
             }
         }
         
-        // Normalizar estrutura de tarefa (compatibilidade com Python/HTML)
+        // Normalizar estrutura de tarefa
         function normalizeTask(task) {
-            // Se já está no formato HTML, retornar como está
             if (task.text !== undefined && task.completed !== undefined) {
                 return task;
             }
             
-            // Converter do formato Python para o formato HTML
             return {
                 text: task.texto || '',
                 completed: task.completada || false,
@@ -792,14 +528,12 @@
                 link: task.link || null,
                 date: task.data || null,
                 highlightColor: task.destaque_cor || (task.destaque ? 'red' : null),
-                // Manter propriedades originais para exportação
                 _original: task
             };
         }
         
-        // Converter tarefa para formato Python (exportação)
+        // Converter tarefa para formato Python
         function taskToPythonFormat(task) {
-            // Se já temos propriedades originais, usá-las como base
             const base = task._original || {};
             
             return {
@@ -808,9 +542,8 @@
                 pasta: task.folder,
                 link: task.link,
                 data: task.date,
-                destaque: task.highlightColor === 'red', // Para compatibilidade com versões antigas
+                destaque: task.highlightColor === 'red',
                 destaque_cor: task.highlightColor,
-                // Manter outras propriedades que possam existir no original
                 ...Object.fromEntries(
                     Object.entries(base).filter(([key]) => 
                         !['texto', 'completada', 'pasta', 'link', 'data', 'destaque', 'destaque_cor'].includes(key)
@@ -832,12 +565,10 @@
                 };
             }
             
-            // Se já está no formato HTML, retornar como está
             if (menu.programs !== undefined) {
                 return menu;
             }
             
-            // Converter do formato Python para o formato HTML
             return {
                 programs: (menu.programas || []).map(p => ({
                     label: p.label || '',
@@ -861,7 +592,7 @@
             };
         }
         
-        // Converter menu de execução para formato Python (exportação)
+        // Converter menu de execução para formato Python
         function execMenuToPythonFormat(menu) {
             const base = menu._original || {};
             
@@ -913,7 +644,7 @@
             };
         }
         
-        // Atualizar lista de tarefas - CORREÇÃO DOS DESTAQUES
+        // Atualizar lista de tarefas
         function updateTaskList() {
             taskList.innerHTML = '';
             
@@ -921,26 +652,15 @@
                 const li = document.createElement('li');
                 li.className = 'task-item';
                 
-                if (task.completed) {
-                    li.classList.add('completed');
-                }
-                
-                // CORREÇÃO CRÍTICA: Aplicar destaques de forma mais robusta
-                if (task.highlightColor === 'red') {
-                    li.classList.add('highlight-red');
-                } else if (task.highlightColor === 'blue') {
-                    li.classList.add('highlight-blue');
-                }
-                
-                if (index === selectedTaskIndex) {
-                    li.classList.add('selected');
-                }
+                if (task.completed) li.classList.add('completed');
+                if (task.highlightColor === 'red') li.classList.add('highlight-red');
+                if (task.highlightColor === 'blue') li.classList.add('highlight-blue');
+                if (index === selectedTaskIndex) li.classList.add('selected');
                 
                 if (task.text === '┈┈') {
                     li.classList.add('separator');
-                    li.textContent = '┈'.repeat(30);
+                    li.textContent = '┈'.repeat(50);
                 } else {
-                    // Ícones
                     const iconsDiv = document.createElement('div');
                     iconsDiv.className = 'task-icons';
                     
@@ -968,71 +688,16 @@
                         iconsDiv.appendChild(dateIcon);
                     }
                     
-                    // Texto da tarefa
                     const textDiv = document.createElement('div');
                     textDiv.className = 'task-text';
-                    textDiv.textContent = task.text.split('\n')[0]; // Primeira linha apenas
+                    textDiv.textContent = task.text.split('\n')[0];
                     
                     li.appendChild(iconsDiv);
                     li.appendChild(textDiv);
                 }
                 
-                li.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    selectTask(index);
-                });
-                
+                li.addEventListener('click', () => selectTask(index));
                 li.addEventListener('dblclick', () => openProperties());
-                
-                // Melhor suporte para touch
-                let tapTimer;
-                li.addEventListener('touchstart', function(e) {
-                    e.stopPropagation();
-                    if (e.touches.length === 1) {
-                        tapTimer = setTimeout(() => {
-                            selectTask(index);
-                        }, 300);
-                    }
-                }, { passive: true });
-                
-                li.addEventListener('touchend', function(e) {
-                    e.stopPropagation();
-                    if (tapTimer) {
-                        clearTimeout(tapTimer);
-                    }
-                }, { passive: true });
-                
-                li.addEventListener('touchmove', function(e) {
-                    e.stopPropagation();
-                    if (tapTimer) {
-                        clearTimeout(tapTimer);
-                    }
-                }, { passive: true });
-                
-                // Long press para menu de contexto em mobile
-                let pressTimer;
-                li.addEventListener('touchstart', function(e) {
-                    e.stopPropagation();
-                    if (e.touches.length === 1) {
-                        pressTimer = setTimeout(() => {
-                            showContextMenu(e);
-                        }, 500);
-                    }
-                }, { passive: true });
-                
-                li.addEventListener('touchend', function(e) {
-                    e.stopPropagation();
-                    if (pressTimer) {
-                        clearTimeout(pressTimer);
-                    }
-                }, { passive: true });
-                
-                li.addEventListener('touchmove', function(e) {
-                    e.stopPropagation();
-                    if (pressTimer) {
-                        clearTimeout(pressTimer);
-                    }
-                }, { passive: true });
                 
                 taskList.appendChild(li);
             });
@@ -1043,7 +708,6 @@
             selectedTaskIndex = index;
             updateTaskList();
             
-            // Atualizar estado dos botões
             const hasSelection = selectedTaskIndex !== -1;
             moveUpBtn.disabled = !hasSelection || selectedTaskIndex === 0;
             moveDownBtn.disabled = !hasSelection || selectedTaskIndex === tasks.length - 1;
@@ -1070,7 +734,6 @@
                 highlightColor: null
             };
             
-            // Inserir após a tarefa selecionada, ou no início se nenhuma estiver selecionada
             if (selectedTaskIndex !== -1) {
                 tasks.splice(selectedTaskIndex + 1, 0, newTask);
                 selectTask(selectedTaskIndex + 1);
@@ -1125,7 +788,6 @@
             document.getElementById('propertiesLink').value = task.link || '';
             document.getElementById('propertiesDate').value = task.date || '';
             
-            // Definir destaque
             document.getElementById('highlightNone').checked = !task.highlightColor;
             document.getElementById('highlightRed').checked = task.highlightColor === 'red';
             document.getElementById('highlightBlue').checked = task.highlightColor === 'blue';
@@ -1147,7 +809,6 @@
             task.folder = document.getElementById('propertiesFolder').value.trim() || null;
             task.link = document.getElementById('propertiesLink').value.trim() || null;
             
-            // Validar e salvar data
             const dateValue = document.getElementById('propertiesDate').value.trim();
             if (dateValue) {
                 if (!isValidDate(dateValue)) {
@@ -1159,7 +820,6 @@
                 task.date = null;
             }
             
-            // Salvar destaque
             const highlightValue = document.querySelector('input[name="highlight"]:checked').value;
             task.highlightColor = highlightValue === 'none' ? null : highlightValue;
             
@@ -1210,7 +870,7 @@
             updateStatus('Todas as tarefas foram removidas');
         }
         
-        // Exportar para JSON (formato Python)
+        // Exportar para JSON
         function exportToJSON() {
             const data = {
                 tarefas: tasks.map(taskToPythonFormat),
@@ -1231,7 +891,7 @@
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
             
-            updateStatus('Dados exportados com sucesso (formato Python)');
+            updateStatus('Dados exportados com sucesso');
         }
         
         // Importar de JSON
@@ -1245,7 +905,6 @@
                     const data = JSON.parse(e.target.result);
                     
                     if (Array.isArray(data)) {
-                        // Formato antigo: apenas array de tarefas
                         tasks = data.map(normalizeTask);
                         notes = "";
                         lastWarningDate = null;
@@ -1258,17 +917,12 @@
                             documentsFolder: null
                         };
                     } else if (typeof data === 'object') {
-                        // Formato novo: objeto com várias propriedades
-                        
-                        // Detectar se é formato Python ou HTML
                         if (data.tarefas) {
-                            // Formato Python
                             tasks = (data.tarefas || []).map(normalizeTask);
                             notes = data.notas || "";
                             lastWarningDate = data.ultimo_aviso_data || null;
                             execMenu = normalizeExecMenu(data.executar_menu);
                         } else {
-                            // Formato HTML
                             tasks = (data.tasks || []).map(normalizeTask);
                             notes = data.notes || "";
                             lastWarningDate = data.lastWarningDate || null;
@@ -1291,13 +945,7 @@
             };
             
             reader.readAsText(file);
-            fileInput.value = ''; // Resetar o input
-        }
-        
-        // Abrir modal de notas
-        function openNotesModal() {
-            document.getElementById('notesModalTextarea').value = notes;
-            notesModal.style.display = 'flex';
+            fileInput.value = '';
         }
         
         // Salvar notas
@@ -1310,7 +958,6 @@
         // Fechar modais
         function closeModals() {
             propertiesModal.style.display = 'none';
-            notesModal.style.display = 'none';
         }
         
         // Executar pesquisa
@@ -1351,127 +998,24 @@
             selectTask(searchResults[currentSearchIndex]);
         }
         
-        // Mostrar menu de contexto - CORREÇÃO PARA MOBILE
+        // Mostrar menu de contexto
         function showContextMenu(event) {
-            event.preventDefault();
-            event.stopPropagation();
-            
             const index = Array.from(taskList.children).indexOf(event.target.closest('.task-item'));
             if (index === -1) return;
             
             selectTask(index);
             const task = tasks[index];
             
-            // Atualizar opções do menu de contexto
-            const toggleCompleteItem = contextMenu.querySelector('[data-action="toggleComplete"]');
-            toggleCompleteItem.textContent = task.completed ? 
-                'Marcar como Não Completada' : 'Marcar como Completada';
-            
-            const openFolderItem = contextMenu.querySelector('[data-action="openFolder"]');
-            const associateFolderItem = contextMenu.querySelector('[data-action="associateFolder"]');
-            const removeFolderItem = contextMenu.querySelector('[data-action="removeFolder"]');
-            
-            if (task.folder) {
-                openFolderItem.style.display = 'block';
-                associateFolderItem.style.display = 'none';
-                removeFolderItem.style.display = 'block';
-            } else {
-                openFolderItem.style.display = 'none';
-                associateFolderItem.style.display = 'block';
-                removeFolderItem.style.display = 'none';
-            }
-            
-            const openLinkItem = contextMenu.querySelector('[data-action="openLink"]');
-            const associateLinkItem = contextMenu.querySelector('[data-action="associateLink"]');
-            const removeLinkItem = contextMenu.querySelector('[data-action="removeLink"]');
-            
-            if (task.link) {
-                openLinkItem.style.display = 'block';
-                associateLinkItem.style.display = 'none';
-                removeLinkItem.style.display = 'block';
-            } else {
-                openLinkItem.style.display = 'none';
-                associateLinkItem.style.display = 'block';
-                removeLinkItem.style.display = 'none';
-            }
-            
-            const addDateItem = contextMenu.querySelector('[data-action="addDate"]');
-            const removeDateItem = contextMenu.querySelector('[data-action="removeDate"]');
-            
-            if (task.date) {
-                addDateItem.style.display = 'none';
-                removeDateItem.style.display = 'block';
-                removeDateItem.textContent = `Remover Data (${task.date})`;
-            } else {
-                addDateItem.style.display = 'block';
-                removeDateItem.style.display = 'none';
-            }
-            
-            const insertSeparatorItem = contextMenu.querySelector('[data-action="insertSeparator"]');
-            const removeSeparatorItem = contextMenu.querySelector('[data-action="removeSeparator']");
-            
-            if (task.text === '┈┈') {
-                insertSeparatorItem.style.display = 'none';
-                removeSeparatorItem.style.display = 'block';
-            } else {
-                insertSeparatorItem.style.display = 'block';
-                removeSeparatorItem.style.display = 'none';
-            }
-            
-            // Posicionar e mostrar o menu
-            const rect = contextMenu.getBoundingClientRect();
-            const viewport = {
-                width: window.innerWidth,
-                height: window.innerHeight
-            };
-            
-            let x, y;
-            
-            if (event.type === 'touchstart') {
-                // Para eventos touch
-                const touch = event.touches[0];
-                x = touch.clientX;
-                y = touch.clientY;
-            } else {
-                // Para eventos mouse
-                x = event.clientX;
-                y = event.clientY;
-            }
-            
-            // Ajustar posição para não sair da tela
-            if (x + rect.width > viewport.width) {
-                x = viewport.width - rect.width - 10;
-            }
-            if (y + rect.height > viewport.height) {
-                y = viewport.height - rect.height - 10;
-            }
-            
-            contextMenu.style.left = `${x}px`;
-            contextMenu.style.top = `${y}px`;
+            contextMenu.style.left = `${event.pageX}px`;
+            contextMenu.style.top = `${event.pageY}px`;
             contextMenu.style.display = 'block';
             
-            // CORREÇÃO CRÍTICA: Configurar eventos de clique para mobile
             contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
-                // Remover event listeners antigos
-                item.replaceWith(item.cloneNode(true));
-            });
-            
-            // Re-configurar eventos
-            contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.stopPropagation();
+                item.onclick = function() {
                     const action = this.getAttribute('data-action');
                     handleContextMenuAction(action, index);
                     contextMenu.style.display = 'none';
-                });
-                
-                // Suporte para touch
-                item.addEventListener('touchend', function(e) {
-                    e.stopPropagation();
-                    const action = this.getAttribute('data-action');
-                    handleContextMenuAction(action, index);
-                    contextMenu.style.display = 'none';
-                }, { passive: true });
+                };
             });
         }
         
@@ -1483,7 +1027,6 @@
                 case 'toggleComplete':
                     task.completed = !task.completed;
                     if (task.completed) {
-                        // Mover para o final
                         tasks.splice(index, 1);
                         tasks.push(task);
                         selectTask(tasks.length - 1);
@@ -1502,13 +1045,11 @@
                     
                 case 'openFolder':
                     if (task.folder) {
-                        // Em um ambiente web, não podemos abrir pastas diretamente
                         alert(`Pasta: ${task.folder}\n\nEm um ambiente web, não é possível abrir pastas diretamente.`);
                     }
                     break;
                     
                 case 'associateFolder':
-                    // Em um ambiente web, não podemos selecionar pastas diretamente
                     const folderPath = prompt('Digite o caminho da pasta:');
                     if (folderPath) {
                         task.folder = folderPath;
@@ -1641,7 +1182,6 @@
                 report += `Data: ${task.date || 'n/a'}\n\n`;
             });
             
-            // Criar e baixar o ficheiro
             const blob = new Blob([report], {type: 'text/plain'});
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
