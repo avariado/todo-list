@@ -109,11 +109,7 @@
             color: white;
         }
         
-        .task-item.completed {
-            color: var(--completed-color);
-            text-decoration: line-through;
-        }
-        
+        /* CORREÇÃO: A classe .completed deve vir DEPOIS das classes de destaque para prevalecer */
         .task-item.highlight-red {
             color: var(--highlight-red);
             font-weight: bold;
@@ -122,6 +118,11 @@
         .task-item.highlight-blue {
             color: var(--highlight-blue);
             font-weight: bold;
+        }
+        
+        .task-item.completed {
+            color: var(--completed-color) !important;
+            text-decoration: line-through;
         }
         
         .task-icons {
@@ -776,9 +777,14 @@
                 const li = document.createElement('li');
                 li.className = 'task-item';
                 
-                if (task.completed) li.classList.add('completed');
+                // CORREÇÃO: A ordem das classes é importante
+                // Primeiro aplicamos as cores de destaque
                 if (task.highlightColor === 'red') li.classList.add('highlight-red');
                 if (task.highlightColor === 'blue') li.classList.add('highlight-blue');
+                
+                // DEPOIS aplicamos o estado completado (que prevalece)
+                if (task.completed) li.classList.add('completed');
+                
                 if (index === selectedTaskIndex) li.classList.add('selected');
                 
                 if (task.text === '┈┈') {
