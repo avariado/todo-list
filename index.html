@@ -109,7 +109,6 @@
             color: white;
         }
         
-        /* CORREÇÃO: A classe .completed deve vir DEPOIS das classes de destaque para prevalecer */
         .task-item.highlight-red {
             color: var(--highlight-red);
             font-weight: bold;
@@ -123,7 +122,7 @@
         .task-item.completed {
             color: var(--completed-color) !important;
             text-decoration: line-through;
-            font-weight: normal !important; /* CORREÇÃO: Remove o bold das tarefas completadas */
+            font-weight: normal !important;
         }
         
         .task-icons {
@@ -141,16 +140,44 @@
             font-weight: bold;
             color: #666;
         }
-        
+
+        /* --- CONTROLOS NOVOS --- */
         .controls {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
             margin-bottom: 20px;
+            align-items: center;
         }
-        
-        .controls button {
+
+        /* bloco da esquerda: mover, propriedades, remover, limpar, recarregar */
+        .controls-left {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            flex: 1 1 100%;
+        }
+
+        /* segunda fila: exportar/importar à esquerda, notas à direita */
+        .controls-bottom {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+        }
+
+        .controls-bottom-left {
+            display: flex;
+            gap: 10px;
             flex: 1;
+        }
+
+        .controls-bottom-right {
+            display: flex;
+            justify-content: flex-end;
+            flex: 1;
+        }
+
+        .controls button {
             min-width: 120px;
         }
         
@@ -319,7 +346,6 @@
             text-align: center;
         }
         
-        /* NOVO ESTILO PARA AS OPÇÕES DE DESTAQUE NA MODAL */
         .highlight-options {
             display: flex;
             gap: 15px;
@@ -357,15 +383,26 @@
             <ul id="taskList"></ul>
         </div>
         
+        <!-- CONTROLOS REORGANIZADOS -->
         <div class="controls">
-            <button id="moveUpBtn">▲ Subir</button>
-            <button id="moveDownBtn">▼ Descer</button>
-            <button id="propertiesBtn">Propriedades</button>
-            <button id="removeTaskBtn">Remover</button>
-            <button id="clearAllBtn">Limpar Todas</button>
-            <button id="exportBtn">Exportar</button>
-            <button id="importBtn">Importar</button>
-            <button id="notesBtn">Notas</button>
+            <div class="controls-left">
+                <button id="moveUpBtn">▲ Subir</button>
+                <button id="moveDownBtn">▼ Descer</button>
+                <button id="propertiesBtn">Propriedades</button>
+                <button id="removeTaskBtn">Remover</button>
+                <button id="clearAllBtn">Limpar Todas</button>
+                <!-- NOVO BOTÃO RECARREGAR AO LADO DE LIMPAR TODAS -->
+                <button id="reloadBtn">Recarregar</button>
+            </div>
+            <div class="controls-bottom">
+                <div class="controls-bottom-left">
+                    <button id="exportBtn">Exportar</button>
+                    <button id="importBtn">Importar</button>
+                </div>
+                <div class="controls-bottom-right">
+                    <button id="notesBtn">Notas</button>
+                </div>
+            </div>
         </div>
         
         <div class="notes-container" id="notesContainer">
@@ -424,7 +461,7 @@
         </div>
     </div>
     
-    <!-- Context Menu - CORRIGIDO COM SUBMENUS -->
+    <!-- Context Menu -->
     <div id="contextMenu" class="context-menu">
         <div class="context-menu-item" data-action="toggleComplete">Marcar como Completada</div>
         <div class="context-menu-item" data-action="edit">Editar Tarefa</div>
@@ -495,13 +532,17 @@
             documentsFolder: null
         };
         
-        // Estado da aplicação
+        // Estado
         let selectedTaskIndex = -1;
         let searchResults = [];
         let currentSearchIndex = -1;
         let searchTerm = "";
         let notesVisible = false;
-        
+
+        // NOVO: guardar o último ficheiro importado
+        let lastImportedHandle = null;   // para File System Access API
+        let lastImportedRaw = null;      // fallback: último conteúdo importado
+
         // Elementos DOM
         const taskInput = document.getElementById('taskInput');
         const addTaskBtn = document.getElementById('addTaskBtn');
@@ -514,6 +555,7 @@
         const exportBtn = document.getElementById('exportBtn');
         const importBtn = document.getElementById('importBtn');
         const notesBtn = document.getElementById('notesBtn');
+        const reloadBtn = document.getElementById('reloadBtn'); // NOVO
         const searchInput = document.getElementById('searchInput');
         const searchBtn = document.getElementById('searchBtn');
         const nextResultBtn = document.getElementById('nextResultBtn');
@@ -521,22 +563,20 @@
         const notesContainer = document.getElementById('notesContainer');
         const statusText = document.getElementById('statusText');
         
-        // Modais
         const propertiesModal = document.getElementById('propertiesModal');
         const contextMenu = document.getElementById('contextMenu');
         const fileInput = document.getElementById('fileInput');
         
-        // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
             loadTasks();
+            // NOVO: tentar restaurar handle se o browser suportar
+            restoreLastImportedHandle();
             updateTaskList();
             setupEventListeners();
             updateStatus('Pronto');
         });
         
-        // Configurar event listeners - CORRIGIDO PARA WINDOWS
         function setupEventListeners() {
-            // Botões principais
             addTaskBtn.addEventListener('click', addTask);
             moveUpBtn.addEventListener('click', moveTaskUp);
             moveDownBtn.addEventListener('click', moveTaskDown);
@@ -546,15 +586,14 @@
             exportBtn.addEventListener('click', exportToJSON);
             importBtn.addEventListener('click', () => fileInput.click());
             notesBtn.addEventListener('click', toggleNotes);
+            reloadBtn.addEventListener('click', reloadLastImported); // NOVO
             
-            // Pesquisa
             searchBtn.addEventListener('click', executeSearch);
             nextResultBtn.addEventListener('click', nextSearchResult);
             searchInput.addEventListener('keyup', function(e) {
                 if (e.key === 'Enter') executeSearch();
             });
             
-            // Modais
             document.querySelectorAll('.close-btn').forEach(btn => {
                 btn.addEventListener('click', closeModals);
             });
@@ -562,7 +601,6 @@
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
             
-            // Context menu - CORREÇÃO PARA WINDOWS
             document.addEventListener('click', function(e) {
                 if (!e.target.closest('.context-menu')) {
                     contextMenu.style.display = 'none';
@@ -576,18 +614,13 @@
                 }
             });
             
-            // File input
             fileInput.addEventListener('change', importFromJSON);
             
-            // Teclas de atalho para Windows
             document.addEventListener('keydown', function(e) {
-                // Ctrl+F para pesquisa
                 if (e.ctrlKey && e.key === 'f') {
                     e.preventDefault();
                     searchInput.focus();
                 }
-                
-                // F3 para próximo resultado de pesquisa
                 if (e.key === 'F3') {
                     e.preventDefault();
                     nextSearchResult();
@@ -595,7 +628,6 @@
             });
         }
 
-        // Alternar visibilidade das notas
         function toggleNotes() {
             notesVisible = !notesVisible;
             if (notesVisible) {
@@ -608,14 +640,10 @@
             }
         }
         
-        // Normalizar estrutura de tarefa - CORRIGIDA PARA COMPATIBILIDADE
         function normalizeTask(task) {
-            // Se já está no formato correto, retorna como está
             if (task.text !== undefined && task.completed !== undefined) {
                 return task;
             }
-            
-            // Converte do formato Python/JSON para o formato interno
             const normalizedTask = {
                 text: task.texto || '',
                 completed: task.completada || false,
@@ -624,29 +652,22 @@
                 date: task.data || null,
                 _original: task
             };
-            
-            // CORREÇÃO: Processa corretamente os destaques do ficheiro JSON
-            // Verifica primeiro se existe destaque_cor
             if (task.destaque_cor) {
                 if (task.destaque_cor === 'vermelho') {
                     normalizedTask.highlightColor = 'red';
                 } else if (task.destaque_cor === 'azul') {
                     normalizedTask.highlightColor = 'blue';
                 } else {
-                    normalizedTask.highlightColor = task.destaque_cor; // mantém outros valores
+                    normalizedTask.highlightColor = task.destaque_cor;
                 }
-            } 
-            // Se não existe destaque_cor, verifica o campo destaque booleano
-            else if (task.destaque === true) {
-                normalizedTask.highlightColor = 'red'; // compatibilidade com versão antiga
+            } else if (task.destaque === true) {
+                normalizedTask.highlightColor = 'red';
             } else {
                 normalizedTask.highlightColor = null;
             }
-            
             return normalizedTask;
         }
         
-        // Converter tarefa para formato Python - CORRIGIDA PARA COMPATIBILIDADE
         function taskToPythonFormat(task) {
             const base = task._original || {};
             
@@ -663,12 +684,11 @@
                 )
             };
             
-            // CORREÇÃO: Converte corretamente para o formato do ficheiro JSON
             if (task.highlightColor === 'red') {
                 pythonTask.destaque = true;
                 pythonTask.destaque_cor = 'vermelho';
             } else if (task.highlightColor === 'blue') {
-                pythonTask.destaque = false; // azul não é considerado "destaque" no sentido booleano
+                pythonTask.destaque = false;
                 pythonTask.destaque_cor = 'azul';
             } else {
                 pythonTask.destaque = false;
@@ -678,7 +698,6 @@
             return pythonTask;
         }
         
-        // Normalizar estrutura do menu de execução
         function normalizeExecMenu(menu) {
             if (!menu) {
                 return {
@@ -690,11 +709,9 @@
                     documentsFolder: null
                 };
             }
-            
             if (menu.programs !== undefined) {
                 return menu;
             }
-            
             return {
                 programs: (menu.programas || []).map(p => ({
                     label: p.label || '',
@@ -718,10 +735,8 @@
             };
         }
         
-        // Converter menu de execução para formato Python
         function execMenuToPythonFormat(menu) {
             const base = menu._original || {};
-            
             return {
                 programas: (menu.programs || []).map(p => {
                     const baseItem = p._original || {};
@@ -770,7 +785,6 @@
             };
         }
         
-        // Atualizar lista de tarefas
         function updateTaskList() {
             taskList.innerHTML = '';
             
@@ -778,12 +792,8 @@
                 const li = document.createElement('li');
                 li.className = 'task-item';
                 
-                // CORREÇÃO: A ordem das classes é importante
-                // Primeiro aplicamos as cores de destaque
                 if (task.highlightColor === 'red') li.classList.add('highlight-red');
                 if (task.highlightColor === 'blue') li.classList.add('highlight-blue');
-                
-                // DEPOIS aplicamos o estado completado (que prevalece)
                 if (task.completed) li.classList.add('completed');
                 
                 if (index === selectedTaskIndex) li.classList.add('selected');
@@ -827,7 +837,6 @@
                     li.appendChild(textDiv);
                 }
                 
-                // CORREÇÃO: Event listeners simples para Windows
                 li.addEventListener('click', function(e) {
                     e.stopPropagation();
                     selectTask(index);
@@ -842,7 +851,6 @@
             });
         }
         
-        // Selecionar tarefa
         function selectTask(index) {
             selectedTaskIndex = index;
             updateTaskList();
@@ -856,7 +864,6 @@
             updateStatus(hasSelection ? `Tarefa ${selectedTaskIndex + 1} de ${tasks.length} selecionada` : 'Pronto');
         }
         
-        // Adicionar tarefa
         function addTask() {
             const text = taskInput.value.trim();
             if (!text) {
@@ -887,7 +894,6 @@
             updateStatus('Tarefa adicionada com sucesso');
         }
         
-        // Mover tarefa para cima
         function moveTaskUp() {
             if (selectedTaskIndex <= 0) return;
             
@@ -900,7 +906,6 @@
             saveTasks();
         }
         
-        // Mover tarefa para baixo
         function moveTaskDown() {
             if (selectedTaskIndex >= tasks.length - 1) return;
             
@@ -913,7 +918,6 @@
             saveTasks();
         }
         
-        // Abrir propriedades da tarefa
         function openProperties() {
             if (selectedTaskIndex === -1) {
                 alert('Por favor, selecione uma tarefa para ver as propriedades.');
@@ -934,7 +938,6 @@
             propertiesModal.style.display = 'flex';
         }
         
-        // Salvar propriedades da tarefa
         function saveProperties() {
             const task = tasks[selectedTaskIndex];
             
@@ -968,7 +971,6 @@
             updateStatus('Propriedades da tarefa atualizadas com sucesso');
         }
         
-        // Remover tarefa
         function removeTask() {
             if (selectedTaskIndex === -1) {
                 alert('Por favor, selecione uma tarefa para eliminar.');
@@ -991,7 +993,6 @@
             updateStatus('Tarefa removida com sucesso');
         }
         
-        // Limpar todas as tarefas
         function clearAllTasks() {
             if (!tasks.length) {
                 alert('Não há tarefas para limpar.');
@@ -1009,7 +1010,6 @@
             updateStatus('Todas as tarefas foram removidas');
         }
         
-        // Exportar para JSON
         function exportToJSON() {
             const data = {
                 tarefas: tasks.map(taskToPythonFormat),
@@ -1033,73 +1033,124 @@
             updateStatus('Dados exportados com sucesso');
         }
         
-        // Importar de JSON
+        // IMPORTAR: via <input type=file>
         function importFromJSON(event) {
             const file = event.target.files[0];
             if (!file) return;
             
             const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    
-                    if (Array.isArray(data)) {
-                        tasks = data.map(normalizeTask);
-                        notes = "";
-                        lastWarningDate = null;
-                        execMenu = {
-                            programs: [],
-                            programsFolder: null,
-                            favorites: [],
-                            linksFolder: null,
-                            documents: [],
-                            documentsFolder: null
-                        };
-                    } else if (typeof data === 'object') {
-                        if (data.tarefas) {
-                            tasks = (data.tarefas || []).map(normalizeTask);
-                            notes = data.notas || "";
-                            lastWarningDate = data.ultimo_aviso_data || null;
-                            execMenu = normalizeExecMenu(data.executar_menu);
-                        } else {
-                            tasks = (data.tasks || []).map(normalizeTask);
-                            notes = data.notes || "";
-                            lastWarningDate = data.lastWarningDate || null;
-                            execMenu = normalizeExecMenu(data.execMenu);
-                        }
-                    } else {
-                        throw new Error('Formato inválido');
-                    }
-                    
-                    selectTask(-1);
-                    updateTaskList();
-                    notesTextarea.value = notes;
-                    saveTasks();
-                    
-                    updateStatus('Dados importados com sucesso');
-                } catch (error) {
-                    alert('Erro ao importar ficheiro: ' + error.message);
-                    updateStatus('Erro ao importar ficheiro');
-                }
+            reader.onload = async function(e) {
+                handleImportedData(e.target.result);
+                // NOVO: tentar obter handle nativo (File System Access) se o input o expuser
+                // (normalmente não expõe; por isso fazemos fallback para guardar o conteúdo)
+                lastImportedRaw = e.target.result;
+                saveLastImportedRaw();
             };
             
             reader.readAsText(file);
             fileInput.value = '';
         }
+
+        // NOVO: função comum para aplicar dados importados
+        function handleImportedData(textData) {
+            try {
+                const data = JSON.parse(textData);
+                
+                if (Array.isArray(data)) {
+                    tasks = data.map(normalizeTask);
+                    notes = "";
+                    lastWarningDate = null;
+                    execMenu = {
+                        programs: [],
+                        programsFolder: null,
+                        favorites: [],
+                        linksFolder: null,
+                        documents: [],
+                        documentsFolder: null
+                    };
+                } else if (typeof data === 'object') {
+                    if (data.tarefas) {
+                        tasks = (data.tarefas || []).map(normalizeTask);
+                        notes = data.notas || "";
+                        lastWarningDate = data.ultimo_aviso_data || null;
+                        execMenu = normalizeExecMenu(data.executar_menu);
+                    } else {
+                        tasks = (data.tasks || []).map(normalizeTask);
+                        notes = data.notes || "";
+                        lastWarningDate = data.lastWarningDate || null;
+                        execMenu = normalizeExecMenu(data.execMenu);
+                    }
+                } else {
+                    throw new Error('Formato inválido');
+                }
+                
+                selectTask(-1);
+                updateTaskList();
+                notesTextarea.value = notes;
+                saveTasks();
+                
+                updateStatus('Dados importados com sucesso');
+            } catch (error) {
+                alert('Erro ao importar ficheiro: ' + error.message);
+                updateStatus('Erro ao importar ficheiro');
+            }
+        }
+
+        // NOVO: recarregar último ficheiro
+        async function reloadLastImported() {
+            // 1) se tivermos handle (File System Access API)
+            if (lastImportedHandle) {
+                try {
+                    const file = await lastImportedHandle.getFile();
+                    const text = await file.text();
+                    handleImportedData(text);
+                    lastImportedRaw = text;
+                    saveLastImportedRaw();
+                    updateStatus(`Ficheiro recarregado: ${file.name}`);
+                    return;
+                } catch (err) {
+                    console.warn('Erro ao recarregar via handle:', err);
+                    alert('Não foi possível recarregar o ficheiro guardado. Pode ter mudado de sítio ou o browser retirou a permissão.');
+                }
+            }
+            // 2) fallback: usar última cópia em memória/localStorage
+            if (lastImportedRaw) {
+                handleImportedData(lastImportedRaw);
+                updateStatus('Ficheiro recarregado a partir da cópia guardada.');
+            } else {
+                alert('Ainda não há nenhum ficheiro importado nesta sessão.');
+            }
+        }
+
+        // NOVO: guardar última cópia no localStorage
+        function saveLastImportedRaw() {
+            localStorage.setItem('organizadorTarefas_lastImportedRaw', lastImportedRaw);
+        }
+
+        // NOVO: tentar restaurar handle do File System Access
+        async function restoreLastImportedHandle() {
+            // guardamos a info do handle no storage nativo do browser?
+            // não dá para serializar diretamente o handle; o que fazemos é:
+            // - usar IndexedDB com 'navigator.storage.getDirectory' ou 'showOpenFilePicker' com 'suggestedName'
+            // MAS: para simplificar e manter tudo num ficheiro HTML, vamos só tentar restaurar a cópia crua:
+            const raw = localStorage.getItem('organizadorTarefas_lastImportedRaw');
+            if (raw) {
+                lastImportedRaw = raw;
+            }
+            // Nota: guardar mesmo o "handle" não é portátil só com localStorage.
+            // Se quiseres MESMO reabrir o ficheiro físico, temos de pedir ao utilizador outra vez e guardar o handle em memória.
+        }
         
-        // Salvar notas
         function saveNotes() {
             notes = notesTextarea.value;
             saveTasks();
             updateStatus('Notas salvas com sucesso');
         }
         
-        // Fechar modais
         function closeModals() {
             propertiesModal.style.display = 'none';
         }
         
-        // Executar pesquisa
         function executeSearch() {
             const term = searchInput.value.trim();
             if (!term) {
@@ -1129,7 +1180,6 @@
             updateStatus(`Encontradas ${searchResults.length} tarefas para '${term}'`);
         }
         
-        // Próximo resultado de pesquisa
         function nextSearchResult() {
             if (!searchResults.length) return;
             
@@ -1137,25 +1187,20 @@
             selectTask(searchResults[currentSearchIndex]);
         }
         
-        // Mostrar menu de contexto - CORRIGIDO PARA WINDOWS
         function showContextMenu(event) {
             const index = Array.from(taskList.children).indexOf(event.target.closest('.task-item'));
             if (index === -1) return;
             
             selectTask(index);
             
-            // Posicionar menu
             contextMenu.style.left = `${event.pageX}px`;
             contextMenu.style.top = `${event.pageY}px`;
             contextMenu.style.display = 'block';
             
-            // Configurar ações - CORREÇÃO: Usar função nomeada para evitar problemas
             contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
-                // Remover listeners antigos
                 const newItem = item.cloneNode(true);
                 item.parentNode.replaceChild(newItem, item);
                 
-                // Adicionar novo listener
                 newItem.addEventListener('click', function() {
                     const action = this.getAttribute('data-action');
                     if (action) {
@@ -1166,7 +1211,6 @@
             });
         }
         
-        // Manipular ação do menu de contexto
         function handleContextMenuAction(action, index) {
             const task = tasks[index];
             
@@ -1307,7 +1351,6 @@
             }
         }
         
-        // Gerar relatório
         function generateReport() {
             const activeTasks = tasks.filter(t => !t.completed && t.text !== '┈┈');
             
@@ -1342,7 +1385,6 @@
             updateStatus('Relatório gerado com sucesso');
         }
         
-        // Validar data
         function isValidDate(dateString) {
             const regex = /^(\d{2})-(\d{2})-(\d{4})$/;
             const match = dateString.match(regex);
@@ -1360,12 +1402,10 @@
                    date.getFullYear() === year;
         }
         
-        // Atualizar texto de status
         function updateStatus(message) {
             statusText.textContent = message;
         }
         
-        // Carregar tarefas do localStorage
         function loadTasks() {
             const saved = localStorage.getItem('organizadorTarefas');
             if (saved) {
@@ -1383,7 +1423,6 @@
             }
         }
         
-        // Salvar tarefas no localStorage
         function saveTasks() {
             const data = {
                 tasks: tasks,
