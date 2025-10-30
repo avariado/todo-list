@@ -244,7 +244,7 @@
         
         .context-menu {
             display: none;
-            position: absolute;
+            position: fixed;
             background-color: white;
             border: 1px solid var(--border-color);
             border-radius: 4px;
@@ -458,7 +458,7 @@
             updateStatus('Pronto');
         });
         
-        // Configurar event listeners
+        // Configurar event listeners - CORRIGIDO PARA WINDOWS
         function setupEventListeners() {
             // Botões principais
             addTaskBtn.addEventListener('click', addTask);
@@ -486,9 +486,11 @@
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
             
-            // Context menu
-            document.addEventListener('click', function() {
-                contextMenu.style.display = 'none';
+            // Context menu - CORREÇÃO PARA WINDOWS
+            document.addEventListener('click', function(e) {
+                if (!e.target.closest('.context-menu')) {
+                    contextMenu.style.display = 'none';
+                }
             });
             
             document.addEventListener('contextmenu', function(e) {
@@ -500,6 +502,21 @@
             
             // File input
             fileInput.addEventListener('change', importFromJSON);
+            
+            // Teclas de atalho para Windows
+            document.addEventListener('keydown', function(e) {
+                // Ctrl+F para pesquisa
+                if (e.ctrlKey && e.key === 'f') {
+                    e.preventDefault();
+                    searchInput.focus();
+                }
+                
+                // F3 para próximo resultado de pesquisa
+                if (e.key === 'F3') {
+                    e.preventDefault();
+                    nextSearchResult();
+                }
+            });
         }
 
         // Alternar visibilidade das notas
@@ -696,8 +713,16 @@
                     li.appendChild(textDiv);
                 }
                 
-                li.addEventListener('click', () => selectTask(index));
-                li.addEventListener('dblclick', () => openProperties());
+                // CORREÇÃO: Event listeners simples para Windows
+                li.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    selectTask(index);
+                });
+                
+                li.addEventListener('dblclick', function(e) {
+                    e.stopPropagation();
+                    openProperties();
+                });
                 
                 taskList.appendChild(li);
             });
@@ -998,24 +1023,30 @@
             selectTask(searchResults[currentSearchIndex]);
         }
         
-        // Mostrar menu de contexto
+        // Mostrar menu de contexto - CORRIGIDO PARA WINDOWS
         function showContextMenu(event) {
             const index = Array.from(taskList.children).indexOf(event.target.closest('.task-item'));
             if (index === -1) return;
             
             selectTask(index);
-            const task = tasks[index];
             
+            // Posicionar menu
             contextMenu.style.left = `${event.pageX}px`;
             contextMenu.style.top = `${event.pageY}px`;
             contextMenu.style.display = 'block';
             
+            // Configurar ações - CORREÇÃO: Usar função nomeada para evitar problemas
             contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
-                item.onclick = function() {
+                // Remover listeners antigos
+                const newItem = item.cloneNode(true);
+                item.parentNode.replaceChild(newItem, item);
+                
+                // Adicionar novo listener
+                newItem.addEventListener('click', function() {
                     const action = this.getAttribute('data-action');
                     handleContextMenuAction(action, index);
                     contextMenu.style.display = 'none';
-                };
+                });
             });
         }
         
