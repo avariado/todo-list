@@ -252,7 +252,6 @@
             border-radius: 4px;
         }
         
-        /* MENU DE CONTEXTO SIMPLES E FUNCIONAL */
         .context-menu {
             display: none;
             position: fixed;
@@ -305,15 +304,8 @@
             z-index: 10001;
         }
         
-        /* SUBMENUS FUNCIONAM COM HOVER */
-        .context-menu-item.has-submenu:hover > .context-submenu {
+        .context-menu-item:hover > .context-submenu {
             display: block;
-        }
-        
-        /* CORREÇÃO: Se não houver espaço à direita, abre para a esquerda */
-        .context-submenu.no-space-right {
-            left: auto;
-            right: 100%;
         }
         
         .notes-container {
@@ -399,6 +391,9 @@
             
             .context-submenu {
                 min-width: 160px;
+                /* CORREÇÃO: Em mobile, submenu aparece à esquerda se não houver espaço */
+                left: auto;
+                right: 100%;
             }
         }
     </style>
@@ -675,7 +670,7 @@
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
 
-            // MENU DE CONTEXTO - CORREÇÃO PARA SUBMENUS
+            // MENU DE CONTEXTO - CORREÇÃO DEFINITIVA
             taskList.addEventListener('contextmenu', function(e) {
                 console.log('=== CONTEXTMENU DISPARADO ===');
                 e.preventDefault();
@@ -701,29 +696,6 @@
                     handleContextMenuAction(action, currentContextTaskIndex, menuItem);
                     hideContextMenu();
                 }
-            });
-
-            // CORREÇÃO: Hover para submenus em desktop com verificação de espaço
-            document.querySelectorAll('.context-menu-item.has-submenu').forEach(item => {
-                item.addEventListener('mouseenter', function() {
-                    if (window.innerWidth > 768) { // Apenas em desktop
-                        const submenu = this.querySelector('.context-submenu');
-                        if (submenu) {
-                            // Verificar se há espaço à direita
-                            const rect = this.getBoundingClientRect();
-                            const submenuWidth = submenu.offsetWidth;
-                            const vw = window.innerWidth;
-                            
-                            if (rect.right + submenuWidth > vw - 10) {
-                                // Não há espaço à direita, abrir para a esquerda
-                                submenu.classList.add('no-space-right');
-                            } else {
-                                // Há espaço à direita, abrir normalmente
-                                submenu.classList.remove('no-space-right');
-                            }
-                        }
-                    }
-                });
             });
 
             // Fechar menu ao clicar fora
@@ -759,40 +731,6 @@
             
             taskList.addEventListener('touchmove', function() {
                 clearTimeout(longPressTimer);
-            });
-
-            // CORREÇÃO: Clique para abrir submenus em Android com verificação de espaço
-            document.querySelectorAll('.context-menu-item.has-submenu').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    if (window.innerWidth <= 768) { // Apenas em mobile
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const submenu = this.querySelector('.context-submenu');
-                        if (submenu) {
-                            // Verificar se há espaço à direita
-                            const rect = this.getBoundingClientRect();
-                            const submenuWidth = submenu.offsetWidth;
-                            const vw = window.innerWidth;
-                            
-                            if (rect.right + submenuWidth > vw - 10) {
-                                // Não há espaço à direita, abrir para a esquerda
-                                submenu.classList.add('no-space-right');
-                            } else {
-                                // Há espaço à direita, abrir normalmente
-                                submenu.classList.remove('no-space-right');
-                            }
-                            
-                            // Alternar visibilidade
-                            const isVisible = submenu.style.display === 'block';
-                            // Fechar todos os submenus primeiro
-                            document.querySelectorAll('.context-submenu').forEach(sm => {
-                                sm.style.display = 'none';
-                            });
-                            // Abrir o submenu atual
-                            submenu.style.display = isVisible ? 'none' : 'block';
-                        }
-                    }
-                });
             });
 
             // Importação
@@ -910,11 +848,6 @@
 
             updateDynamicSubmenus();
 
-            // CORREÇÃO: Fechar todos os submenus antes de abrir
-            document.querySelectorAll('.context-submenu').forEach(submenu => {
-                submenu.style.display = 'none';
-            });
-
             // Posicionar menu
             let x = event.clientX || (event.touches && event.touches[0].clientX) || 0;
             let y = event.clientY || (event.touches && event.touches[0].clientY) || 0;
@@ -938,13 +871,10 @@
 
         function hideContextMenu() {
             contextMenu.style.display = 'none';
-            // CORREÇÃO: Fechar também todos os submenus
-            document.querySelectorAll('.context-submenu').forEach(submenu => {
-                submenu.style.display = 'none';
-            });
             currentContextTaskIndex = -1;
         }
 
+        // RESTANTE DAS FUNÇÕES (mantidas iguais mas garantindo compatibilidade)
         function updateTaskList() {
             taskList.innerHTML = '';
             
