@@ -261,6 +261,9 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             z-index: 10000;
             min-width: 200px;
+            max-height: 70vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
         .context-menu-item {
@@ -383,6 +386,7 @@
             .context-menu {
                 min-width: 180px;
                 font-size: 14px;
+                max-height: 60vh;
             }
             
             .context-menu-item {
@@ -391,15 +395,6 @@
             
             .context-submenu {
                 min-width: 160px;
-                /* CORREÇÃO: Em mobile, mantém-se à direita mas ajusta posição se necessário */
-                left: 100%;
-                right: auto;
-            }
-            
-            /* CORREÇÃO: Se não houver espaço à direita, ajusta a posição do menu principal */
-            .context-menu.no-space-right {
-                left: auto;
-                right: 10px;
             }
         }
     </style>
@@ -612,6 +607,7 @@
         let searchTerm = "";
         let notesVisible = false;
         let currentContextTaskIndex = -1;
+        let isContextMenuOpen = false;
 
         // ELEMENTOS DO DOM
         const taskInput = document.getElementById('taskInput');
@@ -704,9 +700,22 @@
                 }
             });
 
+            // CORREÇÃO: Prevenir scroll da página quando o menu está aberto
+            contextMenu.addEventListener('touchmove', function(e) {
+                if (isContextMenuOpen) {
+                    e.stopPropagation();
+                }
+            }, { passive: false });
+
+            contextMenu.addEventListener('wheel', function(e) {
+                if (isContextMenuOpen) {
+                    e.stopPropagation();
+                }
+            }, { passive: false });
+
             // Fechar menu ao clicar fora
             document.addEventListener('click', function(e) {
-                if (contextMenu.style.display === 'block' && !contextMenu.contains(e.target)) {
+                if (isContextMenuOpen && !contextMenu.contains(e.target)) {
                     hideContextMenu();
                 }
             });
@@ -719,7 +728,7 @@
                 }
             });
 
-            // Touch para Android
+            // Touch para Android - CORREÇÃO COMPLETA
             let longPressTimer;
             taskList.addEventListener('touchstart', function(e) {
                 const taskItem = e.target.closest('.task-item');
@@ -854,36 +863,31 @@
 
             updateDynamicSubmenus();
 
-            // Posicionar menu - CORREÇÃO PARA ANDROID
+            // Posicionar menu
             let x = event.clientX || (event.touches && event.touches[0].clientX) || 0;
             let y = event.clientY || (event.touches && event.touches[0].clientY) || 0;
 
-            // Garantir que não sai da tela - CORREÇÃO PARA SUBMENUS
+            // Garantir que não sai da tela
             const rect = contextMenu.getBoundingClientRect();
             const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
             const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
 
-            // CORREÇÃO: Se estiver perto da borda direita, ajusta para que os submenus tenham espaço
-            if (x + rect.width > vw - 100) {
-                x = vw - rect.width - 100;
-                contextMenu.classList.add('no-space-right');
-            } else {
-                contextMenu.classList.remove('no-space-right');
-            }
-            
-            if (x < 10) x = 10;
+            if (x + rect.width > vw) x = vw - rect.width - 10;
             if (y + rect.height > vh) y = vh - rect.height - 10;
+            if (x < 10) x = 10;
             if (y < 10) y = 10;
 
             contextMenu.style.left = x + 'px';
             contextMenu.style.top = y + 'px';
             contextMenu.style.display = 'block';
+            isContextMenuOpen = true;
 
             console.log('Menu posicionado em:', x, y);
         }
 
         function hideContextMenu() {
             contextMenu.style.display = 'none';
+            isContextMenuOpen = false;
             currentContextTaskIndex = -1;
         }
 
