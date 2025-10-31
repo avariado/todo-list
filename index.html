@@ -622,7 +622,6 @@
         const documentsSubmenu = document.getElementById('documentsSubmenu');
         const favoritesSubmenu = document.getElementById('favoritesSubmenu');
 
-        // CORREÇÃO DEFINITIVA - Setup completo
         document.addEventListener('DOMContentLoaded', function () {
             loadTasks();
             updateTaskList();
@@ -654,24 +653,29 @@
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
 
-            // CORREÇÃO RADICAL: Event listener DIRETO na lista de tarefas
+            // EVENT LISTENER CORRETO PARA O MENU DE CONTEXTO
             taskList.addEventListener('contextmenu', function(e) {
+                console.log('CONTEXTMENU EVENT: Disparado');
                 e.preventDefault();
                 e.stopPropagation();
                 
                 const taskItem = e.target.closest('.task-item');
                 if (taskItem) {
+                    console.log('CONTEXTMENU: Task item encontrado');
                     showContextMenu(e, taskItem);
+                } else {
+                    console.log('CONTEXTMENU: Task item NÃO encontrado');
                 }
                 return false;
             });
 
-            // Listener único para o menu de contexto
+            // Listener para os itens do menu de contexto
             contextMenu.addEventListener('click', function(e) {
                 e.stopPropagation();
                 const menuItem = e.target.closest('.context-menu-item');
                 if (menuItem && menuItem.getAttribute('data-action')) {
                     const action = menuItem.getAttribute('data-action');
+                    console.log('CONTEXTMENU ACTION: ', action);
                     handleContextMenuAction(action, currentContextTaskIndex, menuItem);
                     hideContextMenu();
                 }
@@ -727,13 +731,19 @@
         }
 
         function showContextMenu(event, taskItem) {
+            console.log('SHOW CONTEXT MENU: Iniciando');
+            
             const index = Array.from(taskList.children).indexOf(taskItem);
-            if (index === -1) return;
+            if (index === -1) {
+                console.log('SHOW CONTEXT MENU: Índice inválido');
+                return;
+            }
 
             currentContextTaskIndex = index;
             selectTask(index);
 
             const task = tasks[index];
+            console.log('SHOW CONTEXT MENU: Tarefa selecionada:', task);
             
             // Atualizar texto dos itens do menu
             const toggleCompleteItem = contextMenu.querySelector('[data-action="toggleComplete"]');
@@ -775,11 +785,14 @@
             contextMenu.style.left = x + 'px';
             contextMenu.style.top = y + 'px';
             contextMenu.style.display = 'block';
+            
+            console.log('SHOW CONTEXT MENU: Menu exibido em', x, y);
         }
 
         function hideContextMenu() {
             contextMenu.style.display = 'none';
             currentContextTaskIndex = -1;
+            console.log('HIDE CONTEXT MENU: Menu escondido');
         }
 
         function toggleNotes() {
@@ -794,13 +807,18 @@
             }
         }
         
+        // FUNÇÃO NORMALIZETASK COMPLETAMENTE CORRIGIDA
         function normalizeTask(task) {
+            console.log('NORMALIZE TASK: Processando:', task);
+            
             if (!task || typeof task !== 'object') {
+                console.log('NORMALIZE TASK: Tarefa inválida');
                 return createDefaultTask();
             }
 
-            // Formato Web
+            // Formato Web (novo)
             if (task.text !== undefined) {
+                console.log('NORMALIZE TASK: Formato Web detectado');
                 return {
                     text: String(task.text || ''),
                     completed: Boolean(task.completed),
@@ -812,14 +830,29 @@
                 };
             }
 
-            // Formato Python/Tkinter
+            // Formato Python/Tkinter (seu JSON)
             if (task.texto !== undefined) {
-                let highlight = null;
+                console.log('NORMALIZE TASK: Formato Python detectado');
+                
+                // CORREÇÃO CRÍTICA: Lógica de destaque completamente revisada
+                let highlightColor = null;
+                
+                // PRIMEIRO verifica se tem destaque_cor definido (independente do campo destaque)
                 if (task.destaque_cor) {
-                    if (task.destaque_cor === 'vermelho') highlight = 'red';
-                    else if (task.destaque_cor === 'azul') highlight = 'blue';
-                    else highlight = String(task.destaque_cor);
+                    if (task.destaque_cor === 'vermelho') {
+                        highlightColor = 'red';
+                    } else if (task.destaque_cor === 'azul') {
+                        highlightColor = 'blue';
+                    } else {
+                        highlightColor = String(task.destaque_cor);
+                    }
                 }
+                // DEPOIS se não tem destaque_cor mas tem destaque=true, assume vermelho
+                else if (task.destaque === true) {
+                    highlightColor = 'red';
+                }
+                
+                console.log('NORMALIZE TASK: destaque_cor=', task.destaque_cor, 'destaque=', task.destaque, 'resultado=', highlightColor);
                 
                 return {
                     text: String(task.texto || ''),
@@ -828,10 +861,11 @@
                     sharedFolder: task.pasta_partilhada ? String(task.pasta_partilhada) : null,
                     link: task.link ? String(task.link) : null,
                     date: task.data ? String(task.data) : null,
-                    highlightColor: highlight
+                    highlightColor: highlightColor
                 };
             }
 
+            console.log('NORMALIZE TASK: Formato desconhecido');
             return createDefaultTask();
         }
 
@@ -924,6 +958,7 @@
         }
         
         function updateTaskList() {
+            console.log('UPDATE TASK LIST: Atualizando lista com', tasks.length, 'tarefas');
             taskList.innerHTML = '';
             
             tasks.forEach((task, index) => {
@@ -1189,7 +1224,9 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
+                    console.log('IMPORT JSON: Iniciando importação');
                     const data = JSON.parse(e.target.result);
+                    console.log('IMPORT JSON: Dados brutos:', data);
                     
                     if (Array.isArray(data)) {
                         tasks = data.map(normalizeTask);
@@ -1219,6 +1256,8 @@
                         throw new Error('Formato inválido');
                     }
                     
+                    console.log('IMPORT JSON: Tarefas após normalização:', tasks);
+                    
                     selectTask(-1);
                     updateTaskList();
                     notesTextarea.value = notes;
@@ -1226,6 +1265,7 @@
                     
                     updateStatus('Dados importados com sucesso');
                 } catch (error) {
+                    console.error('IMPORT JSON: Erro:', error);
                     alert('Erro ao importar ficheiro: ' + error.message);
                     updateStatus('Erro ao importar ficheiro');
                 }
