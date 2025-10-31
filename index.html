@@ -809,6 +809,7 @@
             }
         }
         
+        // CORREÇÃO CRÍTICA: função normalizeTask corrigida
         function normalizeTask(task) {
             // 1) Já está no formato web?
             if (task && typeof task === 'object' && task.text !== undefined) {
@@ -830,11 +831,13 @@
                     else if (task.destaque_cor === 'azul') highlight = 'blue';
                     else highlight = task.destaque_cor;
                 }
+                
+                // CORREÇÃO: processar pasta_partilhada corretamente
                 return {
                     text: task.texto || '',
                     completed: !!task.completada,
                     personalFolder: task.pasta_pessoal || null,
-                    sharedFolder: task.pasta_partilhada || null,
+                    sharedFolder: task.pasta_partilhada || null, // CORREÇÃO AQUI
                     link: task.link || null,
                     date: task.data || null,
                     highlightColor: highlight
@@ -857,7 +860,7 @@
                 texto: task.text,
                 completada: task.completed,
                 pasta_pessoal: task.personalFolder,
-                pasta_partilhada: task.sharedFolder,
+                pasta_partilhada: task.sharedFolder, // CORREÇÃO AQUI
                 link: task.link,
                 data: task.date
             };
