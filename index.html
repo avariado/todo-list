@@ -29,6 +29,12 @@
             user-select: none;
             -webkit-user-select: none;
         }
+
+        /* quando o menu está aberto, bloqueamos o scroll do fundo */
+        body.no-scroll {
+            overflow: hidden;
+            touch-action: none;
+        }
         
         .container {
             max-width: 900px;
@@ -252,6 +258,16 @@
             border-radius: 4px;
         }
         
+        /* OVERLAY PARA BLOQUEAR SCROLL POR BAIXO DO MENU */
+        .context-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: transparent;
+            z-index: 9999;
+            touch-action: none;
+        }
+
         /* MENU DE CONTEXTO SIMPLES E FUNCIONAL */
         .context-menu {
             display: none;
@@ -262,6 +278,12 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             z-index: 10000;
             min-width: 200px;
+
+            /* para mobile: o próprio menu passa a rolar */
+            max-height: 70vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            touch-action: auto;
         }
         
         .context-menu-item {
@@ -385,12 +407,13 @@
             .context-menu {
                 min-width: 180px;
                 font-size: 14px;
+                max-height: 75vh; /* um bocadinho mais no mobile */
             }
             
             .context-menu-item {
                 padding: 12px 15px;
             }
-        
+
             /* SUBMENUS AGORA ABREM PARA A DIREITA EM MOBILE TAMBÉM */
             .context-submenu {
                 min-width: 160px;
@@ -404,7 +427,6 @@
                 z-index: 10001;
             }
         }
-
     </style>
 </head>
 <body>
@@ -505,6 +527,9 @@
         </div>
     </div>
     
+    <!-- overlay que bloqueia o scroll do fundo quando o menu está aberto -->
+    <div id="contextOverlay" class="context-overlay"></div>
+
     <div id="contextMenu" class="context-menu">
         <div class="context-menu-item" data-action="toggleComplete">Marcar como Completada</div>
         <div class="context-menu-separator"></div>
@@ -640,10 +665,10 @@
         const programsSubmenu = document.getElementById('programsSubmenu');
         const documentsSubmenu = document.getElementById('documentsSubmenu');
         const favoritesSubmenu = document.getElementById('favoritesSubmenu');
+        const contextOverlay = document.getElementById('contextOverlay');
 
         // INICIALIZAÇÃO
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('=== INICIANDO APLICAÇÃO ===');
             loadTasks();
             updateTaskList();
             setupEventListeners();
@@ -652,8 +677,6 @@
 
         // CONFIGURAÇÃO DE EVENTOS
         function setupEventListeners() {
-            console.log('Configurando event listeners...');
-            
             // Eventos básicos
             addTaskBtn.addEventListener('click', addTask);
             moveUpBtn.addEventListener('click', moveTaskUp);
@@ -679,15 +702,13 @@
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
 
-            // MENU DE CONTEXTO - SIMPLES E FUNCIONAL
+            // MENU DE CONTEXTO
             taskList.addEventListener('contextmenu', function(e) {
-                console.log('=== CONTEXTMENU DISPARADO ===');
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 
                 const taskItem = e.target.closest('.task-item');
                 if (taskItem) {
-                    console.log('Task item encontrado:', taskItem);
                     showContextMenu(e, taskItem);
                 }
                 return false;
@@ -701,15 +722,34 @@
                 const menuItem = e.target.closest('.context-menu-item');
                 if (menuItem && menuItem.getAttribute('data-action')) {
                     const action = menuItem.getAttribute('data-action');
-                    console.log('Ação do menu:', action);
                     handleContextMenuAction(action, currentContextTaskIndex, menuItem);
                     hideContextMenu();
                 }
             });
 
-            // Fechar menu ao clicar fora
+            // impedir que toques dentro do menu façam scroll do fundo
+            contextMenu.addEventListener('touchstart', function(e) {
+                e.stopPropagation();
+            }, {passive: false});
+            contextMenu.addEventListener('touchmove', function(e) {
+                // deixa rolar o menu, mas não o fundo
+                e.stopPropagation();
+            }, {passive: false});
+
+            // clicar/tocar no overlay fecha o menu
+            contextOverlay.addEventListener('click', function() {
+                hideContextMenu();
+            });
+            contextOverlay.addEventListener('touchstart', function(e) {
+                e.preventDefault();
+                hideContextMenu();
+            }, {passive: false});
+
+            // Fechar menu ao clicar fora (desktop)
             document.addEventListener('click', function(e) {
-                if (contextMenu.style.display === 'block' && !contextMenu.contains(e.target)) {
+                if (contextMenu.style.display === 'block' &&
+                    !contextMenu.contains(e.target) &&
+                    e.target !== contextOverlay) {
                     hideContextMenu();
                 }
             });
@@ -722,7 +762,7 @@
                 }
             });
 
-            // Touch para Android - SIMPLES
+            // Touch longo para Android
             let longPressTimer;
             taskList.addEventListener('touchstart', function(e) {
                 const taskItem = e.target.closest('.task-item');
@@ -732,7 +772,7 @@
                         showContextMenu(e, taskItem);
                     }, 500);
                 }
-            });
+            }, {passive: false});
             
             taskList.addEventListener('touchend', function() {
                 clearTimeout(longPressTimer);
@@ -756,14 +796,10 @@
                     nextSearchResult();
                 }
             });
-
-            console.log('Event listeners configurados');
         }
 
         // FUNÇÃO NORMALIZETASK 100% COMPATÍVEL COM SEU JSON
         function normalizeTask(task) {
-            console.log('Normalizando tarefa:', task);
-            
             if (!task || typeof task !== 'object') {
                 return createDefaultTask();
             }
@@ -783,22 +819,13 @@
 
             // Formato Python/Tkinter (SEU JSON)
             if (task.texto !== undefined) {
-                console.log('Processando formato Python:', task);
-                
-                // LÓGICA DE DESTAQUE COMPATÍVEL COM SEU JSON
                 let highlightColor = null;
-                
-                // SEU JSON: prioriza destaque_cor sobre destaque
                 if (task.destaque_cor) {
                     if (task.destaque_cor === 'vermelho') highlightColor = 'red';
                     else if (task.destaque_cor === 'azul') highlightColor = 'blue';
-                }
-                // Fallback para compatibilidade
-                else if (task.destaque === true) {
+                } else if (task.destaque === true) {
                     highlightColor = 'red';
                 }
-                
-                console.log('Resultado destaque:', highlightColor);
                 
                 return {
                     text: String(task.texto || ''),
@@ -828,11 +855,8 @@
 
         // MENU DE CONTEXTO - FUNCIONA SEMPRE
         function showContextMenu(event, taskItem) {
-            console.log('=== MOSTRANDO MENU DE CONTEXTO ===');
-            
             const index = Array.from(taskList.children).indexOf(taskItem);
             if (index === -1 || index >= tasks.length) {
-                console.log('Índice inválido:', index);
                 return;
             }
 
@@ -840,7 +864,6 @@
             selectTask(index);
 
             const task = tasks[index];
-            console.log('Tarefa selecionada para menu:', task);
 
             // Atualizar itens do menu
             const toggleCompleteItem = contextMenu.querySelector('[data-action="toggleComplete"]');
@@ -857,11 +880,12 @@
 
             updateDynamicSubmenus();
 
-            // Posicionar menu - CORREÇÃO PARA ANDROID
+            // Posicionar menu
             let x = event.clientX || (event.touches && event.touches[0].clientX) || 0;
             let y = event.clientY || (event.touches && event.touches[0].clientY) || 0;
 
-            // Garantir que não sai da tela
+            // mostrar primeiro para medir
+            contextMenu.style.display = 'block';
             const rect = contextMenu.getBoundingClientRect();
             const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
             const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
@@ -873,17 +897,20 @@
 
             contextMenu.style.left = x + 'px';
             contextMenu.style.top = y + 'px';
-            contextMenu.style.display = 'block';
 
-            console.log('Menu posicionado em:', x, y);
+            // bloquear scroll do fundo
+            contextOverlay.style.display = 'block';
+            document.body.classList.add('no-scroll');
         }
 
         function hideContextMenu() {
             contextMenu.style.display = 'none';
+            contextOverlay.style.display = 'none';
+            document.body.classList.remove('no-scroll');
             currentContextTaskIndex = -1;
         }
 
-        // RESTANTE DAS FUNÇÕES (mantidas iguais)
+        // RESTANTE DAS FUNÇÕES
         function updateTaskList() {
             taskList.innerHTML = '';
             
@@ -1115,17 +1142,13 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
-                    console.log('=== INICIANDO IMPORTAÇÃO ===');
                     const data = JSON.parse(e.target.result);
-                    console.log('Dados importados:', data);
                     
-                    // PROCESSAMENTO COMPATÍVEL COM SEU JSON
                     if (data.tarefas) {
                         tasks = data.tarefas.map(normalizeTask);
                         notes = data.notas || "";
                         lastWarningDate = data.ultimo_aviso_data || null;
                         
-                        // Processar menu executar
                         if (data.executar_menu) {
                             execMenu = {
                                 programs: data.executar_menu.programas || [],
@@ -1139,8 +1162,6 @@
                     } else {
                         throw new Error('Formato de JSON inválido');
                     }
-                    
-                    console.log('Tarefas após importação:', tasks);
                     
                     selectTask(-1);
                     updateTaskList();
@@ -1218,7 +1239,6 @@
         }
 
         function updateDynamicSubmenus() {
-            // Implementação básica - pode ser expandida
             programsSubmenu.innerHTML = '<div class="context-menu-item" data-action="managePrograms">Gerir Programas</div>';
             documentsSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageDocuments">Gerir Documentos</div>';
             favoritesSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageFavorites">Gerir Favoritos</div>';
@@ -1228,7 +1248,6 @@
             if (index === -1) return;
             const task = tasks[index];
             
-            // Implementação básica das ações
             switch (action) {
                 case 'toggleComplete':
                     task.completed = !task.completed;
