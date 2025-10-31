@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Organizador de Tarefas</title>
     <style>
-        /* (MANTENHA TODOS OS ESTILOS EXISTENTES - não mudei nada aqui) */
+        /* (MANTENHA TODOS OS ESTILOS EXISTENTES) */
         :root {
             --primary-color: #4a6987;
             --secondary-color: #f0f0f0;
@@ -599,7 +599,7 @@
     
         let currentContextTaskIndex = -1;
         let justOpenedContextMenu = false;
-    
+
         const taskInput = document.getElementById('taskInput');
         const addTaskBtn = document.getElementById('addTaskBtn');
         const taskList = document.getElementById('taskList');
@@ -617,22 +617,23 @@
         const notesTextarea = document.getElementById('notesTextarea');
         const notesContainer = document.getElementById('notesContainer');
         const statusText = document.getElementById('statusText');
-    
+
         const propertiesModal = document.getElementById('propertiesModal');
         const contextMenu = document.getElementById('contextMenu');
         const fileInput = document.getElementById('fileInput');
-    
+
         const programsSubmenu = document.getElementById('programsSubmenu');
         const documentsSubmenu = document.getElementById('documentsSubmenu');
         const favoritesSubmenu = document.getElementById('favoritesSubmenu');
-    
+
+        // CORREÇÃO RADICAL: Event listeners GLOBAIS que não dependem do conteúdo
         document.addEventListener('DOMContentLoaded', function () {
             loadTasks();
             updateTaskList();
             setupEventListeners();
             updateStatus('Pronto');
         });
-    
+
         function setupEventListeners() {
             addTaskBtn.addEventListener('click', addTask);
             moveUpBtn.addEventListener('click', moveTaskUp);
@@ -643,62 +644,60 @@
             exportBtn.addEventListener('click', exportToJSON);
             importBtn.addEventListener('click', () => fileInput.click());
             notesBtn.addEventListener('click', toggleNotes);
-    
+
             searchBtn.addEventListener('click', executeSearch);
             nextResultBtn.addEventListener('click', nextSearchResult);
             searchInput.addEventListener('keyup', function (e) {
                 if (e.key === 'Enter') executeSearch();
             });
-    
+
             document.querySelectorAll('.close-btn').forEach(btn => {
                 btn.addEventListener('click', closeModals);
             });
-    
+
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
-    
-            // CORREÇÃO RADICAL DO MENU DE CONTEXTO
-            taskList.addEventListener('contextmenu', function (e) {
+
+            // CORREÇÃO DEFINITIVA: Delegation de eventos que funciona SEMPRE
+            document.addEventListener('contextmenu', function(e) {
                 const taskItem = e.target.closest('.task-item');
-                if (taskItem) {
+                if (taskItem && taskList.contains(taskItem)) {
                     e.preventDefault();
                     e.stopPropagation();
                     showContextMenu(e, taskItem);
                 }
-                return false;
             });
-    
-            // CORREÇÃO: Event listeners para o menu de contexto
+
+            // Listener ÚNICO no menu de contexto
             contextMenu.addEventListener('click', function(e) {
+                e.stopPropagation();
                 const menuItem = e.target.closest('.context-menu-item');
                 if (menuItem && menuItem.getAttribute('data-action')) {
-                    e.stopPropagation();
                     const action = menuItem.getAttribute('data-action');
                     handleContextMenuAction(action, currentContextTaskIndex, menuItem);
                     hideContextMenu();
                 }
             });
-    
-            // CORREÇÃO: Fechar menu ao clicar fora
+
+            // Fechar menu ao clicar fora
             document.addEventListener('click', function(e) {
                 if (!contextMenu.contains(e.target)) {
                     hideContextMenu();
                 }
             });
-    
-            // CORREÇÃO: Fechar menu com ESC
+
+            // Fechar menu com ESC
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     hideContextMenu();
-                    closeModals();
                 }
             });
-    
+
             // Touch para Android
             let longPressTimer;
-            taskList.addEventListener('touchstart', function(e) {
+            document.addEventListener('touchstart', function(e) {
                 const taskItem = e.target.closest('.task-item');
-                if (taskItem) {
+                if (taskItem && taskList.contains(taskItem)) {
                     longPressTimer = setTimeout(() => {
                         e.preventDefault();
                         showContextMenu(e, taskItem);
@@ -706,16 +705,16 @@
                 }
             }, { passive: false });
             
-            taskList.addEventListener('touchend', function() {
+            document.addEventListener('touchend', function() {
                 clearTimeout(longPressTimer);
-            }, { passive: true });
+            });
             
-            taskList.addEventListener('touchmove', function() {
+            document.addEventListener('touchmove', function() {
                 clearTimeout(longPressTimer);
-            }, { passive: true });
-    
+            });
+
             fileInput.addEventListener('change', importFromJSON);
-    
+
             document.addEventListener('keydown', function (e) {
                 if (e.ctrlKey && e.key === 'f') {
                     e.preventDefault();
@@ -727,27 +726,37 @@
                 }
             });
         }
-    
+
         function showContextMenu(event, taskItem) {
+            console.log('Abrindo menu de contexto...');
+            
             const index = Array.from(taskList.children).indexOf(taskItem);
-            if (index === -1) return;
-    
+            if (index === -1) {
+                console.log('Índice não encontrado');
+                return;
+            }
+
             currentContextTaskIndex = index;
             selectTask(index);
-    
+
             const task = tasks[index];
+            console.log('Tarefa selecionada:', task);
+
+            // Atualizar texto do item de completar
             const toggleCompleteItem = contextMenu.querySelector('[data-action="toggleComplete"]');
             if (toggleCompleteItem) {
                 toggleCompleteItem.textContent = task.completed ? 'Marcar como Não Completada' : 'Marcar como Completada';
             }
-    
+
+            // Atualizar texto do item de data
             const removeDateItem = contextMenu.querySelector('[data-action="removeDate"]');
             if (removeDateItem) {
                 removeDateItem.textContent = task.date ? `Remover Data (${task.date})` : 'Remover Data';
             }
-    
+
             updateDynamicSubmenus();
-    
+
+            // Posicionar menu
             let x, y;
             if (event.type && event.type.includes('touch')) {
                 x = event.touches[0].clientX;
@@ -756,7 +765,7 @@
                 x = event.clientX;
                 y = event.clientY;
             }
-    
+
             const menuWidth = contextMenu.offsetWidth;
             const menuHeight = contextMenu.offsetHeight;
             const windowWidth = window.innerWidth;
@@ -771,16 +780,18 @@
             
             x = Math.max(10, x);
             y = Math.max(10, y);
-    
+
             contextMenu.style.left = x + 'px';
             contextMenu.style.top = y + 'px';
             contextMenu.style.display = 'block';
             contextMenu.style.zIndex = '1001';
-    
+
+            console.log('Menu posicionado em:', x, y);
+
             justOpenedContextMenu = true;
             setTimeout(() => { justOpenedContextMenu = false; }, 100);
         }
-    
+
         function hideContextMenu() {
             contextMenu.style.display = 'none';
             currentContextTaskIndex = -1;
@@ -798,36 +809,55 @@
             }
         }
         
+        // CORREÇÃO CRÍTICA: Função normalizeTask ROBUSTA
         function normalizeTask(task) {
-            if (task && typeof task === 'object' && task.text !== undefined) {
+            console.log('Normalizando tarefa:', task);
+            
+            if (!task || typeof task !== 'object') {
+                console.log('Tarefa inválida, retornando padrão');
+                return createDefaultTask();
+            }
+
+            // Formato Web
+            if (task.text !== undefined) {
+                console.log('Formato Web detectado');
                 return {
-                    text: task.text || '',
-                    completed: !!task.completed,
-                    personalFolder: task.personalFolder || null,
-                    sharedFolder: task.sharedFolder || null,
-                    link: task.link || null,
-                    date: task.date || null,
-                    highlightColor: task.highlightColor || null
+                    text: String(task.text || ''),
+                    completed: Boolean(task.completed),
+                    personalFolder: task.personalFolder ? String(task.personalFolder) : null,
+                    sharedFolder: task.sharedFolder ? String(task.sharedFolder) : null,
+                    link: task.link ? String(task.link) : null,
+                    date: task.date ? String(task.date) : null,
+                    highlightColor: task.highlightColor ? String(task.highlightColor) : null
                 };
             }
-            if (task && typeof task === 'object' && task.texto !== undefined) {
+
+            // Formato Python/Tkinter
+            if (task.texto !== undefined) {
+                console.log('Formato Python detectado');
                 let highlight = null;
                 if (task.destaque_cor) {
                     if (task.destaque_cor === 'vermelho') highlight = 'red';
                     else if (task.destaque_cor === 'azul') highlight = 'blue';
-                    else highlight = task.destaque_cor;
+                    else highlight = String(task.destaque_cor);
                 }
                 
                 return {
-                    text: task.texto || '',
-                    completed: !!task.completada,
-                    personalFolder: task.pasta_pessoal || null,
-                    sharedFolder: task.pasta_partilhada || null,
-                    link: task.link || null,
-                    date: task.data || null,
+                    text: String(task.texto || ''),
+                    completed: Boolean(task.completada),
+                    personalFolder: task.pasta_pessoal ? String(task.pasta_pessoal) : null,
+                    sharedFolder: task.pasta_partilhada ? String(task.pasta_partilhada) : null,
+                    link: task.link ? String(task.link) : null,
+                    date: task.data ? String(task.data) : null,
                     highlightColor: highlight
                 };
             }
+
+            console.log('Formato desconhecido, retornando padrão');
+            return createDefaultTask();
+        }
+
+        function createDefaultTask() {
             return {
                 text: '',
                 completed: false,
@@ -848,6 +878,7 @@
                 link: task.link,
                 data: task.date
             };
+            
             if (task.highlightColor === 'red') {
                 pythonTask.destaque = true;
                 pythonTask.destaque_cor = 'vermelho';
@@ -915,6 +946,7 @@
         }
         
         function updateTaskList() {
+            console.log('Atualizando lista de tarefas...');
             taskList.innerHTML = '';
             
             tasks.forEach((task, index) => {
@@ -974,6 +1006,7 @@
                     li.appendChild(textDiv);
                 }
                 
+                // Event listeners para as tarefas (não afetam o menu de contexto)
                 li.addEventListener('click', function(e) {
                     e.stopPropagation();
                     selectTask(index);
@@ -986,6 +1019,7 @@
                 
                 taskList.appendChild(li);
             });
+            console.log('Lista atualizada com', tasks.length, 'tarefas');
         }
         
         function selectTask(index) {
@@ -1180,7 +1214,9 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
+                    console.log('Iniciando importação...');
                     const data = JSON.parse(e.target.result);
+                    console.log('Dados importados:', data);
                     
                     if (Array.isArray(data)) {
                         tasks = data.map(normalizeTask);
@@ -1210,6 +1246,8 @@
                         throw new Error('Formato inválido');
                     }
                     
+                    console.log('Tarefas após importação:', tasks);
+                    
                     selectTask(-1);
                     updateTaskList();
                     notesTextarea.value = notes;
@@ -1217,6 +1255,7 @@
                     
                     updateStatus('Dados importados com sucesso');
                 } catch (error) {
+                    console.error('Erro na importação:', error);
                     alert('Erro ao importar ficheiro: ' + error.message);
                     updateStatus('Erro ao importar ficheiro');
                 }
