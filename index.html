@@ -443,49 +443,100 @@
     <!-- Context Menu -->
     <div id="contextMenu" class="context-menu">
         <div class="context-menu-item" data-action="toggleComplete">Marcar como Completada</div>
+        <div class="context-menu-separator"></div>
         <div class="context-menu-item" data-action="edit">Editar Tarefa</div>
         <div class="context-menu-item" data-action="remove">Remover Tarefa</div>
         <div class="context-menu-separator"></div>
         
-        <!-- Menu de Pastas - DINÂMICO (será construído em JavaScript) -->
-        <div id="folderMenuContainer"></div>
-        
+        <!-- Menu de Pastas -->
         <div class="context-menu-item has-submenu">
-            Link
+            Pasta
             <div class="context-submenu">
-                <div class="context-menu-item" data-action="openLink">Abrir Link Associado</div>
-                <div class="context-menu-item" data-action="associateLink">Associar Link</div>
-                <div class="context-menu-item" data-action="removeLink">Remover Link</div>
-            </div>
-        </div>
-        
-        <div class="context-menu-item has-submenu">
-            Data
-            <div class="context-submenu">
-                <div class="context-menu-item" data-action="addDate">Adicionar Data</div>
-                <div class="context-menu-item" data-action="removeDate">Remover Data</div>
-            </div>
-        </div>
-        
-        <div class="context-menu-item has-submenu">
-            Destaque
-            <div class="context-submenu">
-                <div class="context-menu-item" data-action="highlightRed">Destacar a Vermelho</div>
-                <div class="context-menu-item" data-action="highlightBlue">Destacar a Azul</div>
-                <div class="context-menu-item" data-action="removeHighlight">Remover Destaque</div>
-            </div>
-        </div>
-        
-        <div class="context-menu-item has-submenu">
-            Separador
-            <div class="context-submenu">
-                <div class="context-menu-item" data-action="insertSeparator">Inserir Separador</div>
-                <div class="context-menu-item" data-action="removeSeparator">Apagar Separador</div>
+                <div class="context-menu-item" data-action="openPersonalFolder">Abrir Pasta Pessoal</div>
+                <div class="context-menu-item" data-action="openSharedFolder">Abrir Pasta Partilhada</div>
+                <div class="context-menu-separator"></div>
+                <div class="context-menu-item" data-action="removePersonalFolder">Remover Pasta Pessoal</div>
+                <div class="context-menu-item" data-action="removeSharedFolder">Remover Pasta Partilhada</div>
             </div>
         </div>
         
         <div class="context-menu-separator"></div>
+        
+        <!-- Menu de Link -->
+        <div class="context-menu-item has-submenu">
+            Link
+            <div class="context-submenu">
+                <div class="context-menu-item" data-action="openLink">Abrir Link</div>
+                <div class="context-menu-item" data-action="associateLink">Definir Link</div>
+                <div class="context-menu-item" data-action="removeLink">Remover Link</div>
+            </div>
+        </div>
+        
+        <div class="context-menu-separator"></div>
+        
+        <!-- Menu de Data -->
+        <div class="context-menu-item has-submenu">
+            Data
+            <div class="context-submenu">
+                <div class="context-menu-item" data-action="addDate">Definir Data</div>
+                <div class="context-menu-item" data-action="removeDate">Remover Data</div>
+            </div>
+        </div>
+        
+        <div class="context-menu-separator"></div>
+        
+        <!-- Menu de Destacar -->
+        <div class="context-menu-item has-submenu">
+            Destacar
+            <div class="context-submenu">
+                <div class="context-menu-item" data-action="highlightRed">Vermelho</div>
+                <div class="context-menu-item" data-action="highlightBlue">Azul</div>
+                <div class="context-menu-item" data-action="removeHighlight">Nenhum</div>
+            </div>
+        </div>
+        
+        <div class="context-menu-separator"></div>
+        
+        <!-- Menu de Separador -->
+        <div class="context-menu-item has-submenu">
+            Separador
+            <div class="context-submenu">
+                <div class="context-menu-item" data-action="insertSeparator">Inserir Separador</div>
+                <div class="context-menu-item" data-action="removeSeparator">Remover Separador</div>
+            </div>
+        </div>
+        
+        <div class="context-menu-separator"></div>
+        
+        <!-- Relatório -->
         <div class="context-menu-item" data-action="generateReport">Relatório</div>
+        
+        <div class="context-menu-separator"></div>
+        
+        <!-- Submenus para Programas, Documentos e Favoritos -->
+        <div class="context-menu-item has-submenu">
+            Programas
+            <div class="context-submenu" id="programsSubmenu">
+                <div class="context-menu-item" data-action="managePrograms">Gerir Programas</div>
+                <!-- Lista de programas será adicionada dinamicamente -->
+            </div>
+        </div>
+        
+        <div class="context-menu-item has-submenu">
+            Documentos
+            <div class="context-submenu" id="documentsSubmenu">
+                <div class="context-menu-item" data-action="manageDocuments">Gerir Documentos</div>
+                <!-- Lista de documentos será adicionada dinamicamente -->
+            </div>
+        </div>
+        
+        <div class="context-menu-item has-submenu">
+            Favoritos
+            <div class="context-submenu" id="favoritesSubmenu">
+                <div class="context-menu-item" data-action="manageFavorites">Gerir Favoritos</div>
+                <!-- Lista de favoritos será adicionada dinamicamente -->
+            </div>
+        </div>
     </div>
     
     <!-- File Input for Import -->
@@ -530,13 +581,17 @@
         const notesTextarea = document.getElementById('notesTextarea');
         const notesContainer = document.getElementById('notesContainer');
         const statusText = document.getElementById('statusText');
-        const folderMenuContainer = document.getElementById('folderMenuContainer');
         
         // Modais
         const propertiesModal = document.getElementById('propertiesModal');
         const contextMenu = document.getElementById('contextMenu');
         const fileInput = document.getElementById('fileInput');
         
+        // Submenus
+        const programsSubmenu = document.getElementById('programsSubmenu');
+        const documentsSubmenu = document.getElementById('documentsSubmenu');
+        const favoritesSubmenu = document.getElementById('favoritesSubmenu');
+
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
             loadTasks();
@@ -1120,8 +1175,21 @@
             
             selectTask(index);
             
-            // Atualizar menu de pastas dinamicamente
-            updateFolderMenu(index);
+            // Atualizar texto do item "Marcar como Completada"
+            const task = tasks[index];
+            const toggleCompleteItem = contextMenu.querySelector('[data-action="toggleComplete"]');
+            toggleCompleteItem.textContent = task.completed ? 'Marcar como Não Completada' : 'Marcar como Completada';
+            
+            // Atualizar texto do item "Remover Data" se houver data
+            const removeDateItem = contextMenu.querySelector('[data-action="removeDate"]');
+            if (task.date) {
+                removeDateItem.textContent = `Remover Data (${task.date})`;
+            } else {
+                removeDateItem.textContent = 'Remover Data';
+            }
+            
+            // Atualizar submenus dinâmicos
+            updateDynamicSubmenus();
             
             // Posicionar menu
             contextMenu.style.left = `${event.pageX}px`;
@@ -1145,56 +1213,54 @@
             });
         }
         
-        // Atualizar menu de pastas dinamicamente
-        function updateFolderMenu(index) {
-            const task = tasks[index];
-            const hasPersonal = Boolean(task.personalFolder);
-            const hasShared = Boolean(task.sharedFolder);
+        // Atualizar submenus dinâmicos (Programas, Documentos, Favoritos)
+        function updateDynamicSubmenus() {
+            // Limpar submenus
+            programsSubmenu.innerHTML = '<div class="context-menu-item" data-action="managePrograms">Gerir Programas</div>';
+            documentsSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageDocuments">Gerir Documentos</div>';
+            favoritesSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageFavorites">Gerir Favoritos</div>';
             
-            folderMenuContainer.innerHTML = '';
+            // Adicionar separadores se houver itens
+            if (execMenu.programs.length > 0) {
+                programsSubmenu.innerHTML += '<div class="context-menu-separator"></div>';
+                execMenu.programs.forEach(program => {
+                    const item = document.createElement('div');
+                    item.className = 'context-menu-item';
+                    item.textContent = program.label;
+                    item.setAttribute('data-action', 'openProgram');
+                    item.setAttribute('data-path', program.path);
+                    programsSubmenu.appendChild(item);
+                });
+            }
             
-            if (!hasPersonal && !hasShared) {
-                // Caso 1: Nenhuma pasta associada
-                const associateMenu = document.createElement('div');
-                associateMenu.className = 'context-menu-item has-submenu';
-                associateMenu.innerHTML = 'Associar Pasta<div class="context-submenu">' +
-                    '<div class="context-menu-item" data-action="associatePersonalFolder">Pessoal</div>' +
-                    '<div class="context-menu-item" data-action="associateSharedFolder">Partilhada</div>' +
-                    '</div>';
-                folderMenuContainer.appendChild(associateMenu);
+            if (execMenu.documents.length > 0) {
+                documentsSubmenu.innerHTML += '<div class="context-menu-separator"></div>';
+                execMenu.documents.forEach(document => {
+                    const item = document.createElement('div');
+                    item.className = 'context-menu-item';
+                    item.textContent = document.label;
+                    item.setAttribute('data-action', 'openDocument');
+                    item.setAttribute('data-path', document.path);
+                    documentsSubmenu.appendChild(item);
+                });
             }
-            else if (hasPersonal && !hasShared) {
-                // Caso 2: Só tem pasta pessoal
-                folderMenuContainer.innerHTML = 
-                    '<div class="context-menu-item" data-action="openPersonalFolder">Abrir Pasta Pessoal</div>' +
-                    '<div class="context-menu-item" data-action="associateSharedFolder">Associar Pasta Partilhada</div>' +
-                    '<div class="context-menu-item" data-action="removePersonalFolder">Remover Pasta Pessoal</div>';
+            
+            if (execMenu.favorites.length > 0) {
+                favoritesSubmenu.innerHTML += '<div class="context-menu-separator"></div>';
+                execMenu.favorites.forEach(favorite => {
+                    const item = document.createElement('div');
+                    item.className = 'context-menu-item';
+                    item.textContent = favorite.label;
+                    item.setAttribute('data-action', 'openFavorite');
+                    item.setAttribute('data-url', favorite.url);
+                    favoritesSubmenu.appendChild(item);
+                });
             }
-            else if (!hasPersonal && hasShared) {
-                // Caso 3: Só tem pasta partilhada
-                folderMenuContainer.innerHTML = 
-                    '<div class="context-menu-item" data-action="openSharedFolder">Abrir Pasta Partilhada</div>' +
-                    '<div class="context-menu-item" data-action="associatePersonalFolder">Associar Pasta Pessoal</div>' +
-                    '<div class="context-menu-item" data-action="removeSharedFolder">Remover Pasta Partilhada</div>';
-            }
-            else {
-                // Caso 4: Tem ambas as pastas
-                const openMenu = document.createElement('div');
-                openMenu.className = 'context-menu-item has-submenu';
-                openMenu.innerHTML = 'Abrir Pasta<div class="context-submenu">' +
-                    '<div class="context-menu-item" data-action="openPersonalFolder">Pessoal</div>' +
-                    '<div class="context-menu-item" data-action="openSharedFolder">Partilhada</div>' +
-                    '</div>';
-                folderMenuContainer.appendChild(openMenu);
-                
-                const removeMenu = document.createElement('div');
-                removeMenu.className = 'context-menu-item has-submenu';
-                removeMenu.innerHTML = 'Remover Pasta<div class="context-submenu">' +
-                    '<div class="context-menu-item" data-action="removePersonalFolder">Pessoal</div>' +
-                    '<div class="context-menu-item" data-action="removeSharedFolder">Partilhada</div>' +
-                    '</div>';
-                folderMenuContainer.appendChild(removeMenu);
-            }
+            
+            // Adicionar opções de abrir pasta
+            programsSubmenu.innerHTML += '<div class="context-menu-separator"></div><div class="context-menu-item" data-action="openProgramsFolder">Abrir Pasta de Programas</div>';
+            documentsSubmenu.innerHTML += '<div class="context-menu-separator"></div><div class="context-menu-item" data-action="openDocumentsFolder">Abrir Pasta de Documentos</div>';
+            favoritesSubmenu.innerHTML += '<div class="context-menu-separator"></div><div class="context-menu-item" data-action="openFavoritesFolder">Abrir Pasta de Favoritos</div>';
         }
         
         // Manipular ação do menu de contexto
@@ -1221,20 +1287,32 @@
                     removeTask();
                     break;
                     
-                // AÇÕES DE PASTA PESSOAL
+                // AÇÕES DE PASTA
                 case 'openPersonalFolder':
                     if (task.personalFolder) {
                         alert(`Pasta Pessoal: ${task.personalFolder}\n\nEm um ambiente web, não é possível abrir pastas diretamente.`);
+                    } else {
+                        const personalFolderPath = prompt('Digite o caminho da pasta pessoal:');
+                        if (personalFolderPath) {
+                            task.personalFolder = personalFolderPath;
+                            updateTaskList();
+                            saveTasks();
+                            updateStatus('Pasta pessoal associada à tarefa');
+                        }
                     }
                     break;
                     
-                case 'associatePersonalFolder':
-                    const personalFolderPath = prompt('Digite o caminho da pasta pessoal:');
-                    if (personalFolderPath) {
-                        task.personalFolder = personalFolderPath;
-                        updateTaskList();
-                        saveTasks();
-                        updateStatus('Pasta pessoal associada à tarefa');
+                case 'openSharedFolder':
+                    if (task.sharedFolder) {
+                        alert(`Pasta Partilhada: ${task.sharedFolder}\n\nEm um ambiente web, não é possível abrir pastas diretamente.`);
+                    } else {
+                        const sharedFolderPath = prompt('Digite o caminho da pasta partilhada:');
+                        if (sharedFolderPath) {
+                            task.sharedFolder = sharedFolderPath;
+                            updateTaskList();
+                            saveTasks();
+                            updateStatus('Pasta partilhada associada à tarefa');
+                        }
                     }
                     break;
                     
@@ -1245,23 +1323,6 @@
                     updateStatus('Associação de pasta pessoal removida');
                     break;
                     
-                // AÇÕES DE PASTA PARTILHADA
-                case 'openSharedFolder':
-                    if (task.sharedFolder) {
-                        alert(`Pasta Partilhada: ${task.sharedFolder}\n\nEm um ambiente web, não é possível abrir pastas diretamente.`);
-                    }
-                    break;
-                    
-                case 'associateSharedFolder':
-                    const sharedFolderPath = prompt('Digite o caminho da pasta partilhada:');
-                    if (sharedFolderPath) {
-                        task.sharedFolder = sharedFolderPath;
-                        updateTaskList();
-                        saveTasks();
-                        updateStatus('Pasta partilhada associada à tarefa');
-                    }
-                    break;
-                    
                 case 'removeSharedFolder':
                     task.sharedFolder = null;
                     updateTaskList();
@@ -1269,9 +1330,18 @@
                     updateStatus('Associação de pasta partilhada removida');
                     break;
                     
+                // AÇÕES DE LINK
                 case 'openLink':
                     if (task.link) {
                         window.open(task.link, '_blank');
+                    } else {
+                        const linkUrl = prompt('Digite o URL:');
+                        if (linkUrl) {
+                            task.link = linkUrl.startsWith('http') ? linkUrl : `https://${linkUrl}`;
+                            updateTaskList();
+                            saveTasks();
+                            updateStatus('Link associado à tarefa');
+                        }
                     }
                     break;
                     
@@ -1360,6 +1430,46 @@
                     
                 case 'generateReport':
                     generateReport();
+                    break;
+                    
+                // AÇÕES DOS SUBMENUS DINÂMICOS
+                case 'managePrograms':
+                    alert('Funcionalidade "Gerir Programas" - Em desenvolvimento');
+                    break;
+                    
+                case 'manageDocuments':
+                    alert('Funcionalidade "Gerir Documentos" - Em desenvolvimento');
+                    break;
+                    
+                case 'manageFavorites':
+                    alert('Funcionalidade "Gerir Favoritos" - Em desenvolvimento');
+                    break;
+                    
+                case 'openProgram':
+                    const programPath = event.target.getAttribute('data-path');
+                    alert(`Abrir programa: ${programPath}\n\nEm um ambiente web, não é possível executar programas diretamente.`);
+                    break;
+                    
+                case 'openDocument':
+                    const documentPath = event.target.getAttribute('data-path');
+                    alert(`Abrir documento: ${documentPath}\n\nEm um ambiente web, não é possível abrir documentos diretamente.`);
+                    break;
+                    
+                case 'openFavorite':
+                    const favoriteUrl = event.target.getAttribute('data-url');
+                    window.open(favoriteUrl, '_blank');
+                    break;
+                    
+                case 'openProgramsFolder':
+                    alert(`Abrir pasta de programas: ${execMenu.programsFolder || 'Não definida'}`);
+                    break;
+                    
+                case 'openDocumentsFolder':
+                    alert(`Abrir pasta de documentos: ${execMenu.documentsFolder || 'Não definida'}`);
+                    break;
+                    
+                case 'openFavoritesFolder':
+                    alert(`Abrir pasta de favoritos: ${execMenu.linksFolder || 'Não definida'}`);
                     break;
             }
         }
