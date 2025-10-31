@@ -143,9 +143,16 @@
         
         .controls {
             display: flex;
-            flex-wrap: wrap;
+            flex-direction: column;
             gap: 10px;
             margin-bottom: 20px;
+        }
+        
+        .controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
         }
         
         .controls button {
@@ -343,6 +350,29 @@
         .folder-field {
             flex: 1;
         }
+
+        /* Melhorias para mobile */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .input-section {
+                flex-direction: column;
+            }
+            
+            .controls-row {
+                flex-direction: column;
+            }
+            
+            .controls button {
+                min-width: auto;
+            }
+            
+            .search-container {
+                flex-direction: column;
+            }
+        }
     </style>
 </head>
 <body>
@@ -365,14 +395,18 @@
         </div>
         
         <div class="controls">
-            <button id="moveUpBtn">▲ Subir</button>
-            <button id="moveDownBtn">▼ Descer</button>
-            <button id="propertiesBtn">Propriedades</button>
-            <button id="removeTaskBtn">Remover</button>
-            <button id="clearAllBtn">Limpar Todas</button>
-            <button id="exportBtn">Exportar</button>
-            <button id="importBtn">Importar</button>
-            <button id="notesBtn">Notas</button>
+            <div class="controls-row">
+                <button id="moveUpBtn">▲ Subir</button>
+                <button id="moveDownBtn">▼ Descer</button>
+                <button id="removeTaskBtn">Remover</button>
+                <button id="clearAllBtn">Limpar Todas</button>
+                <button id="importBtn">Importar</button>
+                <button id="exportBtn">Exportar</button>
+            </div>
+            <div class="controls-row">
+                <button id="propertiesBtn">Propriedades</button>
+                <button id="notesBtn">Notas</button>
+            </div>
         </div>
         
         <div class="notes-container" id="notesContainer">
@@ -628,18 +662,38 @@
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
             
-            // Context menu
+            // Context menu - Melhor compatibilidade
             document.addEventListener('click', function(e) {
                 if (!e.target.closest('.context-menu')) {
-                    contextMenu.style.display = 'none';
+                    hideContextMenu();
                 }
             });
             
+            // Compatível com Windows e Android
             document.addEventListener('contextmenu', function(e) {
                 if (e.target.closest('.task-item')) {
                     e.preventDefault();
                     showContextMenu(e);
                 }
+            });
+            
+            // Para Android - long press
+            let longPressTimer;
+            document.addEventListener('touchstart', function(e) {
+                if (e.target.closest('.task-item')) {
+                    longPressTimer = setTimeout(() => {
+                        e.preventDefault();
+                        showContextMenu(e);
+                    }, 500);
+                }
+            });
+            
+            document.addEventListener('touchend', function(e) {
+                clearTimeout(longPressTimer);
+            });
+            
+            document.addEventListener('touchmove', function(e) {
+                clearTimeout(longPressTimer);
             });
             
             // File input
@@ -658,7 +712,17 @@
                     e.preventDefault();
                     nextSearchResult();
                 }
+                
+                // Escape para fechar menu de contexto
+                if (e.key === 'Escape') {
+                    hideContextMenu();
+                }
             });
+        }
+
+        // Esconder menu de contexto
+        function hideContextMenu() {
+            contextMenu.style.display = 'none';
         }
 
         // Alternar visibilidade das notas
@@ -1191,23 +1255,41 @@
             // Atualizar submenus dinâmicos
             updateDynamicSubmenus();
             
-            // Posicionar menu
-            contextMenu.style.left = `${event.pageX}px`;
-            contextMenu.style.top = `${event.pageY}px`;
+            // Posicionar menu - compatível com mobile
+            const x = event.clientX || (event.touches && event.touches[0].clientX) || 0;
+            const y = event.clientY || (event.touches && event.touches[0].clientY) || 0;
+            
+            contextMenu.style.left = `${x}px`;
+            contextMenu.style.top = `${y}px`;
             contextMenu.style.display = 'block';
             
-            // Configurar ações
-            contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
-                // Remover listeners antigos
-                const newItem = item.cloneNode(true);
-                item.parentNode.replaceChild(newItem, item);
+            // Prevenir que o menu saia da tela
+            setTimeout(() => {
+                const rect = contextMenu.getBoundingClientRect();
+                const windowWidth = window.innerWidth;
+                const windowHeight = window.innerHeight;
                 
-                // Adicionar novo listener
-                newItem.addEventListener('click', function() {
+                if (rect.right > windowWidth) {
+                    contextMenu.style.left = `${windowWidth - rect.width - 10}px`;
+                }
+                if (rect.bottom > windowHeight) {
+                    contextMenu.style.top = `${windowHeight - rect.height - 10}px`;
+                }
+            }, 0);
+            
+            // Configurar ações
+            setupContextMenuActions(index);
+        }
+        
+        // Configurar ações do menu de contexto
+        function setupContextMenuActions(index) {
+            contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.stopPropagation();
                     const action = this.getAttribute('data-action');
                     if (action) {
-                        handleContextMenuAction(action, index);
-                        contextMenu.style.display = 'none';
+                        handleContextMenuAction(action, index, this);
+                        hideContextMenu();
                     }
                 });
             });
@@ -1264,7 +1346,7 @@
         }
         
         // Manipular ação do menu de contexto
-        function handleContextMenuAction(action, index) {
+        function handleContextMenuAction(action, index, element) {
             const task = tasks[index];
             
             switch (action) {
@@ -1446,17 +1528,17 @@
                     break;
                     
                 case 'openProgram':
-                    const programPath = event.target.getAttribute('data-path');
+                    const programPath = element.getAttribute('data-path');
                     alert(`Abrir programa: ${programPath}\n\nEm um ambiente web, não é possível executar programas diretamente.`);
                     break;
                     
                 case 'openDocument':
-                    const documentPath = event.target.getAttribute('data-path');
+                    const documentPath = element.getAttribute('data-path');
                     alert(`Abrir documento: ${documentPath}\n\nEm um ambiente web, não é possível abrir documentos diretamente.`);
                     break;
                     
                 case 'openFavorite':
-                    const favoriteUrl = event.target.getAttribute('data-url');
+                    const favoriteUrl = element.getAttribute('data-url');
                     window.open(favoriteUrl, '_blank');
                     break;
                     
