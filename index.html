@@ -658,7 +658,7 @@
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
     
-            // -------------- MENU DE CONTEXTO -------------- //
+            // -------------- MENU DE CONTEXTO CORRIGIDO -------------- //
             // 1) abrir APENAS por contextmenu (desktop)
             taskList.addEventListener('contextmenu', function (e) {
                 const taskItem = e.target.closest('.task-item');
@@ -676,18 +676,22 @@
                 item.addEventListener('click', onContextMenuItemClick);
             });
     
-            // 3) fechar ao clicar fora (mas não com botão direito e não logo a seguir a abrir)
+            // 3) CORREÇÃO: fechar ao clicar fora (melhorado)
             document.addEventListener('click', function (e) {
-                // acabou de abrir → ignora
-                if (justOpenedContextMenu) return;
-                // botão direito (2) → não fecha
-                if (e.button === 2) return;
-                if (!e.target.closest('.context-menu')) {
+                // Se não é um clique no menu de contexto, fecha-o
+                if (!contextMenu.contains(e.target)) {
                     hideContextMenu();
                 }
             });
     
-            // 4) touch / Android: tap fora fecha, long press abre
+            // 4) CORREÇÃO: fechar ao pressionar ESC
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape') {
+                    hideContextMenu();
+                }
+            });
+    
+            // 5) touch / Android: tap fora fecha, long press abre
             let longPressTimer;
             document.addEventListener('touchstart', function (e) {
                 const taskItem = e.target.closest('.task-item');
@@ -696,14 +700,14 @@
                         showContextMenu(e, taskItem);
                     }, 500);
                 } else {
-                    if (!justOpenedContextMenu) {
-                        hideContextMenu();
-                    }
+                    hideContextMenu();
                 }
             }, { passive: true });
+            
             document.addEventListener('touchend', function () {
                 clearTimeout(longPressTimer);
             }, { passive: true });
+            
             document.addEventListener('touchmove', function () {
                 clearTimeout(longPressTimer);
             }, { passive: true });
@@ -760,6 +764,24 @@
                 y = event.clientY;
             }
     
+            // CORREÇÃO: Garantir que o menu não sai da tela
+            const menuWidth = contextMenu.offsetWidth;
+            const menuHeight = contextMenu.offsetHeight;
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            
+            // Ajustar posição se o menu sair da tela
+            if (x + menuWidth > windowWidth) {
+                x = windowWidth - menuWidth - 10;
+            }
+            if (y + menuHeight > windowHeight) {
+                y = windowHeight - menuHeight - 10;
+            }
+            
+            // Posição mínima
+            x = Math.max(10, x);
+            y = Math.max(10, y);
+    
             contextMenu.style.left = x + 'px';
             contextMenu.style.top = y + 'px';
             contextMenu.style.display = 'block';
@@ -768,80 +790,11 @@
             // proteger o clique imediatamente seguinte
             justOpenedContextMenu = true;
             setTimeout(() => { justOpenedContextMenu = false; }, 120);
-    
-            // ajustar se sair do ecrã
-            setTimeout(() => {
-                const rect = contextMenu.getBoundingClientRect();
-                const vw = window.innerWidth;
-                const vh = window.innerHeight;
-                if (rect.right > vw) {
-                    contextMenu.style.left = (vw - rect.width - 10) + 'px';
-                }
-                if (rect.bottom > vh) {
-                    contextMenu.style.top = (vh - rect.height - 10) + 'px';
-                }
-            }, 0);
         }
     
         function hideContextMenu() {
             contextMenu.style.display = 'none';
             currentContextTaskIndex = -1;
-        }
-
-        function showContextMenu(event, taskItem) {
-            const index = Array.from(taskList.children).indexOf(taskItem);
-            if (index === -1) return;
-            
-            currentContextTaskIndex = index;
-            selectTask(index);
-            
-            const task = tasks[index];
-            const toggleCompleteItem = contextMenu.querySelector('[data-action="toggleComplete"]');
-            toggleCompleteItem.textContent = task.completed ? 'Marcar como Não Completada' : 'Marcar como Completada';
-            
-            const removeDateItem = contextMenu.querySelector('[data-action="removeDate"]');
-            if (task.date) {
-                removeDateItem.textContent = `Remover Data (${task.date})`;
-            } else {
-                removeDateItem.textContent = 'Remover Data';
-            }
-            
-            updateDynamicSubmenus();
-            
-            let x, y;
-            if (event.type && event.type.includes('touch')) {
-                x = event.touches[0].clientX;
-                y = event.touches[0].clientY;
-            } else {
-                x = event.clientX;
-                y = event.clientY;
-            }
-            
-            contextMenu.style.left = x + 'px';
-            contextMenu.style.top = y + 'px';
-            contextMenu.style.display = 'block';
-            contextMenu.style.zIndex = '1001';
-
-            // protegemos o "clicar fora" imediato
-            justOpenedContextMenu = true;
-            setTimeout(() => {
-                justOpenedContextMenu = false;
-            }, 100);
-
-            event.stopPropagation();
-            
-            setTimeout(() => {
-                const rect = contextMenu.getBoundingClientRect();
-                const windowWidth = window.innerWidth;
-                const windowHeight = window.innerHeight;
-                
-                if (rect.right > windowWidth) {
-                    contextMenu.style.left = (windowWidth - rect.width - 10) + 'px';
-                }
-                if (rect.bottom > windowHeight) {
-                    contextMenu.style.top = (windowHeight - rect.height - 10) + 'px';
-                }
-            }, 0);
         }
 
         function toggleNotes() {
@@ -856,7 +809,6 @@
             }
         }
         
-        // CORRIGIDA
         function normalizeTask(task) {
             // 1) Já está no formato web?
             if (task && typeof task === 'object' && task.text !== undefined) {
