@@ -391,9 +391,15 @@
             
             .context-submenu {
                 min-width: 160px;
-                /* CORREÇÃO: Em mobile, submenu aparece à esquerda se não houver espaço */
+                /* CORREÇÃO: Em mobile, mantém-se à direita mas ajusta posição se necessário */
+                left: 100%;
+                right: auto;
+            }
+            
+            /* CORREÇÃO: Se não houver espaço à direita, ajusta a posição do menu principal */
+            .context-menu.no-space-right {
                 left: auto;
-                right: 100%;
+                right: 10px;
             }
         }
     </style>
@@ -848,18 +854,25 @@
 
             updateDynamicSubmenus();
 
-            // Posicionar menu
+            // Posicionar menu - CORREÇÃO PARA ANDROID
             let x = event.clientX || (event.touches && event.touches[0].clientX) || 0;
             let y = event.clientY || (event.touches && event.touches[0].clientY) || 0;
 
-            // Garantir que não sai da tela
+            // Garantir que não sai da tela - CORREÇÃO PARA SUBMENUS
             const rect = contextMenu.getBoundingClientRect();
             const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
             const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
 
-            if (x + rect.width > vw) x = vw - rect.width - 10;
-            if (y + rect.height > vh) y = vh - rect.height - 10;
+            // CORREÇÃO: Se estiver perto da borda direita, ajusta para que os submenus tenham espaço
+            if (x + rect.width > vw - 100) {
+                x = vw - rect.width - 100;
+                contextMenu.classList.add('no-space-right');
+            } else {
+                contextMenu.classList.remove('no-space-right');
+            }
+            
             if (x < 10) x = 10;
+            if (y + rect.height > vh) y = vh - rect.height - 10;
             if (y < 10) y = 10;
 
             contextMenu.style.left = x + 'px';
@@ -874,7 +887,7 @@
             currentContextTaskIndex = -1;
         }
 
-        // RESTANTE DAS FUNÇÕES (mantidas iguais mas garantindo compatibilidade)
+        // RESTANTE DAS FUNÇÕES (mantidas iguais)
         function updateTaskList() {
             taskList.innerHTML = '';
             
