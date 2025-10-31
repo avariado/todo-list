@@ -336,6 +336,16 @@
         .highlight-option input[type="radio"] {
             margin: 0;
         }
+
+        /* NOVO: Estilo para os campos de pasta pessoal e partilhada */
+        .folder-fields {
+            display: flex;
+            gap: 10px;
+        }
+
+        .folder-field {
+            flex: 1;
+        }
     </style>
 </head>
 <body>
@@ -377,7 +387,7 @@
         </div>
     </div>
     
-    <!-- Modal para Propriedades da Tarefa -->
+    <!-- Modal para Propriedades da Tarefa - MODIFICADO PARA DUAS PASTAS -->
     <div id="propertiesModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -389,8 +399,17 @@
                 <textarea id="propertiesTaskText"></textarea>
             </div>
             <div class="form-group">
-                <label for="propertiesFolder">Pasta:</label>
-                <input type="text" id="propertiesFolder">
+                <label>Pastas:</label>
+                <div class="folder-fields">
+                    <div class="folder-field">
+                        <label for="propertiesPersonalFolder">Pasta Pessoal:</label>
+                        <input type="text" id="propertiesPersonalFolder">
+                    </div>
+                    <div class="folder-field">
+                        <label for="propertiesSharedFolder">Pasta Partilhada:</label>
+                        <input type="text" id="propertiesSharedFolder">
+                    </div>
+                </div>
             </div>
             <div class="form-group">
                 <label for="propertiesLink">Link:</label>
@@ -424,21 +443,15 @@
         </div>
     </div>
     
-    <!-- Context Menu - CORRIGIDO COM SUBMENUS -->
+    <!-- Context Menu - MODIFICADO PARA SISTEMA DE DUAS PASTAS -->
     <div id="contextMenu" class="context-menu">
         <div class="context-menu-item" data-action="toggleComplete">Marcar como Completada</div>
         <div class="context-menu-item" data-action="edit">Editar Tarefa</div>
         <div class="context-menu-item" data-action="remove">Remover Tarefa</div>
         <div class="context-menu-separator"></div>
         
-        <div class="context-menu-item has-submenu">
-            Pasta
-            <div class="context-submenu">
-                <div class="context-menu-item" data-action="openFolder">Abrir Pasta Associada</div>
-                <div class="context-menu-item" data-action="associateFolder">Associar Pasta</div>
-                <div class="context-menu-item" data-action="removeFolder">Remover Pasta</div>
-            </div>
-        </div>
+        <!-- Menu de Pastas - DINÂMICO (será construído em JavaScript) -->
+        <div id="folderMenuContainer"></div>
         
         <div class="context-menu-item has-submenu">
             Link
@@ -520,6 +533,7 @@
         const notesTextarea = document.getElementById('notesTextarea');
         const notesContainer = document.getElementById('notesContainer');
         const statusText = document.getElementById('statusText');
+        const folderMenuContainer = document.getElementById('folderMenuContainer');
         
         // Modais
         const propertiesModal = document.getElementById('propertiesModal');
@@ -534,7 +548,7 @@
             updateStatus('Pronto');
         });
         
-        // Configurar event listeners - CORRIGIDO PARA WINDOWS
+        // Configurar event listeners
         function setupEventListeners() {
             // Botões principais
             addTaskBtn.addEventListener('click', addTask);
@@ -562,7 +576,7 @@
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
             
-            // Context menu - CORREÇÃO PARA WINDOWS
+            // Context menu
             document.addEventListener('click', function(e) {
                 if (!e.target.closest('.context-menu')) {
                     contextMenu.style.display = 'none';
@@ -579,7 +593,7 @@
             // File input
             fileInput.addEventListener('change', importFromJSON);
             
-            // Teclas de atalho para Windows
+            // Teclas de atalho
             document.addEventListener('keydown', function(e) {
                 // Ctrl+F para pesquisa
                 if (e.ctrlKey && e.key === 'f') {
@@ -608,7 +622,7 @@
             }
         }
         
-        // Normalizar estrutura de tarefa - CORRIGIDA PARA COMPATIBILIDADE
+        // Normalizar estrutura de tarefa - MODIFICADO PARA DUAS PASTAS
         function normalizeTask(task) {
             // Se já está no formato correto, retorna como está
             if (task.text !== undefined && task.completed !== undefined) {
@@ -619,24 +633,25 @@
             const normalizedTask = {
                 text: task.texto || '',
                 completed: task.completada || false,
+                personalFolder: task.pasta_pessoal || null,
+                sharedFolder: task.pasta_partilhada || null,
+                // Para compatibilidade com versões antigas
                 folder: task.pasta || null,
                 link: task.link || null,
                 date: task.data || null,
                 _original: task
             };
             
-            // CORREÇÃO: Processa corretamente os destaques do ficheiro JSON
-            // Verifica primeiro se existe destaque_cor
+            // Processa corretamente os destaques do ficheiro JSON
             if (task.destaque_cor) {
                 if (task.destaque_cor === 'vermelho') {
                     normalizedTask.highlightColor = 'red';
                 } else if (task.destaque_cor === 'azul') {
                     normalizedTask.highlightColor = 'blue';
                 } else {
-                    normalizedTask.highlightColor = task.destaque_cor; // mantém outros valores
+                    normalizedTask.highlightColor = task.destaque_cor;
                 }
             } 
-            // Se não existe destaque_cor, verifica o campo destaque booleano
             else if (task.destaque === true) {
                 normalizedTask.highlightColor = 'red'; // compatibilidade com versão antiga
             } else {
@@ -646,29 +661,32 @@
             return normalizedTask;
         }
         
-        // Converter tarefa para formato Python - CORRIGIDA PARA COMPATIBILIDADE
+        // Converter tarefa para formato Python - MODIFICADO PARA DUAS PASTAS
         function taskToPythonFormat(task) {
             const base = task._original || {};
             
             const pythonTask = {
                 texto: task.text,
                 completada: task.completed,
+                pasta_pessoal: task.personalFolder,
+                pasta_partilhada: task.sharedFolder,
+                // Para compatibilidade com versões antigas
                 pasta: task.folder,
                 link: task.link,
                 data: task.date,
                 ...Object.fromEntries(
                     Object.entries(base).filter(([key]) => 
-                        !['texto', 'completada', 'pasta', 'link', 'data', 'destaque', 'destaque_cor'].includes(key)
+                        !['texto', 'completada', 'pasta_pessoal', 'pasta_partilhada', 'pasta', 'link', 'data', 'destaque', 'destaque_cor'].includes(key)
                     )
                 )
             };
             
-            // CORREÇÃO: Converte corretamente para o formato do ficheiro JSON
+            // Converte corretamente para o formato do ficheiro JSON
             if (task.highlightColor === 'red') {
                 pythonTask.destaque = true;
                 pythonTask.destaque_cor = 'vermelho';
             } else if (task.highlightColor === 'blue') {
-                pythonTask.destaque = false; // azul não é considerado "destaque" no sentido booleano
+                pythonTask.destaque = false;
                 pythonTask.destaque_cor = 'azul';
             } else {
                 pythonTask.destaque = false;
@@ -770,7 +788,7 @@
             };
         }
         
-        // Atualizar lista de tarefas
+        // Atualizar lista de tarefas - MODIFICADO PARA MOSTRAR ÍCONES DAS DUAS PASTAS
         function updateTaskList() {
             taskList.innerHTML = '';
             
@@ -778,12 +796,11 @@
                 const li = document.createElement('li');
                 li.className = 'task-item';
                 
-                // CORREÇÃO: A ordem das classes é importante
-                // Primeiro aplicamos as cores de destaque
+                // Aplica as cores de destaque
                 if (task.highlightColor === 'red') li.classList.add('highlight-red');
                 if (task.highlightColor === 'blue') li.classList.add('highlight-blue');
                 
-                // DEPOIS aplicamos o estado completado (que prevalece)
+                // Aplica o estado completado (que prevalece)
                 if (task.completed) li.classList.add('completed');
                 
                 if (index === selectedTaskIndex) li.classList.add('selected');
@@ -801,9 +818,26 @@
                         iconsDiv.appendChild(checkIcon);
                     }
                     
-                    if (task.folder) {
+                    // MOSTRA ÍCONES PARA AMBAS AS PASTAS
+                    if (task.personalFolder) {
+                        const personalFolderIcon = document.createElement('span');
+                        personalFolderIcon.textContent = '👤 ';
+                        personalFolderIcon.title = 'Pasta Pessoal';
+                        iconsDiv.appendChild(personalFolderIcon);
+                    }
+                    
+                    if (task.sharedFolder) {
+                        const sharedFolderIcon = document.createElement('span');
+                        sharedFolderIcon.textContent = '👥 ';
+                        sharedFolderIcon.title = 'Pasta Partilhada';
+                        iconsDiv.appendChild(sharedFolderIcon);
+                    }
+                    
+                    // Para compatibilidade com versões antigas
+                    if (!task.personalFolder && !task.sharedFolder && task.folder) {
                         const folderIcon = document.createElement('span');
                         folderIcon.textContent = '📁 ';
+                        folderIcon.title = 'Pasta';
                         iconsDiv.appendChild(folderIcon);
                     }
                     
@@ -827,7 +861,7 @@
                     li.appendChild(textDiv);
                 }
                 
-                // CORREÇÃO: Event listeners simples para Windows
+                // Event listeners
                 li.addEventListener('click', function(e) {
                     e.stopPropagation();
                     selectTask(index);
@@ -867,7 +901,9 @@
             const newTask = {
                 text: text,
                 completed: false,
-                folder: null,
+                personalFolder: null,
+                sharedFolder: null,
+                folder: null, // Para compatibilidade
                 link: null,
                 date: null,
                 highlightColor: null
@@ -913,7 +949,7 @@
             saveTasks();
         }
         
-        // Abrir propriedades da tarefa
+        // Abrir propriedades da tarefa - MODIFICADO PARA DUAS PASTAS
         function openProperties() {
             if (selectedTaskIndex === -1) {
                 alert('Por favor, selecione uma tarefa para ver as propriedades.');
@@ -923,7 +959,8 @@
             const task = tasks[selectedTaskIndex];
             
             document.getElementById('propertiesTaskText').value = task.text;
-            document.getElementById('propertiesFolder').value = task.folder || '';
+            document.getElementById('propertiesPersonalFolder').value = task.personalFolder || '';
+            document.getElementById('propertiesSharedFolder').value = task.sharedFolder || '';
             document.getElementById('propertiesLink').value = task.link || '';
             document.getElementById('propertiesDate').value = task.date || '';
             
@@ -934,7 +971,7 @@
             propertiesModal.style.display = 'flex';
         }
         
-        // Salvar propriedades da tarefa
+        // Salvar propriedades da tarefa - MODIFICADO PARA DUAS PASTAS
         function saveProperties() {
             const task = tasks[selectedTaskIndex];
             
@@ -945,7 +982,8 @@
             }
             
             task.text = newText;
-            task.folder = document.getElementById('propertiesFolder').value.trim() || null;
+            task.personalFolder = document.getElementById('propertiesPersonalFolder').value.trim() || null;
+            task.sharedFolder = document.getElementById('propertiesSharedFolder').value.trim() || null;
             task.link = document.getElementById('propertiesLink').value.trim() || null;
             
             const dateValue = document.getElementById('propertiesDate').value.trim();
@@ -1137,19 +1175,22 @@
             selectTask(searchResults[currentSearchIndex]);
         }
         
-        // Mostrar menu de contexto - CORRIGIDO PARA WINDOWS
+        // Mostrar menu de contexto - MODIFICADO PARA SISTEMA DE DUAS PASTAS
         function showContextMenu(event) {
             const index = Array.from(taskList.children).indexOf(event.target.closest('.task-item'));
             if (index === -1) return;
             
             selectTask(index);
             
+            // Atualizar menu de pastas dinamicamente
+            updateFolderMenu(index);
+            
             // Posicionar menu
             contextMenu.style.left = `${event.pageX}px`;
             contextMenu.style.top = `${event.pageY}px`;
             contextMenu.style.display = 'block';
             
-            // Configurar ações - CORREÇÃO: Usar função nomeada para evitar problemas
+            // Configurar ações
             contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
                 // Remover listeners antigos
                 const newItem = item.cloneNode(true);
@@ -1166,7 +1207,59 @@
             });
         }
         
-        // Manipular ação do menu de contexto
+        // Atualizar menu de pastas dinamicamente - NOVA FUNÇÃO
+        function updateFolderMenu(index) {
+            const task = tasks[index];
+            const hasPersonal = Boolean(task.personalFolder);
+            const hasShared = Boolean(task.sharedFolder);
+            
+            folderMenuContainer.innerHTML = '';
+            
+            if (!hasPersonal && !hasShared) {
+                // Caso 1: Nenhuma pasta associada
+                const associateMenu = document.createElement('div');
+                associateMenu.className = 'context-menu-item has-submenu';
+                associateMenu.innerHTML = 'Associar Pasta<div class="context-submenu">' +
+                    '<div class="context-menu-item" data-action="associatePersonalFolder">Pessoal</div>' +
+                    '<div class="context-menu-item" data-action="associateSharedFolder">Partilhada</div>' +
+                    '</div>';
+                folderMenuContainer.appendChild(associateMenu);
+            }
+            else if (hasPersonal && !hasShared) {
+                // Caso 2: Só tem pasta pessoal
+                folderMenuContainer.innerHTML = 
+                    '<div class="context-menu-item" data-action="openPersonalFolder">Abrir Pasta Pessoal</div>' +
+                    '<div class="context-menu-item" data-action="associateSharedFolder">Associar Pasta Partilhada</div>' +
+                    '<div class="context-menu-item" data-action="removePersonalFolder">Remover Pasta Pessoal</div>';
+            }
+            else if (!hasPersonal && hasShared) {
+                // Caso 3: Só tem pasta partilhada
+                folderMenuContainer.innerHTML = 
+                    '<div class="context-menu-item" data-action="openSharedFolder">Abrir Pasta Partilhada</div>' +
+                    '<div class="context-menu-item" data-action="associatePersonalFolder">Associar Pasta Pessoal</div>' +
+                    '<div class="context-menu-item" data-action="removeSharedFolder">Remover Pasta Partilhada</div>';
+            }
+            else {
+                // Caso 4: Tem ambas as pastas
+                const openMenu = document.createElement('div');
+                openMenu.className = 'context-menu-item has-submenu';
+                openMenu.innerHTML = 'Abrir Pasta<div class="context-submenu">' +
+                    '<div class="context-menu-item" data-action="openPersonalFolder">Pessoal</div>' +
+                    '<div class="context-menu-item" data-action="openSharedFolder">Partilhada</div>' +
+                    '</div>';
+                folderMenuContainer.appendChild(openMenu);
+                
+                const removeMenu = document.createElement('div');
+                removeMenu.className = 'context-menu-item has-submenu';
+                removeMenu.innerHTML = 'Remover Pasta<div class="context-submenu">' +
+                    '<div class="context-menu-item" data-action="removePersonalFolder">Pessoal</div>' +
+                    '<div class="context-menu-item" data-action="removeSharedFolder">Partilhada</div>' +
+                    '</div>';
+                folderMenuContainer.appendChild(removeMenu);
+            }
+        }
+        
+        // Manipular ação do menu de contexto - MODIFICADO PARA DUAS PASTAS
         function handleContextMenuAction(action, index) {
             const task = tasks[index];
             
@@ -1190,27 +1283,52 @@
                     removeTask();
                     break;
                     
-                case 'openFolder':
-                    if (task.folder) {
-                        alert(`Pasta: ${task.folder}\n\nEm um ambiente web, não é possível abrir pastas diretamente.`);
+                // AÇÕES DE PASTA PESSOAL
+                case 'openPersonalFolder':
+                    if (task.personalFolder) {
+                        alert(`Pasta Pessoal: ${task.personalFolder}\n\nEm um ambiente web, não é possível abrir pastas diretamente.`);
                     }
                     break;
                     
-                case 'associateFolder':
-                    const folderPath = prompt('Digite o caminho da pasta:');
-                    if (folderPath) {
-                        task.folder = folderPath;
+                case 'associatePersonalFolder':
+                    const personalFolderPath = prompt('Digite o caminho da pasta pessoal:');
+                    if (personalFolderPath) {
+                        task.personalFolder = personalFolderPath;
                         updateTaskList();
                         saveTasks();
-                        updateStatus('Pasta associada à tarefa');
+                        updateStatus('Pasta pessoal associada à tarefa');
                     }
                     break;
                     
-                case 'removeFolder':
-                    task.folder = null;
+                case 'removePersonalFolder':
+                    task.personalFolder = null;
                     updateTaskList();
                     saveTasks();
-                    updateStatus('Associação de pasta removida');
+                    updateStatus('Associação de pasta pessoal removida');
+                    break;
+                    
+                // AÇÕES DE PASTA PARTILHADA
+                case 'openSharedFolder':
+                    if (task.sharedFolder) {
+                        alert(`Pasta Partilhada: ${task.sharedFolder}\n\nEm um ambiente web, não é possível abrir pastas diretamente.`);
+                    }
+                    break;
+                    
+                case 'associateSharedFolder':
+                    const sharedFolderPath = prompt('Digite o caminho da pasta partilhada:');
+                    if (sharedFolderPath) {
+                        task.sharedFolder = sharedFolderPath;
+                        updateTaskList();
+                        saveTasks();
+                        updateStatus('Pasta partilhada associada à tarefa');
+                    }
+                    break;
+                    
+                case 'removeSharedFolder':
+                    task.sharedFolder = null;
+                    updateTaskList();
+                    saveTasks();
+                    updateStatus('Associação de pasta partilhada removida');
                     break;
                     
                 case 'openLink':
@@ -1280,6 +1398,8 @@
                     const separator = {
                         text: '┈┈',
                         completed: false,
+                        personalFolder: null,
+                        sharedFolder: null,
                         folder: null,
                         link: null,
                         date: null,
@@ -1307,7 +1427,7 @@
             }
         }
         
-        // Gerar relatório
+        // Gerar relatório - MODIFICADO PARA MOSTRAR AMBAS AS PASTAS
         function generateReport() {
             const activeTasks = tasks.filter(t => !t.completed && t.text !== '┈┈');
             
@@ -1324,7 +1444,19 @@
             activeTasks.forEach((task, i) => {
                 report += `Tarefa ${i+1}:\n`;
                 report += `Tarefa: ${task.text}\n`;
-                report += `Pasta: ${task.folder || ''}\n`;
+                
+                // MOSTRA AMBAS AS PASTAS NO RELATÓRIO
+                if (task.personalFolder) {
+                    report += `Pasta Pessoal: ${task.personalFolder}\n`;
+                }
+                if (task.sharedFolder) {
+                    report += `Pasta Partilhada: ${task.sharedFolder}\n`;
+                }
+                // Para compatibilidade com versões antigas
+                if (!task.personalFolder && !task.sharedFolder && task.folder) {
+                    report += `Pasta: ${task.folder}\n`;
+                }
+                
                 report += `Link: ${task.link || ''}\n`;
                 report += `Data: ${task.date || 'n/a'}\n\n`;
             });
