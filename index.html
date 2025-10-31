@@ -109,7 +109,6 @@
             color: white;
         }
         
-        /* CORREÇÃO: A classe .completed deve vir DEPOIS das classes de destaque para prevalecer */
         .task-item.highlight-red {
             color: var(--highlight-red);
             font-weight: bold;
@@ -123,7 +122,7 @@
         .task-item.completed {
             color: var(--completed-color) !important;
             text-decoration: line-through;
-            font-weight: normal !important; /* CORREÇÃO: Remove o bold das tarefas completadas */
+            font-weight: normal !important;
         }
         
         .task-icons {
@@ -319,7 +318,6 @@
             text-align: center;
         }
         
-        /* NOVO ESTILO PARA AS OPÇÕES DE DESTAQUE NA MODAL */
         .highlight-options {
             display: flex;
             gap: 15px;
@@ -337,7 +335,6 @@
             margin: 0;
         }
 
-        /* NOVO: Estilo para os campos de pasta pessoal e partilhada */
         .folder-fields {
             display: flex;
             gap: 10px;
@@ -387,7 +384,7 @@
         </div>
     </div>
     
-    <!-- Modal para Propriedades da Tarefa - MODIFICADO PARA DUAS PASTAS -->
+    <!-- Modal para Propriedades da Tarefa -->
     <div id="propertiesModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -443,7 +440,7 @@
         </div>
     </div>
     
-    <!-- Context Menu - MODIFICADO PARA SISTEMA DE DUAS PASTAS -->
+    <!-- Context Menu -->
     <div id="contextMenu" class="context-menu">
         <div class="context-menu-item" data-action="toggleComplete">Marcar como Completada</div>
         <div class="context-menu-item" data-action="edit">Editar Tarefa</div>
@@ -622,7 +619,7 @@
             }
         }
         
-        // Normalizar estrutura de tarefa - MODIFICADO PARA DUAS PASTAS
+        // Normalizar estrutura de tarefa
         function normalizeTask(task) {
             // Se já está no formato correto, retorna como está
             if (task.text !== undefined && task.completed !== undefined) {
@@ -635,11 +632,8 @@
                 completed: task.completada || false,
                 personalFolder: task.pasta_pessoal || null,
                 sharedFolder: task.pasta_partilhada || null,
-                // Para compatibilidade com versões antigas
-                folder: task.pasta || null,
                 link: task.link || null,
-                date: task.data || null,
-                _original: task
+                date: task.data || null
             };
             
             // Processa corretamente os destaques do ficheiro JSON
@@ -651,9 +645,6 @@
                 } else {
                     normalizedTask.highlightColor = task.destaque_cor;
                 }
-            } 
-            else if (task.destaque === true) {
-                normalizedTask.highlightColor = 'red'; // compatibilidade com versão antiga
             } else {
                 normalizedTask.highlightColor = null;
             }
@@ -661,24 +652,15 @@
             return normalizedTask;
         }
         
-        // Converter tarefa para formato Python - MODIFICADO PARA DUAS PASTAS
+        // Converter tarefa para formato Python
         function taskToPythonFormat(task) {
-            const base = task._original || {};
-            
             const pythonTask = {
                 texto: task.text,
                 completada: task.completed,
                 pasta_pessoal: task.personalFolder,
                 pasta_partilhada: task.sharedFolder,
-                // Para compatibilidade com versões antigas
-                pasta: task.folder,
                 link: task.link,
-                data: task.date,
-                ...Object.fromEntries(
-                    Object.entries(base).filter(([key]) => 
-                        !['texto', 'completada', 'pasta_pessoal', 'pasta_partilhada', 'pasta', 'link', 'data', 'destaque', 'destaque_cor'].includes(key)
-                    )
-                )
+                data: task.date
             };
             
             // Converte corretamente para o formato do ficheiro JSON
@@ -716,79 +698,44 @@
             return {
                 programs: (menu.programas || []).map(p => ({
                     label: p.label || '',
-                    path: p.path || '',
-                    _original: p
+                    path: p.path || ''
                 })),
                 programsFolder: menu.pasta_programas || null,
                 favorites: (menu.favoritos || []).map(f => ({
                     label: f.label || '',
-                    url: f.url || '',
-                    _original: f
+                    url: f.url || ''
                 })),
                 linksFolder: menu.pasta_links || null,
                 documents: (menu.documentos || []).map(d => ({
                     label: d.label || '',
-                    path: d.path || '',
-                    _original: d
+                    path: d.path || ''
                 })),
-                documentsFolder: menu.pasta_documentos || null,
-                _original: menu
+                documentsFolder: menu.pasta_documentos || null
             };
         }
         
         // Converter menu de execução para formato Python
         function execMenuToPythonFormat(menu) {
-            const base = menu._original || {};
-            
             return {
-                programas: (menu.programs || []).map(p => {
-                    const baseItem = p._original || {};
-                    return {
-                        label: p.label,
-                        path: p.path,
-                        ...Object.fromEntries(
-                            Object.entries(baseItem).filter(([key]) => 
-                                !['label', 'path'].includes(key)
-                            )
-                        )
-                    };
-                }),
+                programas: (menu.programs || []).map(p => ({
+                    label: p.label,
+                    path: p.path
+                })),
                 pasta_programas: menu.programsFolder,
-                favoritos: (menu.favorites || []).map(f => {
-                    const baseItem = f._original || {};
-                    return {
-                        label: f.label,
-                        url: f.url,
-                        ...Object.fromEntries(
-                            Object.entries(baseItem).filter(([key]) => 
-                                !['label', 'url'].includes(key)
-                            )
-                        )
-                    };
-                }),
+                favoritos: (menu.favorites || []).map(f => ({
+                    label: f.label,
+                    url: f.url
+                })),
                 pasta_links: menu.linksFolder,
-                documentos: (menu.documents || []).map(d => {
-                    const baseItem = d._original || {};
-                    return {
-                        label: d.label,
-                        path: d.path,
-                        ...Object.fromEntries(
-                            Object.entries(baseItem).filter(([key]) => 
-                                !['label', 'path'].includes(key)
-                            )
-                        )
-                    };
-                }),
-                pasta_documentos: menu.documentsFolder,
-                ...Object.fromEntries(
-                    Object.entries(base).filter(([key]) => 
-                        !['programas', 'pasta_programas', 'favoritos', 'pasta_links', 'documentos', 'pasta_documentos'].includes(key)
-                    )
-                )
+                documentos: (menu.documents || []).map(d => ({
+                    label: d.label,
+                    path: d.path
+                })),
+                pasta_documentos: menu.documentsFolder
             };
         }
         
-        // Atualizar lista de tarefas - MODIFICADO PARA MOSTRAR ÍCONES DAS DUAS PASTAS
+        // Atualizar lista de tarefas
         function updateTaskList() {
             taskList.innerHTML = '';
             
@@ -831,14 +778,6 @@
                         sharedFolderIcon.textContent = '👥 ';
                         sharedFolderIcon.title = 'Pasta Partilhada';
                         iconsDiv.appendChild(sharedFolderIcon);
-                    }
-                    
-                    // Para compatibilidade com versões antigas
-                    if (!task.personalFolder && !task.sharedFolder && task.folder) {
-                        const folderIcon = document.createElement('span');
-                        folderIcon.textContent = '📁 ';
-                        folderIcon.title = 'Pasta';
-                        iconsDiv.appendChild(folderIcon);
                     }
                     
                     if (task.link) {
@@ -903,7 +842,6 @@
                 completed: false,
                 personalFolder: null,
                 sharedFolder: null,
-                folder: null, // Para compatibilidade
                 link: null,
                 date: null,
                 highlightColor: null
@@ -949,7 +887,7 @@
             saveTasks();
         }
         
-        // Abrir propriedades da tarefa - MODIFICADO PARA DUAS PASTAS
+        // Abrir propriedades da tarefa
         function openProperties() {
             if (selectedTaskIndex === -1) {
                 alert('Por favor, selecione uma tarefa para ver as propriedades.');
@@ -971,7 +909,7 @@
             propertiesModal.style.display = 'flex';
         }
         
-        // Salvar propriedades da tarefa - MODIFICADO PARA DUAS PASTAS
+        // Salvar propriedades da tarefa
         function saveProperties() {
             const task = tasks[selectedTaskIndex];
             
@@ -1175,7 +1113,7 @@
             selectTask(searchResults[currentSearchIndex]);
         }
         
-        // Mostrar menu de contexto - MODIFICADO PARA SISTEMA DE DUAS PASTAS
+        // Mostrar menu de contexto
         function showContextMenu(event) {
             const index = Array.from(taskList.children).indexOf(event.target.closest('.task-item'));
             if (index === -1) return;
@@ -1207,7 +1145,7 @@
             });
         }
         
-        // Atualizar menu de pastas dinamicamente - NOVA FUNÇÃO
+        // Atualizar menu de pastas dinamicamente
         function updateFolderMenu(index) {
             const task = tasks[index];
             const hasPersonal = Boolean(task.personalFolder);
@@ -1259,7 +1197,7 @@
             }
         }
         
-        // Manipular ação do menu de contexto - MODIFICADO PARA DUAS PASTAS
+        // Manipular ação do menu de contexto
         function handleContextMenuAction(action, index) {
             const task = tasks[index];
             
@@ -1400,7 +1338,6 @@
                         completed: false,
                         personalFolder: null,
                         sharedFolder: null,
-                        folder: null,
                         link: null,
                         date: null,
                         highlightColor: null
@@ -1427,7 +1364,7 @@
             }
         }
         
-        // Gerar relatório - MODIFICADO PARA MOSTRAR AMBAS AS PASTAS
+        // Gerar relatório
         function generateReport() {
             const activeTasks = tasks.filter(t => !t.completed && t.text !== '┈┈');
             
@@ -1451,10 +1388,6 @@
                 }
                 if (task.sharedFolder) {
                     report += `Pasta Partilhada: ${task.sharedFolder}\n`;
-                }
-                // Para compatibilidade com versões antigas
-                if (!task.personalFolder && !task.sharedFolder && task.folder) {
-                    report += `Pasta: ${task.folder}\n`;
                 }
                 
                 report += `Link: ${task.link || ''}\n`;
