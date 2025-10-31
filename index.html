@@ -259,6 +259,8 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             z-index: 1001;
             min-width: 200px;
+            top: 0;
+            left: 0;
         }
         
         .context-menu-item {
@@ -371,6 +373,19 @@
             
             .search-container {
                 flex-direction: column;
+            }
+            
+            .context-menu {
+                min-width: 180px;
+                font-size: 14px;
+            }
+            
+            .context-menu-item {
+                padding: 12px 15px;
+            }
+            
+            .context-submenu {
+                min-width: 160px;
             }
         }
     </style>
@@ -662,28 +677,36 @@
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
             
-            // Context menu - Melhor compatibilidade
+            // Context menu - Melhor compatibilidade entre Desktop e Mobile
             document.addEventListener('click', function(e) {
                 if (!e.target.closest('.context-menu')) {
                     hideContextMenu();
                 }
             });
             
-            // Compatível com Windows e Android
+            // Para Desktop - contextmenu event
             document.addEventListener('contextmenu', function(e) {
-                if (e.target.closest('.task-item')) {
+                const taskItem = e.target.closest('.task-item');
+                if (taskItem) {
                     e.preventDefault();
-                    showContextMenu(e);
+                    e.stopPropagation();
+                    showContextMenu(e, taskItem);
+                    return false;
                 }
+                hideContextMenu();
             });
             
             // Para Android - long press
             let longPressTimer;
+            let longPressTarget;
+            
             document.addEventListener('touchstart', function(e) {
-                if (e.target.closest('.task-item')) {
+                const taskItem = e.target.closest('.task-item');
+                if (taskItem) {
+                    longPressTarget = taskItem;
                     longPressTimer = setTimeout(() => {
                         e.preventDefault();
-                        showContextMenu(e);
+                        showContextMenu(e, taskItem);
                     }, 500);
                 }
             });
@@ -723,6 +746,67 @@
         // Esconder menu de contexto
         function hideContextMenu() {
             contextMenu.style.display = 'none';
+        }
+
+        // Mostrar menu de contexto (versão corrigida)
+        function showContextMenu(event, taskItem) {
+            const index = Array.from(taskList.children).indexOf(taskItem);
+            if (index === -1) return;
+            
+            selectTask(index);
+            
+            // Atualizar texto do item "Marcar como Completada"
+            const task = tasks[index];
+            const toggleCompleteItem = contextMenu.querySelector('[data-action="toggleComplete"]');
+            toggleCompleteItem.textContent = task.completed ? 'Marcar como Não Completada' : 'Marcar como Completada';
+            
+            // Atualizar texto do item "Remover Data" se houver data
+            const removeDateItem = contextMenu.querySelector('[data-action="removeDate"]');
+            if (task.date) {
+                removeDateItem.textContent = `Remover Data (${task.date})`;
+            } else {
+                removeDateItem.textContent = 'Remover Data';
+            }
+            
+            // Atualizar submenus dinâmicos
+            updateDynamicSubmenus();
+            
+            // Posicionar menu - compatível com desktop e mobile
+            let x, y;
+            
+            if (event.type.includes('touch')) {
+                // Para eventos touch
+                x = event.touches[0].clientX;
+                y = event.touches[0].clientY;
+            } else {
+                // Para eventos mouse
+                x = event.clientX;
+                y = event.clientY;
+            }
+            
+            contextMenu.style.left = `${x}px`;
+            contextMenu.style.top = `${y}px`;
+            contextMenu.style.display = 'block';
+            
+            // Prevenir que o menu saia da tela
+            setTimeout(() => {
+                const rect = contextMenu.getBoundingClientRect();
+                const windowWidth = window.innerWidth;
+                const windowHeight = window.innerHeight;
+                
+                if (rect.right > windowWidth) {
+                    contextMenu.style.left = `${windowWidth - rect.width - 10}px`;
+                }
+                if (rect.bottom > windowHeight) {
+                    contextMenu.style.top = `${windowHeight - rect.height - 10}px`;
+                }
+                
+                // Garantir que o menu fique visível
+                contextMenu.style.zIndex = '1001';
+            }, 0);
+            
+            // Configurar ações
+            setupContextMenuActions(index);
         }
 
         // Alternar visibilidade das notas
@@ -1230,55 +1314,6 @@
             
             currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
             selectTask(searchResults[currentSearchIndex]);
-        }
-        
-        // Mostrar menu de contexto
-        function showContextMenu(event) {
-            const index = Array.from(taskList.children).indexOf(event.target.closest('.task-item'));
-            if (index === -1) return;
-            
-            selectTask(index);
-            
-            // Atualizar texto do item "Marcar como Completada"
-            const task = tasks[index];
-            const toggleCompleteItem = contextMenu.querySelector('[data-action="toggleComplete"]');
-            toggleCompleteItem.textContent = task.completed ? 'Marcar como Não Completada' : 'Marcar como Completada';
-            
-            // Atualizar texto do item "Remover Data" se houver data
-            const removeDateItem = contextMenu.querySelector('[data-action="removeDate"]');
-            if (task.date) {
-                removeDateItem.textContent = `Remover Data (${task.date})`;
-            } else {
-                removeDateItem.textContent = 'Remover Data';
-            }
-            
-            // Atualizar submenus dinâmicos
-            updateDynamicSubmenus();
-            
-            // Posicionar menu - compatível com mobile
-            const x = event.clientX || (event.touches && event.touches[0].clientX) || 0;
-            const y = event.clientY || (event.touches && event.touches[0].clientY) || 0;
-            
-            contextMenu.style.left = `${x}px`;
-            contextMenu.style.top = `${y}px`;
-            contextMenu.style.display = 'block';
-            
-            // Prevenir que o menu saia da tela
-            setTimeout(() => {
-                const rect = contextMenu.getBoundingClientRect();
-                const windowWidth = window.innerWidth;
-                const windowHeight = window.innerHeight;
-                
-                if (rect.right > windowWidth) {
-                    contextMenu.style.left = `${windowWidth - rect.width - 10}px`;
-                }
-                if (rect.bottom > windowHeight) {
-                    contextMenu.style.top = `${windowHeight - rect.height - 10}px`;
-                }
-            }, 0);
-            
-            // Configurar ações
-            setupContextMenuActions(index);
         }
         
         // Configurar ações do menu de contexto
