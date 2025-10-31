@@ -28,7 +28,6 @@
             color: #333;
             user-select: none;
             -webkit-user-select: none;
-            touch-action: pan-y;
         }
         
         .container {
@@ -88,7 +87,6 @@
             margin-bottom: 20px;
             max-height: 400px;
             overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
         }
         
         #taskList {
@@ -102,7 +100,6 @@
             display: flex;
             align-items: center;
             gap: 10px;
-            touch-action: pan-y;
         }
         
         .task-item:hover {
@@ -255,7 +252,7 @@
             border-radius: 4px;
         }
         
-        /* CORREÇÃO DO MENU DE CONTEXTO - FUNCIONA EM AMBOS */
+        /* MENU DE CONTEXTO SIMPLES E FUNCIONAL */
         .context-menu {
             display: none;
             position: fixed;
@@ -265,9 +262,6 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             z-index: 10000;
             min-width: 200px;
-            max-height: 70vh;
-            overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
         }
         
         .context-menu-item {
@@ -279,7 +273,6 @@
             width: 100%;
             text-align: left;
             font-size: 14px;
-            touch-action: manipulation;
         }
         
         .context-menu-item:hover {
@@ -312,8 +305,8 @@
             z-index: 10001;
         }
         
-        /* CORREÇÃO: Submenus funcionam com hover no Windows */
-        .context-menu-item:hover > .context-submenu {
+        /* SUBMENUS FUNCIONAM COM HOVER */
+        .context-menu-item.has-submenu:hover > .context-submenu {
             display: block;
         }
         
@@ -392,7 +385,6 @@
             .context-menu {
                 min-width: 180px;
                 font-size: 14px;
-                max-height: 60vh;
             }
             
             .context-menu-item {
@@ -401,17 +393,9 @@
             
             .context-submenu {
                 min-width: 160px;
-            }
-            
-            /* CORREÇÃO: Em dispositivos móveis, submenus aparecem como overlay */
-            .context-submenu {
-                position: fixed;
-                left: 50%;
-                top: 50%;
-                transform: translate(-50%, -50%);
-                max-height: 80vh;
-                min-width: 280px;
-                overflow-y: auto;
+                /* Em mobile, submenu aparece à esquerda se não houver espaço */
+                left: auto;
+                right: 100%;
             }
         }
     </style>
@@ -624,8 +608,6 @@
         let searchTerm = "";
         let notesVisible = false;
         let currentContextTaskIndex = -1;
-        let isContextMenuOpen = false;
-        let isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
         // ELEMENTOS DO DOM
         const taskInput = document.getElementById('taskInput');
@@ -690,7 +672,7 @@
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
 
-            // MENU DE CONTEXTO - CORREÇÃO DEFINITIVA
+            // MENU DE CONTEXTO - SIMPLES E FUNCIONAL
             taskList.addEventListener('contextmenu', function(e) {
                 console.log('=== CONTEXTMENU DISPARADO ===');
                 e.preventDefault();
@@ -720,7 +702,7 @@
 
             // Fechar menu ao clicar fora
             document.addEventListener('click', function(e) {
-                if (isContextMenuOpen && !contextMenu.contains(e.target)) {
+                if (contextMenu.style.display === 'block' && !contextMenu.contains(e.target)) {
                     hideContextMenu();
                 }
             });
@@ -733,7 +715,7 @@
                 }
             });
 
-            // Touch para Android - MELHORADO
+            // Touch para Android - SIMPLES
             let longPressTimer;
             taskList.addEventListener('touchstart', function(e) {
                 const taskItem = e.target.closest('.task-item');
@@ -752,25 +734,6 @@
             taskList.addEventListener('touchmove', function() {
                 clearTimeout(longPressTimer);
             });
-            
-            // CORREÇÃO: Para dispositivos touch, adicionar eventos de clique nos submenus
-            if (isTouchDevice) {
-                document.querySelectorAll('.context-menu-item.has-submenu').forEach(item => {
-                    item.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        const submenu = this.querySelector('.context-submenu');
-                        if (submenu) {
-                            // Alternar visibilidade do submenu em dispositivos touch
-                            const isVisible = submenu.style.display === 'block';
-                            document.querySelectorAll('.context-submenu').forEach(sm => {
-                                sm.style.display = 'none';
-                            });
-                            submenu.style.display = isVisible ? 'none' : 'block';
-                        }
-                    });
-                });
-            }
 
             // Importação
             fileInput.addEventListener('change', importFromJSON);
@@ -856,7 +819,7 @@
             };
         }
 
-        // MENU DE CONTEXTO - FUNCIONA EM AMBOS OS DISPOSITIVOS
+        // MENU DE CONTEXTO - FUNCIONA SEMPRE
         function showContextMenu(event, taskItem) {
             console.log('=== MOSTRANDO MENU DE CONTEXTO ===');
             
@@ -887,12 +850,7 @@
 
             updateDynamicSubmenus();
 
-            // CORREÇÃO: Fechar todos os submenus antes de abrir
-            document.querySelectorAll('.context-submenu').forEach(submenu => {
-                submenu.style.display = 'none';
-            });
-
-            // Posicionar menu
+            // Posicionar menu - CORREÇÃO PARA ANDROID
             let x = event.clientX || (event.touches && event.touches[0].clientX) || 0;
             let y = event.clientY || (event.touches && event.touches[0].clientY) || 0;
 
@@ -909,19 +867,13 @@
             contextMenu.style.left = x + 'px';
             contextMenu.style.top = y + 'px';
             contextMenu.style.display = 'block';
-            isContextMenuOpen = true;
 
             console.log('Menu posicionado em:', x, y);
         }
 
         function hideContextMenu() {
             contextMenu.style.display = 'none';
-            // CORREÇÃO: Fechar também todos os submenus
-            document.querySelectorAll('.context-submenu').forEach(submenu => {
-                submenu.style.display = 'none';
-            });
             currentContextTaskIndex = -1;
-            isContextMenuOpen = false;
         }
 
         // RESTANTE DAS FUNÇÕES (mantidas iguais)
