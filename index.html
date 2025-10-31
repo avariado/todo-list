@@ -261,10 +261,10 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             z-index: 10000;
             min-width: 200px;
-            /* CORREÇÃO ANDROID */
-            touch-action: none;
+            max-height: 70vh;
+            overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            overscroll-behavior: none;
+            overscroll-behavior: contain;
         }
         
         .context-menu-item {
@@ -276,8 +276,6 @@
             width: 100%;
             text-align: left;
             font-size: 14px;
-            /* CORREÇÃO ANDROID */
-            touch-action: pan-y;
             user-select: none;
             -webkit-user-select: none;
         }
@@ -310,6 +308,9 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             min-width: 180px;
             z-index: 10001;
+            max-height: 50vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
         }
         
         .context-menu-item:hover > .context-submenu {
@@ -367,12 +368,9 @@
             flex: 1;
         }
 
-        /* CORREÇÃO ANDROID - Prevenir scroll quando menu está aberto */
+        /* CORREÇÃO ANDROID - Scroll apenas no menu */
         body.menu-open {
             overflow: hidden;
-            position: fixed;
-            width: 100%;
-            height: 100%;
         }
 
         .list-section.menu-open {
@@ -403,6 +401,7 @@
             .context-menu {
                 min-width: 180px;
                 font-size: 14px;
+                max-height: 60vh;
             }
             
             .context-menu-item {
@@ -411,6 +410,7 @@
             
             .context-submenu {
                 min-width: 160px;
+                max-height: 40vh;
             }
         }
     </style>
@@ -583,6 +583,17 @@
             Programas
             <div class="context-submenu" id="programsSubmenu">
                 <div class="context-menu-item" data-action="managePrograms">Gerir Programas</div>
+                <div class="context-menu-separator"></div>
+                <div class="context-menu-item" data-action="openProgram" data-path="C:\Program1.exe">Programa 1</div>
+                <div class="context-menu-item" data-action="openProgram" data-path="C:\Program2.exe">Programa 2</div>
+                <div class="context-menu-item" data-action="openProgram" data-path="C:\Program3.exe">Programa 3</div>
+                <div class="context-menu-item" data-action="openProgram" data-path="C:\Program4.exe">Programa 4</div>
+                <div class="context-menu-item" data-action="openProgram" data-path="C:\Program5.exe">Programa 5</div>
+                <div class="context-menu-item" data-action="openProgram" data-path="C:\Program6.exe">Programa 6</div>
+                <div class="context-menu-item" data-action="openProgram" data-path="C:\Program7.exe">Programa 7</div>
+                <div class="context-menu-item" data-action="openProgram" data-path="C:\Program8.exe">Programa 8</div>
+                <div class="context-menu-item" data-action="openProgram" data-path="C:\Program9.exe">Programa 9</div>
+                <div class="context-menu-item" data-action="openProgram" data-path="C:\Program10.exe">Programa 10</div>
             </div>
         </div>
         
@@ -590,6 +601,17 @@
             Documentos
             <div class="context-submenu" id="documentsSubmenu">
                 <div class="context-menu-item" data-action="manageDocuments">Gerir Documentos</div>
+                <div class="context-menu-separator"></div>
+                <div class="context-menu-item" data-action="openDocument" data-path="C:\Doc1.pdf">Documento 1</div>
+                <div class="context-menu-item" data-action="openDocument" data-path="C:\Doc2.pdf">Documento 2</div>
+                <div class="context-menu-item" data-action="openDocument" data-path="C:\Doc3.pdf">Documento 3</div>
+                <div class="context-menu-item" data-action="openDocument" data-path="C:\Doc4.pdf">Documento 4</div>
+                <div class="context-menu-item" data-action="openDocument" data-path="C:\Doc5.pdf">Documento 5</div>
+                <div class="context-menu-item" data-action="openDocument" data-path="C:\Doc6.pdf">Documento 6</div>
+                <div class="context-menu-item" data-action="openDocument" data-path="C:\Doc7.pdf">Documento 7</div>
+                <div class="context-menu-item" data-action="openDocument" data-path="C:\Doc8.pdf">Documento 8</div>
+                <div class="context-menu-item" data-action="openDocument" data-path="C:\Doc9.pdf">Documento 9</div>
+                <div class="context-menu-item" data-action="openDocument" data-path="C:\Doc10.pdf">Documento 10</div>
             </div>
         </div>
         
@@ -597,8 +619,26 @@
             Favoritos
             <div class="context-submenu" id="favoritesSubmenu">
                 <div class="context-menu-item" data-action="manageFavorites">Gerir Favoritos</div>
+                <div class="context-menu-separator"></div>
+                <div class="context-menu-item" data-action="openFavorite" data-url="https://google.com">Google</div>
+                <div class="context-menu-item" data-action="openFavorite" data-url="https://youtube.com">YouTube</div>
+                <div class="context-menu-item" data-action="openFavorite" data-url="https://github.com">GitHub</div>
+                <div class="context-menu-item" data-action="openFavorite" data-url="https://stackoverflow.com">Stack Overflow</div>
+                <div class="context-menu-item" data-action="openFavorite" data-url="https://twitter.com">Twitter</div>
+                <div class="context-menu-item" data-action="openFavorite" data-url="https://facebook.com">Facebook</div>
+                <div class="context-menu-item" data-action="openFavorite" data-url="https://instagram.com">Instagram</div>
+                <div class="context-menu-item" data-action="openFavorite" data-url="https://linkedin.com">LinkedIn</div>
+                <div class="context-menu-item" data-action="openFavorite" data-url="https://reddit.com">Reddit</div>
+                <div class="context-menu-item" data-action="openFavorite" data-url="https://wikipedia.org">Wikipedia</div>
             </div>
         </div>
+        
+        <div class="context-menu-separator"></div>
+        <div class="context-menu-item" data-action="extra1">Item Extra 1</div>
+        <div class="context-menu-item" data-action="extra2">Item Extra 2</div>
+        <div class="context-menu-item" data-action="extra3">Item Extra 3</div>
+        <div class="context-menu-item" data-action="extra4">Item Extra 4</div>
+        <div class="context-menu-item" data-action="extra5">Item Extra 5</div>
     </div>
     
     <input type="file" id="fileInput" class="file-input" accept=".json">
@@ -655,7 +695,6 @@
             loadTasks();
             updateTaskList();
             setupEventListeners();
-            setupContextMenuTouchEvents(); // CORREÇÃO ANDROID
             updateStatus('Pronto');
         });
 
@@ -716,6 +755,20 @@
                 }
             });
 
+            // CORREÇÃO ANDROID: Scroll apenas no menu
+            contextMenu.addEventListener('touchstart', function(e) {
+                e.stopPropagation();
+            }, { passive: true });
+
+            contextMenu.addEventListener('touchmove', function(e) {
+                // Permitir scroll apenas no menu
+                e.stopPropagation();
+            }, { passive: true });
+
+            contextMenu.addEventListener('touchend', function(e) {
+                e.stopPropagation();
+            }, { passive: true });
+
             // Fechar menu ao clicar fora
             document.addEventListener('click', function(e) {
                 if (contextMenu.style.display === 'block' && !contextMenu.contains(e.target)) {
@@ -731,7 +784,7 @@
                 }
             });
 
-            // Touch para Android
+            // Touch para Android - Long press
             let longPressTimer;
             taskList.addEventListener('touchstart', function(e) {
                 const taskItem = e.target.closest('.task-item');
@@ -751,38 +804,6 @@
                 clearTimeout(longPressTimer);
             });
 
-            // CORREÇÃO ANDROID: Prevenir scroll da lista quando menu está aberto
-            contextMenu.addEventListener('touchstart', function(e) {
-                e.stopPropagation();
-                console.log('Touch no menu - prevenindo propagação');
-            }, { passive: false });
-
-            contextMenu.addEventListener('touchmove', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                console.log('Move no menu - bloqueando scroll da lista');
-            }, { passive: false });
-
-            contextMenu.addEventListener('touchend', function(e) {
-                e.stopPropagation();
-            }, { passive: false });
-
-            // Quando menu abrir, adicionar classe para bloquear scroll
-            const originalShowContextMenu = showContextMenu;
-            showContextMenu = function(event, taskItem) {
-                document.body.classList.add('menu-open');
-                document.querySelector('.list-section').classList.add('menu-open');
-                originalShowContextMenu(event, taskItem);
-            };
-
-            // Quando menu fechar, remover classe
-            const originalHideContextMenu = hideContextMenu;
-            hideContextMenu = function() {
-                document.body.classList.remove('menu-open');
-                document.querySelector('.list-section').classList.remove('menu-open');
-                originalHideContextMenu();
-            };
-
             // Importação
             fileInput.addEventListener('change', importFromJSON);
 
@@ -799,35 +820,6 @@
             });
 
             console.log('Event listeners configurados');
-        }
-
-        // CORREÇÃO ANDROID - Gestos no menu
-        function setupContextMenuTouchEvents() {
-            let startY = 0;
-            let isScrollingMenu = false;
-
-            contextMenu.addEventListener('touchstart', function(e) {
-                startY = e.touches[0].clientY;
-                isScrollingMenu = true;
-                e.stopPropagation();
-            }, { passive: true });
-
-            contextMenu.addEventListener('touchmove', function(e) {
-                if (!isScrollingMenu) return;
-                
-                const currentY = e.touches[0].clientY;
-                const deltaY = currentY - startY;
-                
-                // Se estiver a mover significativamente no menu, prevenir scroll da lista
-                if (Math.abs(deltaY) > 5) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                }
-            }, { passive: false });
-
-            contextMenu.addEventListener('touchend', function() {
-                isScrollingMenu = false;
-            }, { passive: true });
         }
 
         // FUNÇÃO NORMALIZETASK 100% COMPATÍVEL COM SEU JSON
@@ -945,15 +937,22 @@
             contextMenu.style.top = y + 'px';
             contextMenu.style.display = 'block';
 
+            // CORREÇÃO ANDROID: Bloquear scroll da lista
+            document.body.classList.add('menu-open');
+            document.querySelector('.list-section').classList.add('menu-open');
+
             console.log('Menu posicionado em:', x, y);
         }
 
         function hideContextMenu() {
             contextMenu.style.display = 'none';
             currentContextTaskIndex = -1;
+            
+            // CORREÇÃO ANDROID: Restaurar scroll da lista
+            document.body.classList.remove('menu-open');
+            document.querySelector('.list-section').classList.remove('menu-open');
         }
 
-        // RESTANTE DAS FUNÇÕES (mantidas do código anterior)
         function updateTaskList() {
             taskList.innerHTML = '';
             
@@ -1045,7 +1044,99 @@
             updateStatus('Tarefa adicionada com sucesso');
         }
 
-        // ... (outras funções mantidas iguais: moveTaskUp, moveTaskDown, openProperties, saveProperties, removeTask, clearAllTasks)
+        function moveTaskUp() {
+            if (selectedTaskIndex <= 0) return;
+            [tasks[selectedTaskIndex], tasks[selectedTaskIndex - 1]] = [tasks[selectedTaskIndex - 1], tasks[selectedTaskIndex]];
+            selectTask(selectedTaskIndex - 1);
+            updateTaskList();
+            saveTasks();
+        }
+
+        function moveTaskDown() {
+            if (selectedTaskIndex >= tasks.length - 1) return;
+            [tasks[selectedTaskIndex], tasks[selectedTaskIndex + 1]] = [tasks[selectedTaskIndex + 1], tasks[selectedTaskIndex]];
+            selectTask(selectedTaskIndex + 1);
+            updateTaskList();
+            saveTasks();
+        }
+
+        function openProperties() {
+            if (selectedTaskIndex === -1) {
+                alert('Por favor, selecione uma tarefa para ver as propriedades.');
+                return;
+            }
+            
+            const task = tasks[selectedTaskIndex];
+            document.getElementById('propertiesTaskText').value = task.text;
+            document.getElementById('propertiesPersonalFolder').value = task.personalFolder || '';
+            document.getElementById('propertiesSharedFolder').value = task.sharedFolder || '';
+            document.getElementById('propertiesLink').value = task.link || '';
+            document.getElementById('propertiesDate').value = task.date || '';
+            
+            document.getElementById('highlightNone').checked = !task.highlightColor;
+            document.getElementById('highlightRed').checked = task.highlightColor === 'red';
+            document.getElementById('highlightBlue').checked = task.highlightColor === 'blue';
+            
+            propertiesModal.style.display = 'flex';
+        }
+
+        function saveProperties() {
+            const task = tasks[selectedTaskIndex];
+            const newText = document.getElementById('propertiesTaskText').value.trim();
+            if (!newText) {
+                alert('A tarefa não pode estar vazia.');
+                return;
+            }
+            
+            task.text = newText;
+            task.personalFolder = document.getElementById('propertiesPersonalFolder').value.trim() || null;
+            task.sharedFolder = document.getElementById('propertiesSharedFolder').value.trim() || null;
+            task.link = document.getElementById('propertiesLink').value.trim() || null;
+            
+            const dateValue = document.getElementById('propertiesDate').value.trim();
+            task.date = dateValue && isValidDate(dateValue) ? dateValue : null;
+            
+            const highlightValue = document.querySelector('input[name="highlight"]:checked').value;
+            task.highlightColor = highlightValue === 'none' ? null : highlightValue;
+            
+            updateTaskList();
+            saveTasks();
+            closeModals();
+            updateStatus('Propriedades da tarefa atualizadas com sucesso');
+        }
+
+        function removeTask() {
+            if (selectedTaskIndex === -1) {
+                alert('Por favor, selecione uma tarefa para eliminar.');
+                return;
+            }
+            
+            const taskText = tasks[selectedTaskIndex].text;
+            const preview = taskText.length > 150 ? taskText.substring(0, 147) + '...' : taskText;
+            
+            if (confirm(`Tem a certeza que pretende eliminar a tarefa?\n\n${preview}`)) {
+                tasks.splice(selectedTaskIndex, 1);
+                selectTask(Math.min(selectedTaskIndex, tasks.length - 1));
+                updateTaskList();
+                saveTasks();
+                updateStatus('Tarefa removida com sucesso');
+            }
+        }
+
+        function clearAllTasks() {
+            if (!tasks.length) {
+                alert('Não há tarefas para limpar.');
+                return;
+            }
+            
+            if (confirm('Tem a certeza que deseja limpar TODAS as tarefas?\n\nATENÇÃO: esta ação não pode ser desfeita.')) {
+                tasks = [];
+                selectTask(-1);
+                updateTaskList();
+                saveTasks();
+                updateStatus('Todas as tarefas foram removidas');
+            }
+        }
 
         function exportToJSON() {
             const data = {
@@ -1197,9 +1288,6 @@
 
         function updateDynamicSubmenus() {
             // Implementação básica - pode ser expandida
-            programsSubmenu.innerHTML = '<div class="context-menu-item" data-action="managePrograms">Gerir Programas</div>';
-            documentsSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageDocuments">Gerir Documentos</div>';
-            favoritesSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageFavorites">Gerir Favoritos</div>';
         }
 
         function handleContextMenuAction(action, index, element) {
@@ -1280,101 +1368,6 @@
                 execMenu: execMenu
             };
             localStorage.setItem('organizadorTarefas', JSON.stringify(data));
-        }
-
-        // Funções auxiliares (mantidas iguais)
-        function moveTaskUp() {
-            if (selectedTaskIndex <= 0) return;
-            [tasks[selectedTaskIndex], tasks[selectedTaskIndex - 1]] = [tasks[selectedTaskIndex - 1], tasks[selectedTaskIndex]];
-            selectTask(selectedTaskIndex - 1);
-            updateTaskList();
-            saveTasks();
-        }
-
-        function moveTaskDown() {
-            if (selectedTaskIndex >= tasks.length - 1) return;
-            [tasks[selectedTaskIndex], tasks[selectedTaskIndex + 1]] = [tasks[selectedTaskIndex + 1], tasks[selectedTaskIndex]];
-            selectTask(selectedTaskIndex + 1);
-            updateTaskList();
-            saveTasks();
-        }
-
-        function openProperties() {
-            if (selectedTaskIndex === -1) {
-                alert('Por favor, selecione uma tarefa para ver as propriedades.');
-                return;
-            }
-            
-            const task = tasks[selectedTaskIndex];
-            document.getElementById('propertiesTaskText').value = task.text;
-            document.getElementById('propertiesPersonalFolder').value = task.personalFolder || '';
-            document.getElementById('propertiesSharedFolder').value = task.sharedFolder || '';
-            document.getElementById('propertiesLink').value = task.link || '';
-            document.getElementById('propertiesDate').value = task.date || '';
-            
-            document.getElementById('highlightNone').checked = !task.highlightColor;
-            document.getElementById('highlightRed').checked = task.highlightColor === 'red';
-            document.getElementById('highlightBlue').checked = task.highlightColor === 'blue';
-            
-            propertiesModal.style.display = 'flex';
-        }
-
-        function saveProperties() {
-            const task = tasks[selectedTaskIndex];
-            const newText = document.getElementById('propertiesTaskText').value.trim();
-            if (!newText) {
-                alert('A tarefa não pode estar vazia.');
-                return;
-            }
-            
-            task.text = newText;
-            task.personalFolder = document.getElementById('propertiesPersonalFolder').value.trim() || null;
-            task.sharedFolder = document.getElementById('propertiesSharedFolder').value.trim() || null;
-            task.link = document.getElementById('propertiesLink').value.trim() || null;
-            
-            const dateValue = document.getElementById('propertiesDate').value.trim();
-            task.date = dateValue && isValidDate(dateValue) ? dateValue : null;
-            
-            const highlightValue = document.querySelector('input[name="highlight"]:checked').value;
-            task.highlightColor = highlightValue === 'none' ? null : highlightValue;
-            
-            updateTaskList();
-            saveTasks();
-            closeModals();
-            updateStatus('Propriedades da tarefa atualizadas com sucesso');
-        }
-
-        function removeTask() {
-            if (selectedTaskIndex === -1) {
-                alert('Por favor, selecione uma tarefa para eliminar.');
-                return;
-            }
-            
-            const taskText = tasks[selectedTaskIndex].text;
-            const preview = taskText.length > 150 ? taskText.substring(0, 147) + '...' : taskText;
-            
-            if (confirm(`Tem a certeza que pretende eliminar a tarefa?\n\n${preview}`)) {
-                tasks.splice(selectedTaskIndex, 1);
-                selectTask(Math.min(selectedTaskIndex, tasks.length - 1));
-                updateTaskList();
-                saveTasks();
-                updateStatus('Tarefa removida com sucesso');
-            }
-        }
-
-        function clearAllTasks() {
-            if (!tasks.length) {
-                alert('Não há tarefas para limpar.');
-                return;
-            }
-            
-            if (confirm('Tem a certeza que deseja limpar TODAS as tarefas?\n\nATENÇÃO: esta ação não pode ser desfeita.')) {
-                tasks = [];
-                selectTask(-1);
-                updateTaskList();
-                saveTasks();
-                updateStatus('Todas as tarefas foram removidas');
-            }
         }
 
         function isValidDate(dateString) {
