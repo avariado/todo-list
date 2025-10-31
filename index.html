@@ -596,8 +596,10 @@
         let searchTerm = "";
         let notesVisible = false;
 
-        // <- NOVO: índice da tarefa cujo menu está aberto
+        // <- índice da tarefa cujo menu está aberto
         let currentContextTaskIndex = -1;
+        // <- proteção para desktop/touch: evitar fechar logo a seguir a abrir
+        let justOpenedContextMenu = false;
         
         const taskInput = document.getElementById('taskInput');
         const addTaskBtn = document.getElementById('addTaskBtn');
@@ -655,24 +657,10 @@
             
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
-            
-            // Clicar fora fecha o menu
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('.context-menu')) {
-                    hideContextMenu();
-                }
-            });
 
-            // <- IMPORTANTE: listeners do menu de contexto APENAS UMA VEZ
+            // itens de menu de contexto – listener único
             contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const action = this.getAttribute('data-action');
-                    if (action) {
-                        handleContextMenuAction(action, currentContextTaskIndex, this);
-                        hideContextMenu();
-                    }
-                });
+                item.addEventListener('click', onContextMenuItemClick);
             });
 
             // 1) Desktop tradicional – botão direito em cima das tarefas
@@ -719,14 +707,19 @@
                     longPressTimer = setTimeout(() => {
                         showContextMenu(e, taskItem);
                     }, 500);
+                } else {
+                    // se tocar fora e não for o "acabado de abrir", fecha
+                    if (!justOpenedContextMenu) {
+                        hideContextMenu();
+                    }
                 }
-            });
+            }, {passive: true});
             document.addEventListener('touchend', function() {
                 clearTimeout(longPressTimer);
-            });
+            }, {passive: true});
             document.addEventListener('touchmove', function() {
                 clearTimeout(longPressTimer);
-            });
+            }, {passive: true});
             
             fileInput.addEventListener('change', importFromJSON);
             
@@ -741,8 +734,35 @@
                 }
                 if (e.key === 'Escape') {
                     hideContextMenu();
+                    closeModals();
                 }
             });
+
+            // clicar / tocar fora fecha o menu (com salvaguardas)
+            document.addEventListener('click', function(e) {
+                // se o menu acabou de abrir, não fechar já
+                if (justOpenedContextMenu) return;
+                // botão direito não fecha
+                if (e.button === 2) return;
+                if (!e.target.closest('.context-menu')) {
+                    hideContextMenu();
+                }
+            });
+            document.addEventListener('touchstart', function(e) {
+                if (justOpenedContextMenu) return;
+                if (!e.target.closest('.context-menu')) {
+                    hideContextMenu();
+                }
+            }, {passive: true});
+        }
+
+        function onContextMenuItemClick(e) {
+            e.stopPropagation();
+            const action = this.getAttribute('data-action');
+            if (action) {
+                handleContextMenuAction(action, currentContextTaskIndex, this);
+                hideContextMenu();
+            }
         }
 
         function hideContextMenu() {
@@ -754,9 +774,7 @@
             const index = Array.from(taskList.children).indexOf(taskItem);
             if (index === -1) return;
             
-            // guardamos o índice da tarefa “de contexto”
             currentContextTaskIndex = index;
-
             selectTask(index);
             
             const task = tasks[index];
@@ -784,6 +802,15 @@
             contextMenu.style.left = x + 'px';
             contextMenu.style.top = y + 'px';
             contextMenu.style.display = 'block';
+            contextMenu.style.zIndex = '1001';
+
+            // protegemos o "clicar fora" imediato
+            justOpenedContextMenu = true;
+            setTimeout(() => {
+                justOpenedContextMenu = false;
+            }, 100);
+
+            event.stopPropagation();
             
             setTimeout(() => {
                 const rect = contextMenu.getBoundingClientRect();
@@ -796,7 +823,6 @@
                 if (rect.bottom > windowHeight) {
                     contextMenu.style.top = (windowHeight - rect.height - 10) + 'px';
                 }
-                contextMenu.style.zIndex = '1001';
             }, 0);
         }
 
@@ -816,7 +842,6 @@
         function normalizeTask(task) {
             // 1) Já está no formato web?
             if (task && typeof task === 'object' && task.text !== undefined) {
-                // garantir propriedades opcionais
                 return {
                     text: task.text || '',
                     completed: !!task.completed,
@@ -827,7 +852,7 @@
                     highlightColor: task.highlightColor || null
                 };
             }
-            // 2) Está no formato Python/Tkinter (como o teu JSON)?
+            // 2) Está no formato Python/Tkinter?
             if (task && typeof task === 'object' && task.texto !== undefined) {
                 let highlight = null;
                 if (task.destaque_cor) {
@@ -845,7 +870,7 @@
                     highlightColor: highlight
                 };
             }
-            // 3) fallback – criar tarefa vazia para não rebentar o render
+            // 3) fallback
             return {
                 text: '',
                 completed: false,
@@ -985,7 +1010,6 @@
                     
                     const textDiv = document.createElement('div');
                     textDiv.className = 'task-text';
-                    // garantir que há string
                     const firstLine = (task.text || '').split('\n')[0];
                     textDiv.textContent = firstLine;
                     
@@ -1336,16 +1360,9 @@
             documentsSubmenu.innerHTML += '<div class="context-menu-separator"></div><div class="context-menu-item" data-action="openDocumentsFolder">Abrir Pasta de Documentos</div>';
             favoritesSubmenu.innerHTML += '<div class="context-menu-separator"></div><div class="context-menu-item" data-action="openFavoritesFolder">Abrir Pasta de Favoritos</div>';
             
-            // re-ligar cliques dos itens criados dinamicamente
+            // ligar cliques dos itens criados dinamicamente
             contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
-                item.onclick = function(e) {
-                    e.stopPropagation();
-                    const action = this.getAttribute('data-action');
-                    if (action) {
-                        handleContextMenuAction(action, currentContextTaskIndex, this);
-                        hideContextMenu();
-                    }
-                };
+                item.addEventListener('click', onContextMenuItemClick);
             });
         }
         
