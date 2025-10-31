@@ -676,7 +676,6 @@
             });
 
             // 1) Desktop tradicional – botão direito em cima das tarefas
-            //    Usamos o evento NO UL (é mais estável no Edge)
             taskList.addEventListener('contextmenu', function(e) {
                 const taskItem = e.target.closest('.task-item');
                 if (taskItem) {
@@ -688,7 +687,7 @@
                 }
             });
 
-            // 2) Falha de contextmenu em alguns Edge / drivers -> mousedown right
+            // 2) mousedown right
             taskList.addEventListener('mousedown', function(e) {
                 if (e.button === 2) {
                     const taskItem = e.target.closest('.task-item');
@@ -700,7 +699,7 @@
                 }
             });
 
-            // 3) pointerdown (Edge gosta de pointer events)
+            // 3) pointerdown
             taskList.addEventListener('pointerdown', function(e) {
                 if (e.button === 2) {
                     const taskItem = e.target.closest('.task-item');
@@ -813,30 +812,49 @@
             }
         }
         
+        // CORRIGIDA
         function normalizeTask(task) {
-            if (task.text !== undefined && task.completed !== undefined) {
-                return task;
+            // 1) Já está no formato web?
+            if (task && typeof task === 'object' && task.text !== undefined) {
+                // garantir propriedades opcionais
+                return {
+                    text: task.text || '',
+                    completed: !!task.completed,
+                    personalFolder: task.personalFolder || null,
+                    sharedFolder: task.sharedFolder || null,
+                    link: task.link || null,
+                    date: task.date || null,
+                    highlightColor: task.highlightColor || null
+                };
             }
-            const normalizedTask = {
-                text: task.texto || '',
-                completed: task.completada || false,
-                personalFolder: task.pasta_pessoal || null,
-                sharedFolder: task.pasta_partilhada || null,
-                link: task.link || null,
-                date: task.data || null
-            };
-            if (task.destaque_cor) {
-                if (task.destaque_cor === 'vermelho') {
-                    normalizedTask.highlightColor = 'red';
-                } else if (task.destaque_cor === 'azul') {
-                    normalizedTask.highlightColor = 'blue';
-                } else {
-                    normalizedTask.highlightColor = task.destaque_cor;
+            // 2) Está no formato Python/Tkinter (como o teu JSON)?
+            if (task && typeof task === 'object' && task.texto !== undefined) {
+                let highlight = null;
+                if (task.destaque_cor) {
+                    if (task.destaque_cor === 'vermelho') highlight = 'red';
+                    else if (task.destaque_cor === 'azul') highlight = 'blue';
+                    else highlight = task.destaque_cor;
                 }
-            } else {
-                normalizedTask.highlightColor = null;
+                return {
+                    text: task.texto || '',
+                    completed: !!task.completada,
+                    personalFolder: task.pasta_pessoal || null,
+                    sharedFolder: task.pasta_partilhada || null,
+                    link: task.link || null,
+                    date: task.data || null,
+                    highlightColor: highlight
+                };
             }
-            return normalizedTask;
+            // 3) fallback – criar tarefa vazia para não rebentar o render
+            return {
+                text: '',
+                completed: false,
+                personalFolder: null,
+                sharedFolder: null,
+                link: null,
+                date: null,
+                highlightColor: null
+            };
         }
         
         function taskToPythonFormat(task) {
@@ -967,7 +985,9 @@
                     
                     const textDiv = document.createElement('div');
                     textDiv.className = 'task-text';
-                    textDiv.textContent = task.text.split('\n')[0];
+                    // garantir que há string
+                    const firstLine = (task.text || '').split('\n')[0];
+                    textDiv.textContent = firstLine;
                     
                     li.appendChild(iconsDiv);
                     li.appendChild(textDiv);
@@ -1246,7 +1266,7 @@
             searchResults = [];
             
             tasks.forEach((task, index) => {
-                if (task.text.toLowerCase().includes(term.toLowerCase())) {
+                if ((task.text || '').toLowerCase().includes(term.toLowerCase())) {
                     searchResults.push(index);
                 }
             });
