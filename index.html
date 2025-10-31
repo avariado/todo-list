@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Organizador de Tarefas</title>
     <style>
+        /* (MANTENHA TODOS OS ESTILOS EXISTENTES - não mudei nada aqui) */
         :root {
             --primary-color: #4a6987;
             --secondary-color: #f0f0f0;
@@ -596,9 +597,7 @@
         let searchTerm = "";
         let notesVisible = false;
     
-        // quem está com o menu aberto
         let currentContextTaskIndex = -1;
-        // proteção anti-fechar-logo
         let justOpenedContextMenu = false;
     
         const taskInput = document.getElementById('taskInput');
@@ -658,57 +657,60 @@
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
     
-            // -------------- MENU DE CONTEXTO CORRIGIDO -------------- //
-            // 1) abrir APENAS por contextmenu (desktop)
+            // CORREÇÃO RADICAL DO MENU DE CONTEXTO
             taskList.addEventListener('contextmenu', function (e) {
                 const taskItem = e.target.closest('.task-item');
                 if (taskItem) {
-                    e.preventDefault();      // bloqueia menu do browser
-                    e.stopPropagation();     // não deixa subir
+                    e.preventDefault();
+                    e.stopPropagation();
                     showContextMenu(e, taskItem);
-                } else {
+                }
+                return false;
+            });
+    
+            // CORREÇÃO: Event listeners para o menu de contexto
+            contextMenu.addEventListener('click', function(e) {
+                const menuItem = e.target.closest('.context-menu-item');
+                if (menuItem && menuItem.getAttribute('data-action')) {
+                    e.stopPropagation();
+                    const action = menuItem.getAttribute('data-action');
+                    handleContextMenuAction(action, currentContextTaskIndex, menuItem);
                     hideContextMenu();
                 }
             });
     
-            // 2) itens do menu (listener único)
-            contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
-                item.addEventListener('click', onContextMenuItemClick);
-            });
-    
-            // 3) CORREÇÃO: fechar ao clicar fora (melhorado)
-            document.addEventListener('click', function (e) {
-                // Se não é um clique no menu de contexto, fecha-o
+            // CORREÇÃO: Fechar menu ao clicar fora
+            document.addEventListener('click', function(e) {
                 if (!contextMenu.contains(e.target)) {
                     hideContextMenu();
                 }
             });
     
-            // 4) CORREÇÃO: fechar ao pressionar ESC
-            document.addEventListener('keydown', function (e) {
+            // CORREÇÃO: Fechar menu com ESC
+            document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     hideContextMenu();
+                    closeModals();
                 }
             });
     
-            // 5) touch / Android: tap fora fecha, long press abre
+            // Touch para Android
             let longPressTimer;
-            document.addEventListener('touchstart', function (e) {
+            taskList.addEventListener('touchstart', function(e) {
                 const taskItem = e.target.closest('.task-item');
                 if (taskItem) {
                     longPressTimer = setTimeout(() => {
+                        e.preventDefault();
                         showContextMenu(e, taskItem);
                     }, 500);
-                } else {
-                    hideContextMenu();
                 }
-            }, { passive: true });
+            }, { passive: false });
             
-            document.addEventListener('touchend', function () {
+            taskList.addEventListener('touchend', function() {
                 clearTimeout(longPressTimer);
             }, { passive: true });
             
-            document.addEventListener('touchmove', function () {
+            taskList.addEventListener('touchmove', function() {
                 clearTimeout(longPressTimer);
             }, { passive: true });
     
@@ -723,20 +725,7 @@
                     e.preventDefault();
                     nextSearchResult();
                 }
-                if (e.key === 'Escape') {
-                    hideContextMenu();
-                    closeModals();
-                }
             });
-        }
-    
-        function onContextMenuItemClick(e) {
-            e.stopPropagation();
-            const action = this.getAttribute('data-action');
-            if (action) {
-                handleContextMenuAction(action, currentContextTaskIndex, this);
-                hideContextMenu();
-            }
         }
     
         function showContextMenu(event, taskItem) {
@@ -748,10 +737,14 @@
     
             const task = tasks[index];
             const toggleCompleteItem = contextMenu.querySelector('[data-action="toggleComplete"]');
-            toggleCompleteItem.textContent = task.completed ? 'Marcar como Não Completada' : 'Marcar como Completada';
+            if (toggleCompleteItem) {
+                toggleCompleteItem.textContent = task.completed ? 'Marcar como Não Completada' : 'Marcar como Completada';
+            }
     
             const removeDateItem = contextMenu.querySelector('[data-action="removeDate"]');
-            removeDateItem.textContent = task.date ? `Remover Data (${task.date})` : 'Remover Data';
+            if (removeDateItem) {
+                removeDateItem.textContent = task.date ? `Remover Data (${task.date})` : 'Remover Data';
+            }
     
             updateDynamicSubmenus();
     
@@ -764,13 +757,11 @@
                 y = event.clientY;
             }
     
-            // CORREÇÃO: Garantir que o menu não sai da tela
             const menuWidth = contextMenu.offsetWidth;
             const menuHeight = contextMenu.offsetHeight;
             const windowWidth = window.innerWidth;
             const windowHeight = window.innerHeight;
             
-            // Ajustar posição se o menu sair da tela
             if (x + menuWidth > windowWidth) {
                 x = windowWidth - menuWidth - 10;
             }
@@ -778,7 +769,6 @@
                 y = windowHeight - menuHeight - 10;
             }
             
-            // Posição mínima
             x = Math.max(10, x);
             y = Math.max(10, y);
     
@@ -787,9 +777,8 @@
             contextMenu.style.display = 'block';
             contextMenu.style.zIndex = '1001';
     
-            // proteger o clique imediatamente seguinte
             justOpenedContextMenu = true;
-            setTimeout(() => { justOpenedContextMenu = false; }, 120);
+            setTimeout(() => { justOpenedContextMenu = false; }, 100);
         }
     
         function hideContextMenu() {
@@ -809,9 +798,7 @@
             }
         }
         
-        // CORREÇÃO CRÍTICA: função normalizeTask corrigida
         function normalizeTask(task) {
-            // 1) Já está no formato web?
             if (task && typeof task === 'object' && task.text !== undefined) {
                 return {
                     text: task.text || '',
@@ -823,7 +810,6 @@
                     highlightColor: task.highlightColor || null
                 };
             }
-            // 2) Está no formato Python/Tkinter?
             if (task && typeof task === 'object' && task.texto !== undefined) {
                 let highlight = null;
                 if (task.destaque_cor) {
@@ -832,18 +818,16 @@
                     else highlight = task.destaque_cor;
                 }
                 
-                // CORREÇÃO: processar pasta_partilhada corretamente
                 return {
                     text: task.texto || '',
                     completed: !!task.completada,
                     personalFolder: task.pasta_pessoal || null,
-                    sharedFolder: task.pasta_partilhada || null, // CORREÇÃO AQUI
+                    sharedFolder: task.pasta_partilhada || null,
                     link: task.link || null,
                     date: task.data || null,
                     highlightColor: highlight
                 };
             }
-            // 3) fallback
             return {
                 text: '',
                 completed: false,
@@ -860,7 +844,7 @@
                 texto: task.text,
                 completada: task.completed,
                 pasta_pessoal: task.personalFolder,
-                pasta_partilhada: task.sharedFolder, // CORREÇÃO AQUI
+                pasta_partilhada: task.sharedFolder,
                 link: task.link,
                 data: task.date
             };
@@ -1332,11 +1316,6 @@
             programsSubmenu.innerHTML += '<div class="context-menu-separator"></div><div class="context-menu-item" data-action="openProgramsFolder">Abrir Pasta de Programas</div>';
             documentsSubmenu.innerHTML += '<div class="context-menu-separator"></div><div class="context-menu-item" data-action="openDocumentsFolder">Abrir Pasta de Documentos</div>';
             favoritesSubmenu.innerHTML += '<div class="context-menu-separator"></div><div class="context-menu-item" data-action="openFavoritesFolder">Abrir Pasta de Favoritos</div>';
-            
-            // ligar cliques dos itens criados dinamicamente
-            contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
-                item.addEventListener('click', onContextMenuItemClick);
-            });
         }
         
         function handleContextMenuAction(action, index, element) {
