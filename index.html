@@ -353,7 +353,6 @@
             flex: 1;
         }
 
-        /* Melhorias para mobile */
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -433,7 +432,6 @@
         </div>
     </div>
     
-    <!-- Modal para Propriedades da Tarefa -->
     <div id="propertiesModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -489,7 +487,6 @@
         </div>
     </div>
     
-    <!-- Context Menu -->
     <div id="contextMenu" class="context-menu">
         <div class="context-menu-item" data-action="toggleComplete">Marcar como Completada</div>
         <div class="context-menu-separator"></div>
@@ -497,7 +494,6 @@
         <div class="context-menu-item" data-action="remove">Remover Tarefa</div>
         <div class="context-menu-separator"></div>
         
-        <!-- Menu de Pastas -->
         <div class="context-menu-item has-submenu">
             Pasta
             <div class="context-submenu">
@@ -511,7 +507,6 @@
         
         <div class="context-menu-separator"></div>
         
-        <!-- Menu de Link -->
         <div class="context-menu-item has-submenu">
             Link
             <div class="context-submenu">
@@ -523,7 +518,6 @@
         
         <div class="context-menu-separator"></div>
         
-        <!-- Menu de Data -->
         <div class="context-menu-item has-submenu">
             Data
             <div class="context-submenu">
@@ -534,7 +528,6 @@
         
         <div class="context-menu-separator"></div>
         
-        <!-- Menu de Destacar -->
         <div class="context-menu-item has-submenu">
             Destacar
             <div class="context-submenu">
@@ -546,7 +539,6 @@
         
         <div class="context-menu-separator"></div>
         
-        <!-- Menu de Separador -->
         <div class="context-menu-item has-submenu">
             Separador
             <div class="context-submenu">
@@ -557,17 +549,14 @@
         
         <div class="context-menu-separator"></div>
         
-        <!-- Relatório -->
         <div class="context-menu-item" data-action="generateReport">Relatório</div>
         
         <div class="context-menu-separator"></div>
         
-        <!-- Submenus para Programas, Documentos e Favoritos -->
         <div class="context-menu-item has-submenu">
             Programas
             <div class="context-submenu" id="programsSubmenu">
                 <div class="context-menu-item" data-action="managePrograms">Gerir Programas</div>
-                <!-- Lista de programas será adicionada dinamicamente -->
             </div>
         </div>
         
@@ -575,7 +564,6 @@
             Documentos
             <div class="context-submenu" id="documentsSubmenu">
                 <div class="context-menu-item" data-action="manageDocuments">Gerir Documentos</div>
-                <!-- Lista de documentos será adicionada dinamicamente -->
             </div>
         </div>
         
@@ -583,16 +571,13 @@
             Favoritos
             <div class="context-submenu" id="favoritesSubmenu">
                 <div class="context-menu-item" data-action="manageFavorites">Gerir Favoritos</div>
-                <!-- Lista de favoritos será adicionada dinamicamente -->
             </div>
         </div>
     </div>
     
-    <!-- File Input for Import -->
     <input type="file" id="fileInput" class="file-input" accept=".json">
     
     <script>
-        // Dados da aplicação
         let tasks = [];
         let notes = "";
         let lastWarningDate = null;
@@ -605,14 +590,15 @@
             documentsFolder: null
         };
         
-        // Estado da aplicação
         let selectedTaskIndex = -1;
         let searchResults = [];
         let currentSearchIndex = -1;
         let searchTerm = "";
         let notesVisible = false;
+
+        // <- NOVO: índice da tarefa cujo menu está aberto
+        let currentContextTaskIndex = -1;
         
-        // Elementos DOM
         const taskInput = document.getElementById('taskInput');
         const addTaskBtn = document.getElementById('addTaskBtn');
         const taskList = document.getElementById('taskList');
@@ -631,17 +617,14 @@
         const notesContainer = document.getElementById('notesContainer');
         const statusText = document.getElementById('statusText');
         
-        // Modais
         const propertiesModal = document.getElementById('propertiesModal');
         const contextMenu = document.getElementById('contextMenu');
         const fileInput = document.getElementById('fileInput');
         
-        // Submenus
         const programsSubmenu = document.getElementById('programsSubmenu');
         const documentsSubmenu = document.getElementById('documentsSubmenu');
         const favoritesSubmenu = document.getElementById('favoritesSubmenu');
 
-        // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
             loadTasks();
             updateTaskList();
@@ -649,9 +632,7 @@
             updateStatus('Pronto');
         });
         
-        // Configurar event listeners
         function setupEventListeners() {
-            // Botões principais
             addTaskBtn.addEventListener('click', addTask);
             moveUpBtn.addEventListener('click', moveTaskUp);
             moveDownBtn.addEventListener('click', moveTaskDown);
@@ -662,14 +643,12 @@
             importBtn.addEventListener('click', () => fileInput.click());
             notesBtn.addEventListener('click', toggleNotes);
             
-            // Pesquisa
             searchBtn.addEventListener('click', executeSearch);
             nextResultBtn.addEventListener('click', nextSearchResult);
             searchInput.addEventListener('keyup', function(e) {
                 if (e.key === 'Enter') executeSearch();
             });
             
-            // Modais
             document.querySelectorAll('.close-btn').forEach(btn => {
                 btn.addEventListener('click', closeModals);
             });
@@ -677,89 +656,114 @@
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
             
-            // Context menu - Melhor compatibilidade entre Desktop e Mobile
+            // Clicar fora fecha o menu
             document.addEventListener('click', function(e) {
                 if (!e.target.closest('.context-menu')) {
                     hideContextMenu();
                 }
             });
-            
-            // Para Desktop - contextmenu event
-            document.addEventListener('contextmenu', function(e) {
+
+            // <- IMPORTANTE: listeners do menu de contexto APENAS UMA VEZ
+            contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
+                item.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const action = this.getAttribute('data-action');
+                    if (action) {
+                        handleContextMenuAction(action, currentContextTaskIndex, this);
+                        hideContextMenu();
+                    }
+                });
+            });
+
+            // 1) Desktop tradicional – botão direito em cima das tarefas
+            //    Usamos o evento NO UL (é mais estável no Edge)
+            taskList.addEventListener('contextmenu', function(e) {
                 const taskItem = e.target.closest('.task-item');
                 if (taskItem) {
                     e.preventDefault();
                     e.stopPropagation();
                     showContextMenu(e, taskItem);
-                    return false;
+                } else {
+                    hideContextMenu();
                 }
-                hideContextMenu();
+            });
+
+            // 2) Falha de contextmenu em alguns Edge / drivers -> mousedown right
+            taskList.addEventListener('mousedown', function(e) {
+                if (e.button === 2) {
+                    const taskItem = e.target.closest('.task-item');
+                    if (taskItem) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        showContextMenu(e, taskItem);
+                    }
+                }
+            });
+
+            // 3) pointerdown (Edge gosta de pointer events)
+            taskList.addEventListener('pointerdown', function(e) {
+                if (e.button === 2) {
+                    const taskItem = e.target.closest('.task-item');
+                    if (taskItem) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        showContextMenu(e, taskItem);
+                    }
+                }
             });
             
-            // Para Android - long press
+            // 4) Android / touch – long press
             let longPressTimer;
-            let longPressTarget;
-            
             document.addEventListener('touchstart', function(e) {
                 const taskItem = e.target.closest('.task-item');
                 if (taskItem) {
-                    longPressTarget = taskItem;
                     longPressTimer = setTimeout(() => {
                         showContextMenu(e, taskItem);
                     }, 500);
                 }
             });
-            
-            document.addEventListener('touchend', function(e) {
+            document.addEventListener('touchend', function() {
+                clearTimeout(longPressTimer);
+            });
+            document.addEventListener('touchmove', function() {
                 clearTimeout(longPressTimer);
             });
             
-            document.addEventListener('touchmove', function(e) {
-                clearTimeout(longPressTimer);
-            });
-            
-            // File input
             fileInput.addEventListener('change', importFromJSON);
             
-            // Teclas de atalho
             document.addEventListener('keydown', function(e) {
-                // Ctrl+F para pesquisa
                 if (e.ctrlKey && e.key === 'f') {
                     e.preventDefault();
                     searchInput.focus();
                 }
-                
-                // F3 para próximo resultado de pesquisa
                 if (e.key === 'F3') {
                     e.preventDefault();
                     nextSearchResult();
                 }
-                
-                // Escape para fechar menu de contexto
                 if (e.key === 'Escape') {
                     hideContextMenu();
                 }
             });
         }
 
-        // Esconder menu de contexto
         function hideContextMenu() {
             contextMenu.style.display = 'none';
+            currentContextTaskIndex = -1;
         }
 
-        // Mostrar menu de contexto (versão corrigida)
         function showContextMenu(event, taskItem) {
             const index = Array.from(taskList.children).indexOf(taskItem);
             if (index === -1) return;
             
+            // guardamos o índice da tarefa “de contexto”
+            currentContextTaskIndex = index;
+
             selectTask(index);
             
-            // Atualizar texto do item "Marcar como Completada"
             const task = tasks[index];
             const toggleCompleteItem = contextMenu.querySelector('[data-action="toggleComplete"]');
             toggleCompleteItem.textContent = task.completed ? 'Marcar como Não Completada' : 'Marcar como Completada';
             
-            // Atualizar texto do item "Remover Data" se houver data
             const removeDateItem = contextMenu.querySelector('[data-action="removeDate"]');
             if (task.date) {
                 removeDateItem.textContent = `Remover Data (${task.date})`;
@@ -767,48 +771,36 @@
                 removeDateItem.textContent = 'Remover Data';
             }
             
-            // Atualizar submenus dinâmicos
             updateDynamicSubmenus();
             
-            // Posicionar menu - compatível com desktop e mobile
             let x, y;
-            
-            if (event.type.includes('touch')) {
-                // Para eventos touch
+            if (event.type && event.type.includes('touch')) {
                 x = event.touches[0].clientX;
                 y = event.touches[0].clientY;
             } else {
-                // Para eventos mouse
                 x = event.clientX;
                 y = event.clientY;
             }
             
-            contextMenu.style.left = `${x}px`;
-            contextMenu.style.top = `${y}px`;
+            contextMenu.style.left = x + 'px';
+            contextMenu.style.top = y + 'px';
             contextMenu.style.display = 'block';
             
-            // Prevenir que o menu saia da tela
             setTimeout(() => {
                 const rect = contextMenu.getBoundingClientRect();
                 const windowWidth = window.innerWidth;
                 const windowHeight = window.innerHeight;
                 
                 if (rect.right > windowWidth) {
-                    contextMenu.style.left = `${windowWidth - rect.width - 10}px`;
+                    contextMenu.style.left = (windowWidth - rect.width - 10) + 'px';
                 }
                 if (rect.bottom > windowHeight) {
-                    contextMenu.style.top = `${windowHeight - rect.height - 10}px`;
+                    contextMenu.style.top = (windowHeight - rect.height - 10) + 'px';
                 }
-                
-                // Garantir que o menu fique visível
                 contextMenu.style.zIndex = '1001';
             }, 0);
-            
-            // Configurar ações
-            setupContextMenuActions(index);
         }
 
-        // Alternar visibilidade das notas
         function toggleNotes() {
             notesVisible = !notesVisible;
             if (notesVisible) {
@@ -821,14 +813,10 @@
             }
         }
         
-        // Normalizar estrutura de tarefa
         function normalizeTask(task) {
-            // Se já está no formato correto, retorna como está
             if (task.text !== undefined && task.completed !== undefined) {
                 return task;
             }
-            
-            // Converte do formato Python/JSON para o formato interno
             const normalizedTask = {
                 text: task.texto || '',
                 completed: task.completada || false,
@@ -837,8 +825,6 @@
                 link: task.link || null,
                 date: task.data || null
             };
-            
-            // Processa corretamente os destaques do ficheiro JSON
             if (task.destaque_cor) {
                 if (task.destaque_cor === 'vermelho') {
                     normalizedTask.highlightColor = 'red';
@@ -850,11 +836,9 @@
             } else {
                 normalizedTask.highlightColor = null;
             }
-            
             return normalizedTask;
         }
         
-        // Converter tarefa para formato Python
         function taskToPythonFormat(task) {
             const pythonTask = {
                 texto: task.text,
@@ -864,8 +848,6 @@
                 link: task.link,
                 data: task.date
             };
-            
-            // Converte corretamente para o formato do ficheiro JSON
             if (task.highlightColor === 'red') {
                 pythonTask.destaque = true;
                 pythonTask.destaque_cor = 'vermelho';
@@ -876,11 +858,9 @@
                 pythonTask.destaque = false;
                 pythonTask.destaque_cor = null;
             }
-            
             return pythonTask;
         }
         
-        // Normalizar estrutura do menu de execução
         function normalizeExecMenu(menu) {
             if (!menu) {
                 return {
@@ -892,11 +872,9 @@
                     documentsFolder: null
                 };
             }
-            
             if (menu.programs !== undefined) {
                 return menu;
             }
-            
             return {
                 programs: (menu.programas || []).map(p => ({
                     label: p.label || '',
@@ -916,7 +894,6 @@
             };
         }
         
-        // Converter menu de execução para formato Python
         function execMenuToPythonFormat(menu) {
             return {
                 programas: (menu.programs || []).map(p => ({
@@ -937,7 +914,6 @@
             };
         }
         
-        // Atualizar lista de tarefas
         function updateTaskList() {
             taskList.innerHTML = '';
             
@@ -945,13 +921,9 @@
                 const li = document.createElement('li');
                 li.className = 'task-item';
                 
-                // Aplica as cores de destaque
                 if (task.highlightColor === 'red') li.classList.add('highlight-red');
                 if (task.highlightColor === 'blue') li.classList.add('highlight-blue');
-                
-                // Aplica o estado completado (que prevalece)
                 if (task.completed) li.classList.add('completed');
-                
                 if (index === selectedTaskIndex) li.classList.add('selected');
                 
                 if (task.text === '┈┈') {
@@ -967,7 +939,6 @@
                         iconsDiv.appendChild(checkIcon);
                     }
                     
-                    // MOSTRA ÍCONES PARA AMBAS AS PASTAS
                     if (task.personalFolder) {
                         const personalFolderIcon = document.createElement('span');
                         personalFolderIcon.textContent = '📁 ';
@@ -1002,7 +973,6 @@
                     li.appendChild(textDiv);
                 }
                 
-                // Event listeners
                 li.addEventListener('click', function(e) {
                     e.stopPropagation();
                     selectTask(index);
@@ -1017,7 +987,6 @@
             });
         }
         
-        // Selecionar tarefa
         function selectTask(index) {
             selectedTaskIndex = index;
             updateTaskList();
@@ -1031,7 +1000,6 @@
             updateStatus(hasSelection ? `Tarefa ${selectedTaskIndex + 1} de ${tasks.length} selecionada` : 'Pronto');
         }
         
-        // Adicionar tarefa
         function addTask() {
             const text = taskInput.value.trim();
             if (!text) {
@@ -1063,7 +1031,6 @@
             updateStatus('Tarefa adicionada com sucesso');
         }
         
-        // Mover tarefa para cima
         function moveTaskUp() {
             if (selectedTaskIndex <= 0) return;
             
@@ -1076,7 +1043,6 @@
             saveTasks();
         }
         
-        // Mover tarefa para baixo
         function moveTaskDown() {
             if (selectedTaskIndex >= tasks.length - 1) return;
             
@@ -1089,7 +1055,6 @@
             saveTasks();
         }
         
-        // Abrir propriedades da tarefa
         function openProperties() {
             if (selectedTaskIndex === -1) {
                 alert('Por favor, selecione uma tarefa para ver as propriedades.');
@@ -1111,7 +1076,6 @@
             propertiesModal.style.display = 'flex';
         }
         
-        // Salvar propriedades da tarefa
         function saveProperties() {
             const task = tasks[selectedTaskIndex];
             
@@ -1146,7 +1110,6 @@
             updateStatus('Propriedades da tarefa atualizadas com sucesso');
         }
         
-        // Remover tarefa
         function removeTask() {
             if (selectedTaskIndex === -1) {
                 alert('Por favor, selecione uma tarefa para eliminar.');
@@ -1169,7 +1132,6 @@
             updateStatus('Tarefa removida com sucesso');
         }
         
-        // Limpar todas as tarefas
         function clearAllTasks() {
             if (!tasks.length) {
                 alert('Não há tarefas para limpar.');
@@ -1187,7 +1149,6 @@
             updateStatus('Todas as tarefas foram removidas');
         }
         
-        // Exportar para JSON
         function exportToJSON() {
             const data = {
                 tarefas: tasks.map(taskToPythonFormat),
@@ -1211,7 +1172,6 @@
             updateStatus('Dados exportados com sucesso');
         }
         
-        // Importar de JSON
         function importFromJSON(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -1265,19 +1225,16 @@
             fileInput.value = '';
         }
         
-        // Salvar notas
         function saveNotes() {
             notes = notesTextarea.value;
             saveTasks();
             updateStatus('Notas salvas com sucesso');
         }
         
-        // Fechar modais
         function closeModals() {
             propertiesModal.style.display = 'none';
         }
         
-        // Executar pesquisa
         function executeSearch() {
             const term = searchInput.value.trim();
             if (!term) {
@@ -1307,7 +1264,6 @@
             updateStatus(`Encontradas ${searchResults.length} tarefas para '${term}'`);
         }
         
-        // Próximo resultado de pesquisa
         function nextSearchResult() {
             if (!searchResults.length) return;
             
@@ -1315,28 +1271,11 @@
             selectTask(searchResults[currentSearchIndex]);
         }
         
-        // Configurar ações do menu de contexto
-        function setupContextMenuActions(index) {
-            contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
-                item.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const action = this.getAttribute('data-action');
-                    if (action) {
-                        handleContextMenuAction(action, index, this);
-                        hideContextMenu();
-                    }
-                });
-            });
-        }
-        
-        // Atualizar submenus dinâmicos (Programas, Documentos, Favoritos)
         function updateDynamicSubmenus() {
-            // Limpar submenus
             programsSubmenu.innerHTML = '<div class="context-menu-item" data-action="managePrograms">Gerir Programas</div>';
             documentsSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageDocuments">Gerir Documentos</div>';
             favoritesSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageFavorites">Gerir Favoritos</div>';
             
-            // Adicionar separadores se houver itens
             if (execMenu.programs.length > 0) {
                 programsSubmenu.innerHTML += '<div class="context-menu-separator"></div>';
                 execMenu.programs.forEach(program => {
@@ -1373,14 +1312,25 @@
                 });
             }
             
-            // Adicionar opções de abrir pasta
             programsSubmenu.innerHTML += '<div class="context-menu-separator"></div><div class="context-menu-item" data-action="openProgramsFolder">Abrir Pasta de Programas</div>';
             documentsSubmenu.innerHTML += '<div class="context-menu-separator"></div><div class="context-menu-item" data-action="openDocumentsFolder">Abrir Pasta de Documentos</div>';
             favoritesSubmenu.innerHTML += '<div class="context-menu-separator"></div><div class="context-menu-item" data-action="openFavoritesFolder">Abrir Pasta de Favoritos</div>';
+            
+            // re-ligar cliques dos itens criados dinamicamente
+            contextMenu.querySelectorAll('.context-menu-item').forEach(item => {
+                item.onclick = function(e) {
+                    e.stopPropagation();
+                    const action = this.getAttribute('data-action');
+                    if (action) {
+                        handleContextMenuAction(action, currentContextTaskIndex, this);
+                        hideContextMenu();
+                    }
+                };
+            });
         }
         
-        // Manipular ação do menu de contexto
         function handleContextMenuAction(action, index, element) {
+            if (index === -1) return;
             const task = tasks[index];
             
             switch (action) {
@@ -1390,6 +1340,8 @@
                         tasks.splice(index, 1);
                         tasks.push(task);
                         selectTask(tasks.length - 1);
+                    } else {
+                        selectTask(index);
                     }
                     updateTaskList();
                     saveTasks();
@@ -1403,7 +1355,6 @@
                     removeTask();
                     break;
                     
-                // AÇÕES DE PASTA
                 case 'openPersonalFolder':
                     if (task.personalFolder) {
                         alert(`Pasta Pessoal: ${task.personalFolder}\n\nEm um ambiente web, não é possível abrir pastas diretamente.`);
@@ -1446,7 +1397,6 @@
                     updateStatus('Associação de pasta partilhada removida');
                     break;
                     
-                // AÇÕES DE LINK
                 case 'openLink':
                     if (task.link) {
                         window.open(task.link, '_blank');
@@ -1478,7 +1428,7 @@
                     updateStatus('Associação de link removida');
                     break;
                     
-                case 'addDate':
+                case 'addDate': {
                     const today = new Date();
                     const dateStr = prompt('Digite a data (DD-MM-AAAA):', 
                         `${today.getDate().toString().padStart(2, '0')}-${(today.getMonth()+1).toString().padStart(2, '0')}-${today.getFullYear()}`);
@@ -1492,6 +1442,7 @@
                         alert('Formato de data inválido. Utilize DD-MM-AAAA.');
                     }
                     break;
+                }
                     
                 case 'removeDate':
                     task.date = null;
@@ -1548,7 +1499,6 @@
                     generateReport();
                     break;
                     
-                // AÇÕES DOS SUBMENUS DINÂMICOS
                 case 'managePrograms':
                     alert('Funcionalidade "Gerir Programas" - Em desenvolvimento');
                     break;
@@ -1561,20 +1511,23 @@
                     alert('Funcionalidade "Gerir Favoritos" - Em desenvolvimento');
                     break;
                     
-                case 'openProgram':
+                case 'openProgram': {
                     const programPath = element.getAttribute('data-path');
                     alert(`Abrir programa: ${programPath}\n\nEm um ambiente web, não é possível executar programas diretamente.`);
                     break;
+                }
                     
-                case 'openDocument':
+                case 'openDocument': {
                     const documentPath = element.getAttribute('data-path');
                     alert(`Abrir documento: ${documentPath}\n\nEm um ambiente web, não é possível abrir documentos diretamente.`);
                     break;
+                }
                     
-                case 'openFavorite':
+                case 'openFavorite': {
                     const favoriteUrl = element.getAttribute('data-url');
                     window.open(favoriteUrl, '_blank');
                     break;
+                }
                     
                 case 'openProgramsFolder':
                     alert(`Abrir pasta de programas: ${execMenu.programsFolder || 'Não definida'}`);
@@ -1590,7 +1543,6 @@
             }
         }
         
-        // Gerar relatório
         function generateReport() {
             const activeTasks = tasks.filter(t => !t.completed && t.text !== '┈┈');
             
@@ -1607,15 +1559,12 @@
             activeTasks.forEach((task, i) => {
                 report += `Tarefa ${i+1}:\n`;
                 report += `Tarefa: ${task.text}\n`;
-                
-                // MOSTRA AMBAS AS PASTAS NO RELATÓRIO
                 if (task.personalFolder) {
                     report += `Pasta Pessoal: ${task.personalFolder}\n`;
                 }
                 if (task.sharedFolder) {
                     report += `Pasta Partilhada: ${task.sharedFolder}\n`;
                 }
-                
                 report += `Link: ${task.link || ''}\n`;
                 report += `Data: ${task.date || 'n/a'}\n\n`;
             });
@@ -1633,7 +1582,6 @@
             updateStatus('Relatório gerado com sucesso');
         }
         
-        // Validar data
         function isValidDate(dateString) {
             const regex = /^(\d{2})-(\d{2})-(\d{4})$/;
             const match = dateString.match(regex);
@@ -1651,12 +1599,10 @@
                    date.getFullYear() === year;
         }
         
-        // Atualizar texto de status
         function updateStatus(message) {
             statusText.textContent = message;
         }
         
-        // Carregar tarefas do localStorage
         function loadTasks() {
             const saved = localStorage.getItem('organizadorTarefas');
             if (saved) {
@@ -1666,7 +1612,6 @@
                     notes = data.notes || "";
                     lastWarningDate = data.lastWarningDate || null;
                     execMenu = normalizeExecMenu(data.execMenu);
-                    
                     notesTextarea.value = notes;
                 } catch (e) {
                     console.error('Erro ao carregar dados:', e);
@@ -1674,7 +1619,6 @@
             }
         }
         
-        // Salvar tarefas no localStorage
         function saveTasks() {
             const data = {
                 tasks: tasks,
@@ -1682,7 +1626,6 @@
                 lastWarningDate: lastWarningDate,
                 execMenu: execMenu
             };
-            
             localStorage.setItem('organizadorTarefas', JSON.stringify(data));
         }
     </script>
