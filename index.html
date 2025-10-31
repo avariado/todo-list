@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Organizador de Tarefas</title>
     <style>
-        /* (MANTENHA TODOS OS ESTILOS EXISTENTES) */
         :root {
             --primary-color: #4a6987;
             --secondary-color: #f0f0f0;
@@ -258,10 +257,8 @@
             border: 1px solid var(--border-color);
             border-radius: 4px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 1001;
+            z-index: 10000;
             min-width: 200px;
-            top: 0;
-            left: 0;
         }
         
         .context-menu-item {
@@ -598,7 +595,6 @@
         let notesVisible = false;
     
         let currentContextTaskIndex = -1;
-        let justOpenedContextMenu = false;
 
         const taskInput = document.getElementById('taskInput');
         const addTaskBtn = document.getElementById('addTaskBtn');
@@ -626,7 +622,7 @@
         const documentsSubmenu = document.getElementById('documentsSubmenu');
         const favoritesSubmenu = document.getElementById('favoritesSubmenu');
 
-        // CORREÇÃO RADICAL: Event listeners GLOBAIS que não dependem do conteúdo
+        // CORREÇÃO DEFINITIVA - Setup completo
         document.addEventListener('DOMContentLoaded', function () {
             loadTasks();
             updateTaskList();
@@ -658,17 +654,19 @@
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
 
-            // CORREÇÃO DEFINITIVA: Delegation de eventos que funciona SEMPRE
-            document.addEventListener('contextmenu', function(e) {
+            // CORREÇÃO RADICAL: Event listener DIRETO na lista de tarefas
+            taskList.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                
                 const taskItem = e.target.closest('.task-item');
-                if (taskItem && taskList.contains(taskItem)) {
-                    e.preventDefault();
-                    e.stopPropagation();
+                if (taskItem) {
                     showContextMenu(e, taskItem);
                 }
+                return false;
             });
 
-            // Listener ÚNICO no menu de contexto
+            // Listener único para o menu de contexto
             contextMenu.addEventListener('click', function(e) {
                 e.stopPropagation();
                 const menuItem = e.target.closest('.context-menu-item');
@@ -690,26 +688,27 @@
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     hideContextMenu();
+                    closeModals();
                 }
             });
 
             // Touch para Android
             let longPressTimer;
-            document.addEventListener('touchstart', function(e) {
+            taskList.addEventListener('touchstart', function(e) {
                 const taskItem = e.target.closest('.task-item');
-                if (taskItem && taskList.contains(taskItem)) {
+                if (taskItem) {
                     longPressTimer = setTimeout(() => {
                         e.preventDefault();
                         showContextMenu(e, taskItem);
                     }, 500);
                 }
-            }, { passive: false });
+            });
             
-            document.addEventListener('touchend', function() {
+            taskList.addEventListener('touchend', function() {
                 clearTimeout(longPressTimer);
             });
             
-            document.addEventListener('touchmove', function() {
+            taskList.addEventListener('touchmove', function() {
                 clearTimeout(longPressTimer);
             });
 
@@ -728,30 +727,25 @@
         }
 
         function showContextMenu(event, taskItem) {
-            console.log('Abrindo menu de contexto...');
-            
             const index = Array.from(taskList.children).indexOf(taskItem);
-            if (index === -1) {
-                console.log('Índice não encontrado');
-                return;
-            }
+            if (index === -1) return;
 
             currentContextTaskIndex = index;
             selectTask(index);
 
             const task = tasks[index];
-            console.log('Tarefa selecionada:', task);
-
-            // Atualizar texto do item de completar
+            
+            // Atualizar texto dos itens do menu
             const toggleCompleteItem = contextMenu.querySelector('[data-action="toggleComplete"]');
             if (toggleCompleteItem) {
-                toggleCompleteItem.textContent = task.completed ? 'Marcar como Não Completada' : 'Marcar como Completada';
+                toggleCompleteItem.textContent = task.completed ? 
+                    'Marcar como Não Completada' : 'Marcar como Completada';
             }
 
-            // Atualizar texto do item de data
             const removeDateItem = contextMenu.querySelector('[data-action="removeDate"]');
             if (removeDateItem) {
-                removeDateItem.textContent = task.date ? `Remover Data (${task.date})` : 'Remover Data';
+                removeDateItem.textContent = task.date ? 
+                    `Remover Data (${task.date})` : 'Remover Data';
             }
 
             updateDynamicSubmenus();
@@ -766,30 +760,21 @@
                 y = event.clientY;
             }
 
-            const menuWidth = contextMenu.offsetWidth;
-            const menuHeight = contextMenu.offsetHeight;
-            const windowWidth = window.innerWidth;
-            const windowHeight = window.innerHeight;
-            
-            if (x + menuWidth > windowWidth) {
-                x = windowWidth - menuWidth - 10;
+            // Garantir que o menu não sai da tela
+            const menuRect = contextMenu.getBoundingClientRect();
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            if (x + menuRect.width > viewportWidth) {
+                x = viewportWidth - menuRect.width - 10;
             }
-            if (y + menuHeight > windowHeight) {
-                y = windowHeight - menuHeight - 10;
+            if (y + menuRect.height > viewportHeight) {
+                y = viewportHeight - menuRect.height - 10;
             }
-            
-            x = Math.max(10, x);
-            y = Math.max(10, y);
 
             contextMenu.style.left = x + 'px';
             contextMenu.style.top = y + 'px';
             contextMenu.style.display = 'block';
-            contextMenu.style.zIndex = '1001';
-
-            console.log('Menu posicionado em:', x, y);
-
-            justOpenedContextMenu = true;
-            setTimeout(() => { justOpenedContextMenu = false; }, 100);
         }
 
         function hideContextMenu() {
@@ -809,18 +794,13 @@
             }
         }
         
-        // CORREÇÃO CRÍTICA: Função normalizeTask ROBUSTA
         function normalizeTask(task) {
-            console.log('Normalizando tarefa:', task);
-            
             if (!task || typeof task !== 'object') {
-                console.log('Tarefa inválida, retornando padrão');
                 return createDefaultTask();
             }
 
             // Formato Web
             if (task.text !== undefined) {
-                console.log('Formato Web detectado');
                 return {
                     text: String(task.text || ''),
                     completed: Boolean(task.completed),
@@ -834,7 +814,6 @@
 
             // Formato Python/Tkinter
             if (task.texto !== undefined) {
-                console.log('Formato Python detectado');
                 let highlight = null;
                 if (task.destaque_cor) {
                     if (task.destaque_cor === 'vermelho') highlight = 'red';
@@ -853,7 +832,6 @@
                 };
             }
 
-            console.log('Formato desconhecido, retornando padrão');
             return createDefaultTask();
         }
 
@@ -946,7 +924,6 @@
         }
         
         function updateTaskList() {
-            console.log('Atualizando lista de tarefas...');
             taskList.innerHTML = '';
             
             tasks.forEach((task, index) => {
@@ -1006,7 +983,6 @@
                     li.appendChild(textDiv);
                 }
                 
-                // Event listeners para as tarefas (não afetam o menu de contexto)
                 li.addEventListener('click', function(e) {
                     e.stopPropagation();
                     selectTask(index);
@@ -1019,7 +995,6 @@
                 
                 taskList.appendChild(li);
             });
-            console.log('Lista atualizada com', tasks.length, 'tarefas');
         }
         
         function selectTask(index) {
@@ -1214,9 +1189,7 @@
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
-                    console.log('Iniciando importação...');
                     const data = JSON.parse(e.target.result);
-                    console.log('Dados importados:', data);
                     
                     if (Array.isArray(data)) {
                         tasks = data.map(normalizeTask);
@@ -1246,8 +1219,6 @@
                         throw new Error('Formato inválido');
                     }
                     
-                    console.log('Tarefas após importação:', tasks);
-                    
                     selectTask(-1);
                     updateTaskList();
                     notesTextarea.value = notes;
@@ -1255,7 +1226,6 @@
                     
                     updateStatus('Dados importados com sucesso');
                 } catch (error) {
-                    console.error('Erro na importação:', error);
                     alert('Erro ao importar ficheiro: ' + error.message);
                     updateStatus('Erro ao importar ficheiro');
                 }
