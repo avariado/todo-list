@@ -705,7 +705,6 @@
                 if (taskItem) {
                     longPressTarget = taskItem;
                     longPressTimer = setTimeout(() => {
-                        e.preventDefault();
                         showContextMenu(e, taskItem);
                     }, 500);
                 }
