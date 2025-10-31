@@ -326,6 +326,11 @@
         .context-menu-item.has-submenu:hover > .context-submenu {
             display: block;
         }
+
+        /* PARA TOUCH: quando adicionarmos a classe via JS */
+        .context-menu-item.has-submenu.submenu-open > .context-submenu {
+            display: block;
+        }
         
         .notes-container {
             margin-top: 20px;
@@ -707,14 +712,26 @@
                 return false;
             });
 
-            // clique dentro do menu
+            // clique dentro do menu (AJUSTADO p/ ANDROID)
             contextMenu.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                const menuItem = e.target.closest('.context-menu-item');
-                if (menuItem && menuItem.getAttribute('data-action')) {
-                    const action = menuItem.getAttribute('data-action');
-                    handleContextMenuAction(action, currentContextTaskIndex, menuItem);
+                
+                const item = e.target.closest('.context-menu-item');
+                if (!item) return;
+
+                // se for item com submenu, no touch/click vamos só abrir/fechar o submenu
+                if (item.classList.contains('has-submenu')) {
+                    // fechar outros abertos
+                    closeAllSubmenus();
+                    // abrir este
+                    item.classList.add('submenu-open');
+                    return; // NÃO fecha o menu principal
+                }
+
+                // se for ação normal
+                if (item.dataset.action) {
+                    handleContextMenuAction(item.dataset.action, currentContextTaskIndex, item);
                     hideContextMenu();
                 }
             });
@@ -781,6 +798,12 @@
                     e.preventDefault();
                     nextSearchResult();
                 }
+            });
+        }
+
+        function closeAllSubmenus() {
+            contextMenu.querySelectorAll('.has-submenu.submenu-open').forEach(el => {
+                el.classList.remove('submenu-open');
             });
         }
 
@@ -859,6 +882,7 @@
             }
 
             updateDynamicSubmenus();
+            closeAllSubmenus(); // garantir que não há submenus abertos antigos
 
             let x = event.clientX || (event.touches && event.touches[0].clientX) || 0;
             let y = event.clientY || (event.touches && event.touches[0].clientY) || 0;
@@ -886,6 +910,7 @@
             contextMenu.style.display = 'none';
             contextOverlay.style.display = 'none';
             document.body.classList.remove('no-scroll');
+            closeAllSubmenus();
             currentContextTaskIndex = -1;
         }
 
