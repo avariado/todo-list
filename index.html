@@ -257,7 +257,6 @@
             display: none;
             position: fixed;
             z-index: 10000;
-            /* esta camada NÃO rola e NÃO corta submenus */
             overflow: visible;
         }
 
@@ -269,7 +268,7 @@
             min-width: 200px;
             max-height: 70vh;
             overflow-y: auto;
-            overflow-x: hidden; /* ← o que pediste: NADA de scroll lateral */
+            overflow-x: hidden; /* ← sem scroll lateral */
             -webkit-overflow-scrolling: touch;
             touch-action: pan-y;
         }
@@ -303,8 +302,7 @@
             margin: 5px 0;
         }
 
-        /* os submenus ORIGINAIS ficam escondidos dentro do item,
-           mas vamos arrancá-los por JS quando abrirmos */
+        /* os submenus ficam escondidos dentro do item; serão destacados por JS */
         .context-submenu {
             display: none;
         }
@@ -499,7 +497,7 @@
             <div class="context-menu-item" data-action="remove">Remover Tarefa</div>
             <div class="context-menu-separator"></div>
 
-            <div class="context-menu-item has-submenu">
+            <div class="context-menu-item has-submenu" data-submenu="pasta">
                 Pasta
                 <div class="context-submenu">
                     <div class="context-menu-item" data-action="openPersonalFolder">Abrir Pasta Pessoal</div>
@@ -512,7 +510,7 @@
 
             <div class="context-menu-separator"></div>
 
-            <div class="context-menu-item has-submenu">
+            <div class="context-menu-item has-submenu" data-submenu="link">
                 Link
                 <div class="context-submenu">
                     <div class="context-menu-item" data-action="openLink">Abrir Link</div>
@@ -523,7 +521,7 @@
 
             <div class="context-menu-separator"></div>
 
-            <div class="context-menu-item has-submenu">
+            <div class="context-menu-item has-submenu" data-submenu="data">
                 Data
                 <div class="context-submenu">
                     <div class="context-menu-item" data-action="addDate">Definir Data</div>
@@ -533,7 +531,7 @@
 
             <div class="context-menu-separator"></div>
 
-            <div class="context-menu-item has-submenu">
+            <div class="context-menu-item has-submenu" data-submenu="destacar">
                 Destacar
                 <div class="context-submenu">
                     <div class="context-menu-item" data-action="highlightRed">Vermelho</div>
@@ -544,7 +542,7 @@
 
             <div class="context-menu-separator"></div>
 
-            <div class="context-menu-item has-submenu">
+            <div class="context-menu-item has-submenu" data-submenu="separador">
                 Separador
                 <div class="context-submenu">
                     <div class="context-menu-item" data-action="insertSeparator">Inserir Separador</div>
@@ -558,21 +556,21 @@
 
             <div class="context-menu-separator"></div>
 
-            <div class="context-menu-item has-submenu">
+            <div class="context-menu-item has-submenu" data-submenu="programas">
                 Programas
                 <div class="context-submenu" id="programsSubmenu">
                     <div class="context-menu-item" data-action="managePrograms">Gerir Programas</div>
                 </div>
             </div>
 
-            <div class="context-menu-item has-submenu">
+            <div class="context-menu-item has-submenu" data-submenu="documentos">
                 Documentos
                 <div class="context-submenu" id="documentsSubmenu">
                     <div class="context-menu-item" data-action="manageDocuments">Gerir Documentos</div>
                 </div>
             </div>
 
-            <div class="context-menu-item has-submenu">
+            <div class="context-menu-item has-submenu" data-submenu="favoritos">
                 Favoritos
                 <div class="context-submenu" id="favoritesSubmenu">
                     <div class="context-menu-item" data-action="manageFavorites">Gerir Favoritos</div>
@@ -584,9 +582,6 @@
     <input type="file" id="fileInput" class="file-input" accept=".json">
 
     <script>
-        // =========================
-        // ESTADO
-        // =========================
         let tasks = [];
         let notes = "";
         let lastWarningDate = null;
@@ -606,13 +601,11 @@
         let notesVisible = false;
         let currentContextTaskIndex = -1;
 
-        // submenu destacado
+        // submenus destacados
         let openSubmenuEl = null;
         let openSubmenuOriginalParent = null;
+        let submenuCloseTimer = null;
 
-        // =========================
-        // DOM
-        // =========================
         const taskInput = document.getElementById('taskInput');
         const addTaskBtn = document.getElementById('addTaskBtn');
         const taskList = document.getElementById('taskList');
@@ -645,9 +638,6 @@
             updateStatus('Pronto');
         });
 
-        // =========================
-        // EVENTOS
-        // =========================
         function setupEventListeners() {
             addTaskBtn.addEventListener('click', addTask);
             moveUpBtn.addEventListener('click', moveTaskUp);
@@ -665,14 +655,13 @@
                 if (e.key === 'Enter') executeSearch();
             });
 
-            // fechar modal
             document.querySelectorAll('.close-btn').forEach(btn => {
                 btn.addEventListener('click', closeModals);
             });
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
 
-            // menu de contexto (rato)
+            // contextmenu desktop
             taskList.addEventListener('contextmenu', function(e) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
@@ -681,14 +670,14 @@
                 return false;
             });
 
-            // clique dentro do menu (ações simples)
+            // clique em ações simples
             contextMenuBody.addEventListener('click', function(e) {
                 const item = e.target.closest('.context-menu-item');
                 if (!item) return;
                 const hasSubmenu = item.classList.contains('has-submenu');
                 const action = item.getAttribute('data-action');
 
-                // se for item com submenu e sem ação, não fecha
+                // se o item abre submenu e não tem ação, não fechar
                 if (hasSubmenu && !action) return;
 
                 if (action) {
@@ -717,9 +706,9 @@
                 clearTimeout(longPressTimer);
             });
 
-            // fechar ao clicar fora
+            // clicar fora fecha
             document.addEventListener('click', function(e) {
-                if (contextMenu.style.display === 'block' && !contextMenu.contains(e.target) && e.target !== openSubmenuEl) {
+                if (contextMenu.style.display === 'block' && !contextMenu.contains(e.target) && (!openSubmenuEl || !openSubmenuEl.contains(e.target))) {
                     hideContextMenu();
                 }
             });
@@ -732,7 +721,7 @@
                 }
             });
 
-            // impedir que o scroll "escape" para a lista (Android)
+            // impedir fuga de scroll (Android)
             let menuTouchStartY = 0;
             contextMenuBody.addEventListener('touchstart', function(e) {
                 if (e.touches && e.touches.length === 1) {
@@ -759,7 +748,6 @@
                 e.stopPropagation();
             }, {passive: false});
 
-            // input de ficheiro
             fileInput.addEventListener('change', importFromJSON);
 
             // atalhos
@@ -774,60 +762,66 @@
                 }
             });
 
-            // ABERTURA DE SUBMENUS (desktop + touch)
-            // vamos interceptar os .has-submenu e abrir via JS
+            // GESTÃO DE HOVER DOS SUBMENUS (desktop)
             contextMenuBody.querySelectorAll('.context-menu-item.has-submenu').forEach(item => {
-                // desktop: abre ao passar
+                // desktop hover
                 item.addEventListener('mouseenter', () => {
-                    if (isTouchDevice()) return; // no touch abrimos no toque
+                    if (isTouchDevice()) return;
                     openSubmenu(item);
                 });
-                item.addEventListener('mouseleave', (ev) => {
+                item.addEventListener('mouseleave', () => {
                     if (isTouchDevice()) return;
-                    // se o rato sai para dentro do submenu solto, não fechamos já
-                    setTimeout(() => {
-                        if (openSubmenuEl && !openSubmenuEl.matches(':hover')) {
-                            closeSubmenu();
-                        }
-                    }, 150);
+                    scheduleCloseSubmenu();
                 });
 
-                // touch / clique: alterna
+                // toque/click: abre/fecha
                 item.addEventListener('click', (e) => {
-                    // se o item tiver data-action, já foi tratado acima
-                    if (item.classList.contains('has-submenu') && !item.getAttribute('data-action')) {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (openSubmenuEl && openSubmenuEl.dataset.sourceItem === item.dataset.submenuId) {
-                            // já está aberto este → fecha
-                            closeSubmenu();
-                        } else {
-                            openSubmenu(item);
-                        }
+                    if (item.getAttribute('data-action')) return; // é ação, não submenu
+                    if (!item.classList.contains('has-submenu')) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    if (openSubmenuEl && openSubmenuOriginalParent === item) {
+                        closeSubmenu();
+                    } else {
+                        openSubmenu(item);
                     }
                 });
             });
         }
 
-        // =========================
-        // FUNÇÕES DE SUBMENU
-        // =========================
         function isTouchDevice() {
             return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        }
+
+        function cancelCloseSubmenu() {
+            if (submenuCloseTimer) {
+                clearTimeout(submenuCloseTimer);
+                submenuCloseTimer = null;
+            }
+        }
+
+        function scheduleCloseSubmenu() {
+            cancelCloseSubmenu();
+            submenuCloseTimer = setTimeout(() => {
+                if (!openSubmenuEl) return;
+                const overItem = openSubmenuOriginalParent && openSubmenuOriginalParent.matches(':hover');
+                const overSub = openSubmenuEl.matches(':hover');
+                if (!overItem && !overSub) {
+                    closeSubmenu();
+                }
+            }, 180);
         }
 
         function openSubmenu(item) {
             const submenu = item.querySelector('.context-submenu');
             if (!submenu) return;
 
-            // se já houver submenu aberto, fecha-o
+            // fechar anterior
             closeSubmenu();
 
-            // vamos guardar o pai original
             openSubmenuOriginalParent = item;
             openSubmenuEl = submenu;
 
-            // tirar do item e pôr no body
             document.body.appendChild(submenu);
             submenu.style.display = 'block';
             submenu.style.position = 'fixed';
@@ -840,22 +834,25 @@
             submenu.style.borderRadius = '4px';
             submenu.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
 
-            // posicionar ao lado do item
             const rect = item.getBoundingClientRect();
             let left = rect.right;
             let top = rect.top;
 
             const vw = window.innerWidth;
             const vh = window.innerHeight;
-            const subRect = submenu.getBoundingClientRect();
 
-            // se não couber à direita, mete à esquerda
+            // posicionar e só depois medir
+            submenu.style.left = left + 'px';
+            submenu.style.top = top + 'px';
+            let subRect = submenu.getBoundingClientRect();
+
+            // não coube à direita -> esquerda
             if (left + subRect.width > vw) {
                 left = rect.left - subRect.width;
-                if (left < 0) left = 5;
+                if (left < 5) left = 5;
             }
 
-            // se não couber em baixo, sobe
+            // não coube em baixo -> sobe
             if (top + subRect.height > vh) {
                 top = vh - subRect.height - 5;
                 if (top < 5) top = 5;
@@ -864,43 +861,24 @@
             submenu.style.left = left + 'px';
             submenu.style.top = top + 'px';
 
-            // para podermos saber de que item veio
-            const id = 'submenu-' + Math.random().toString(36).slice(2);
-            item.dataset.submenuId = id;
-            submenu.dataset.sourceItem = id;
-
-            // impedir que clique dentro do submenu feche tudo
-            submenu.addEventListener('click', submenuClickStop, {once: false});
-            submenu.addEventListener('mouseenter', () => {/* mantém aberto */});
-            submenu.addEventListener('mouseleave', () => {
-                if (!isTouchDevice()) {
-                    setTimeout(() => {
-                        if (openSubmenuEl && !openSubmenuEl.matches(':hover')) {
-                            closeSubmenu();
-                        }
-                    }, 120);
-                }
-            });
-        }
-
-        function submenuClickStop(e) {
-            e.stopPropagation();
+            // eventos no submenu destacado
+            submenu.onmouseenter = () => {
+                cancelCloseSubmenu();
+            };
+            submenu.onmouseleave = () => {
+                scheduleCloseSubmenu();
+            };
         }
 
         function closeSubmenu() {
+            cancelCloseSubmenu();
             if (openSubmenuEl && openSubmenuOriginalParent) {
-                // voltar a meter no sítio
                 openSubmenuOriginalParent.appendChild(openSubmenuEl);
                 openSubmenuEl.style.display = 'none';
-                openSubmenuEl.removeEventListener('click', submenuClickStop);
             }
             openSubmenuEl = null;
             openSubmenuOriginalParent = null;
         }
-
-        // =========================
-        // RESTO DO CÓDIGO (iguais)
-        // =========================
 
         function showContextMenu(event, taskItem) {
             const index = Array.from(taskList.children).indexOf(taskItem);
@@ -941,10 +919,7 @@
             contextMenu.style.left = x + 'px';
             contextMenu.style.top = y + 'px';
 
-            // reset scroll
             contextMenuBody.scrollTop = 0;
-
-            // fecha qualquer submenu aberto anterior
             closeSubmenu();
         }
 
@@ -1280,7 +1255,6 @@
         }
 
         function updateDynamicSubmenus() {
-            // aqui podes popular dinamicamente
             programsSubmenu.innerHTML = '<div class="context-menu-item" data-action="managePrograms">Gerir Programas</div>';
             documentsSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageDocuments">Gerir Documentos</div>';
             favoritesSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageFavorites">Gerir Favoritos</div>';
