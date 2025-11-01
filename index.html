@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
@@ -14,14 +14,14 @@
             --highlight-blue: #4444ff;
             --hover-color: #e9e9e9;
         }
-        
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        
+
         body {
             background-color: #f5f5f5;
             padding: 20px;
@@ -29,7 +29,15 @@
             user-select: none;
             -webkit-user-select: none;
         }
-        
+
+        /* NOVO: quando o menu de contexto está aberto, impedimos o scroll do fundo.
+           Isto resolve o problema do Android: ao tentar rolar o menu, não rola a lista. */
+        body.no-scroll {
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+        }
+
         .container {
             max-width: 900px;
             margin: 0 auto;
@@ -38,19 +46,19 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
             padding: 20px;
         }
-        
+
         h1 {
             text-align: center;
             margin-bottom: 20px;
             color: var(--primary-color);
         }
-        
+
         .input-section {
             display: flex;
             gap: 10px;
             margin-bottom: 20px;
         }
-        
+
         #taskInput {
             flex: 1;
             padding: 10px;
@@ -60,7 +68,7 @@
             resize: vertical;
             min-height: 60px;
         }
-        
+
         button {
             padding: 10px 15px;
             background-color: var(--primary-color);
@@ -70,16 +78,16 @@
             cursor: pointer;
             font-size: 14px;
         }
-        
+
         button:hover {
             background-color: #3a5877;
         }
-        
+
         button:disabled {
             background-color: #cccccc;
             cursor: not-allowed;
         }
-        
+
         .list-section {
             border: 1px solid var(--border-color);
             border-radius: 4px;
@@ -88,11 +96,11 @@
             max-height: 400px;
             overflow-y: auto;
         }
-        
+
         #taskList {
             list-style-type: none;
         }
-        
+
         .task-item {
             padding: 10px 15px;
             border-bottom: 1px solid var(--border-color);
@@ -101,67 +109,67 @@
             align-items: center;
             gap: 10px;
         }
-        
+
         .task-item:hover {
             background-color: var(--hover-color);
         }
-        
+
         .task-item.selected {
             background-color: var(--primary-color);
             color: white;
         }
-        
+
         .task-item.highlight-red {
             color: var(--highlight-red);
             font-weight: bold;
         }
-        
+
         .task-item.highlight-blue {
             color: var(--highlight-blue);
             font-weight: bold;
         }
-        
+
         .task-item.completed {
             color: var(--completed-color) !important;
             text-decoration: line-through;
             font-weight: normal !important;
         }
-        
+
         .task-icons {
             display: flex;
             gap: 5px;
         }
-        
+
         .task-text {
             flex: 1;
         }
-        
+
         .separator {
             background-color: var(--secondary-color);
             text-align: center;
             font-weight: bold;
             color: #666;
         }
-        
+
         .controls {
             display: flex;
             flex-direction: column;
             gap: 10px;
             margin-bottom: 20px;
         }
-        
+
         .controls-row {
             display: flex;
             flex-wrap: wrap;
             gap: 10px;
             justify-content: center;
         }
-        
+
         .controls button {
             flex: 1;
             min-width: 120px;
         }
-        
+
         .modal {
             display: none;
             position: fixed;
@@ -174,7 +182,7 @@
             justify-content: center;
             align-items: center;
         }
-        
+
         .modal-content {
             background-color: white;
             padding: 20px;
@@ -184,19 +192,19 @@
             max-height: 90vh;
             overflow-y: auto;
         }
-        
+
         .modal-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
             margin-bottom: 15px;
         }
-        
+
         .modal-title {
             font-size: 18px;
             font-weight: bold;
         }
-        
+
         .close-btn {
             background: none;
             border: none;
@@ -204,17 +212,17 @@
             cursor: pointer;
             color: #666;
         }
-        
+
         .form-group {
             margin-bottom: 15px;
         }
-        
+
         .form-group label {
             display: block;
             margin-bottom: 5px;
             font-weight: bold;
         }
-        
+
         .form-group input,
         .form-group textarea {
             width: 100%;
@@ -222,37 +230,37 @@
             border: 1px solid var(--border-color);
             border-radius: 4px;
         }
-        
+
         .form-group textarea {
             min-height: 100px;
             resize: vertical;
         }
-        
+
         .modal-actions {
             display: flex;
             justify-content: flex-end;
             gap: 10px;
             margin-top: 20px;
         }
-        
+
         .file-input {
             display: none;
         }
-        
+
         .search-container {
             margin-bottom: 15px;
             display: flex;
             gap: 10px;
         }
-        
+
         .search-container input {
             flex: 1;
             padding: 8px;
             border: 1px solid var(--border-color);
             border-radius: 4px;
         }
-        
-        /* MENU DE CONTEXTO SIMPLES E FUNCIONAL */
+
+        /* MENU DE CONTEXTO */
         .context-menu {
             display: none;
             position: fixed;
@@ -262,8 +270,13 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             z-index: 10000;
             min-width: 200px;
+            /* NOVO: permitir scroll dentro do menu no Android */
+            max-height: 70vh;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
         }
-        
+
         .context-menu-item {
             padding: 10px 15px;
             cursor: pointer;
@@ -274,24 +287,24 @@
             text-align: left;
             font-size: 14px;
         }
-        
+
         .context-menu-item:hover {
             background-color: var(--hover-color);
         }
-        
+
         .context-menu-item.has-submenu::after {
             content: "▶";
             position: absolute;
             right: 10px;
             font-size: 12px;
         }
-        
+
         .context-menu-separator {
             height: 1px;
             background-color: var(--border-color);
             margin: 5px 0;
         }
-        
+
         .context-submenu {
             display: none;
             position: absolute;
@@ -304,21 +317,21 @@
             min-width: 180px;
             z-index: 10001;
         }
-        
-        /* SUBMENUS FUNCIONAM COM HOVER */
+
+        /* SUBMENUS COM HOVER */
         .context-menu-item.has-submenu:hover > .context-submenu {
             display: block;
         }
-        
+
         .notes-container {
             margin-top: 20px;
             display: none;
         }
-        
+
         .notes-container.visible {
             display: block;
         }
-        
+
         #notesTextarea {
             width: 100%;
             min-height: 150px;
@@ -327,27 +340,27 @@
             border-radius: 4px;
             resize: vertical;
         }
-        
+
         .status-bar {
             margin-top: 10px;
             font-size: 12px;
             color: #666;
             text-align: center;
         }
-        
+
         .highlight-options {
             display: flex;
             gap: 15px;
             align-items: center;
             margin-top: 5px;
         }
-        
+
         .highlight-option {
             display: flex;
             align-items: center;
             gap: 5px;
         }
-        
+
         .highlight-option input[type="radio"] {
             margin: 0;
         }
@@ -365,35 +378,35 @@
             .container {
                 padding: 10px;
             }
-            
+
             .input-section {
                 flex-direction: column;
             }
-            
+
             .controls-row {
                 flex-direction: column;
             }
-            
+
             .controls button {
                 min-width: auto;
             }
-            
+
             .search-container {
                 flex-direction: column;
             }
-            
+
             .context-menu {
                 min-width: 180px;
                 font-size: 14px;
             }
-            
+
             .context-menu-item {
                 padding: 12px 15px;
             }
-            
+
+            /* NOVO: no mobile o submenu também abre para a direita */
             .context-submenu {
                 min-width: 160px;
-                /* ANDROID/MOBILE: agora abre para a direita, como no desktop */
                 left: 100%;
                 right: auto;
             }
@@ -403,22 +416,22 @@
 <body>
     <div class="container">
         <h1>Organizador de Tarefas</h1>
-        
+
         <div class="input-section">
             <textarea id="taskInput" placeholder="Digite uma nova tarefa..."></textarea>
             <button id="addTaskBtn">Adicionar Tarefa</button>
         </div>
-        
+
         <div class="search-container">
             <input type="text" id="searchInput" placeholder="Procurar tarefas...">
             <button id="searchBtn">Procurar</button>
             <button id="nextResultBtn" disabled>Próximo</button>
         </div>
-        
+
         <div class="list-section">
             <ul id="taskList"></ul>
         </div>
-        
+
         <div class="controls">
             <div class="controls-row">
                 <button id="moveUpBtn">▲ Subir</button>
@@ -433,16 +446,16 @@
                 <button id="notesBtn">Notas</button>
             </div>
         </div>
-        
+
         <div class="notes-container" id="notesContainer">
             <textarea id="notesTextarea" placeholder="Digite suas notas aqui..."></textarea>
         </div>
-        
+
         <div class="status-bar">
             <span id="statusText">Pronto</span>
         </div>
     </div>
-    
+
     <div id="propertiesModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -497,14 +510,14 @@
             </div>
         </div>
     </div>
-    
+
     <div id="contextMenu" class="context-menu">
         <div class="context-menu-item" data-action="toggleComplete">Marcar como Completada</div>
         <div class="context-menu-separator"></div>
         <div class="context-menu-item" data-action="edit">Editar Tarefa</div>
         <div class="context-menu-item" data-action="remove">Remover Tarefa</div>
         <div class="context-menu-separator"></div>
-        
+
         <div class="context-menu-item has-submenu">
             Pasta
             <div class="context-submenu">
@@ -515,9 +528,9 @@
                 <div class="context-menu-item" data-action="removeSharedFolder">Remover Pasta Partilhada</div>
             </div>
         </div>
-        
+
         <div class="context-menu-separator"></div>
-        
+
         <div class="context-menu-item has-submenu">
             Link
             <div class="context-submenu">
@@ -526,9 +539,9 @@
                 <div class="context-menu-item" data-action="removeLink">Remover Link</div>
             </div>
         </div>
-        
+
         <div class="context-menu-separator"></div>
-        
+
         <div class="context-menu-item has-submenu">
             Data
             <div class="context-submenu">
@@ -536,9 +549,9 @@
                 <div class="context-menu-item" data-action="removeDate">Remover Data</div>
             </div>
         </div>
-        
+
         <div class="context-menu-separator"></div>
-        
+
         <div class="context-menu-item has-submenu">
             Destacar
             <div class="context-submenu">
@@ -547,9 +560,9 @@
                 <div class="context-menu-item" data-action="removeHighlight">Nenhum</div>
             </div>
         </div>
-        
+
         <div class="context-menu-separator"></div>
-        
+
         <div class="context-menu-item has-submenu">
             Separador
             <div class="context-submenu">
@@ -557,27 +570,27 @@
                 <div class="context-menu-item" data-action="removeSeparator">Remover Separador</div>
             </div>
         </div>
-        
+
         <div class="context-menu-separator"></div>
-        
+
         <div class="context-menu-item" data-action="generateReport">Relatório</div>
-        
+
         <div class="context-menu-separator"></div>
-        
+
         <div class="context-menu-item has-submenu">
             Programas
             <div class="context-submenu" id="programsSubmenu">
                 <div class="context-menu-item" data-action="managePrograms">Gerir Programas</div>
             </div>
         </div>
-        
+
         <div class="context-menu-item has-submenu">
             Documentos
             <div class="context-submenu" id="documentsSubmenu">
                 <div class="context-menu-item" data-action="manageDocuments">Gerir Documentos</div>
             </div>
         </div>
-        
+
         <div class="context-menu-item has-submenu">
             Favoritos
             <div class="context-submenu" id="favoritesSubmenu">
@@ -585,11 +598,11 @@
             </div>
         </div>
     </div>
-    
+
     <input type="file" id="fileInput" class="file-input" accept=".json">
-    
+
     <script>
-        // DADOS INICIAIS - COMPATÍVEIS COM O SEU JSON
+        // DADOS INICIAIS
         let tasks = [];
         let notes = "";
         let lastWarningDate = null;
@@ -609,7 +622,7 @@
         let notesVisible = false;
         let currentContextTaskIndex = -1;
 
-        // ELEMENTOS DO DOM
+        // ELEMENTOS
         const taskInput = document.getElementById('taskInput');
         const addTaskBtn = document.getElementById('addTaskBtn');
         const taskList = document.getElementById('taskList');
@@ -634,20 +647,14 @@
         const documentsSubmenu = document.getElementById('documentsSubmenu');
         const favoritesSubmenu = document.getElementById('favoritesSubmenu');
 
-        // INICIALIZAÇÃO
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('=== INICIANDO APLICAÇÃO ===');
             loadTasks();
             updateTaskList();
             setupEventListeners();
             updateStatus('Pronto');
         });
 
-        // CONFIGURAÇÃO DE EVENTOS
         function setupEventListeners() {
-            console.log('Configurando event listeners...');
-            
-            // Eventos básicos
             addTaskBtn.addEventListener('click', addTask);
             moveUpBtn.addEventListener('click', moveTaskUp);
             moveDownBtn.addEventListener('click', moveTaskDown);
@@ -658,56 +665,59 @@
             importBtn.addEventListener('click', () => fileInput.click());
             notesBtn.addEventListener('click', toggleNotes);
 
-            // Busca
             searchBtn.addEventListener('click', executeSearch);
             nextResultBtn.addEventListener('click', nextSearchResult);
             searchInput.addEventListener('keyup', function(e) {
                 if (e.key === 'Enter') executeSearch();
             });
 
-            // Modais
             document.querySelectorAll('.close-btn').forEach(btn => {
                 btn.addEventListener('click', closeModals);
             });
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
 
-            // MENU DE CONTEXTO - SIMPLES E FUNCIONAL
+            // MENU DE CONTEXTO COM RATO (desktop)
             taskList.addEventListener('contextmenu', function(e) {
-                console.log('=== CONTEXTMENU DISPARADO ===');
                 e.preventDefault();
                 e.stopImmediatePropagation();
-                
                 const taskItem = e.target.closest('.task-item');
                 if (taskItem) {
-                    console.log('Task item encontrado:', taskItem);
                     showContextMenu(e, taskItem);
                 }
                 return false;
             });
 
-            // Clique nos itens do menu de contexto
+            // CLIQUE NO MENU
             contextMenu.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                
                 const menuItem = e.target.closest('.context-menu-item');
                 if (menuItem && menuItem.getAttribute('data-action')) {
                     const action = menuItem.getAttribute('data-action');
-                    console.log('Ação do menu:', action);
                     handleContextMenuAction(action, currentContextTaskIndex, menuItem);
                     hideContextMenu();
                 }
             });
 
-            // Fechar menu ao clicar fora
+            // NOVO: impedir que o scroll do menu vá para o fundo (Android)
+            contextMenu.addEventListener('touchstart', function(e) {
+                e.stopPropagation();
+            }, {passive: true});
+
+            contextMenu.addEventListener('touchmove', function(e) {
+                // deixamos rolar o menu (overflow-y: auto), mas não deixamos o evento "descer"
+                e.stopPropagation();
+            }, {passive: true});
+
+            // FECHAR AO CLICAR FORA
             document.addEventListener('click', function(e) {
                 if (contextMenu.style.display === 'block' && !contextMenu.contains(e.target)) {
                     hideContextMenu();
                 }
             });
 
-            // Fechar menu com ESC
+            // ESC
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     hideContextMenu();
@@ -715,7 +725,7 @@
                 }
             });
 
-            // Touch para Android - SIMPLES
+            // LONG PRESS (Android)
             let longPressTimer;
             taskList.addEventListener('touchstart', function(e) {
                 const taskItem = e.target.closest('.task-item');
@@ -725,20 +735,20 @@
                         showContextMenu(e, taskItem);
                     }, 500);
                 }
-            });
-            
+            }, {passive: false});
+
             taskList.addEventListener('touchend', function() {
                 clearTimeout(longPressTimer);
             });
-            
+
             taskList.addEventListener('touchmove', function() {
                 clearTimeout(longPressTimer);
             });
 
-            // Importação
+            // IMPORTAÇÃO
             fileInput.addEventListener('change', importFromJSON);
 
-            // Atalhos de teclado
+            // ATALHOS
             document.addEventListener('keydown', function(e) {
                 if (e.ctrlKey && e.key === 'f') {
                     e.preventDefault();
@@ -749,19 +759,13 @@
                     nextSearchResult();
                 }
             });
-
-            console.log('Event listeners configurados');
         }
 
-        // FUNÇÃO NORMALIZETASK 100% COMPATÍVEL COM SEU JSON
         function normalizeTask(task) {
-            console.log('Normalizando tarefa:', task);
-            
             if (!task || typeof task !== 'object') {
                 return createDefaultTask();
             }
 
-            // Formato Web (novo)
             if (task.text !== undefined) {
                 return {
                     text: String(task.text || ''),
@@ -774,25 +778,14 @@
                 };
             }
 
-            // Formato Python/Tkinter (SEU JSON)
             if (task.texto !== undefined) {
-                console.log('Processando formato Python:', task);
-                
-                // LÓGICA DE DESTAQUE COMPATÍVEL COM SEU JSON
                 let highlightColor = null;
-                
-                // SEU JSON: prioriza destaque_cor sobre destaque
                 if (task.destaque_cor) {
                     if (task.destaque_cor === 'vermelho') highlightColor = 'red';
                     else if (task.destaque_cor === 'azul') highlightColor = 'blue';
-                }
-                // Fallback para compatibilidade
-                else if (task.destaque === true) {
+                } else if (task.destaque === true) {
                     highlightColor = 'red';
                 }
-                
-                console.log('Resultado destaque:', highlightColor);
-                
                 return {
                     text: String(task.texto || ''),
                     completed: Boolean(task.completada),
@@ -819,42 +812,36 @@
             };
         }
 
-        // MENU DE CONTEXTO - FUNCIONA SEMPRE
+        // MOSTRAR MENU
         function showContextMenu(event, taskItem) {
-            console.log('=== MOSTRANDO MENU DE CONTEXTO ===');
-            
             const index = Array.from(taskList.children).indexOf(taskItem);
-            if (index === -1 || index >= tasks.length) {
-                console.log('Índice inválido:', index);
-                return;
-            }
+            if (index === -1 || index >= tasks.length) return;
 
             currentContextTaskIndex = index;
             selectTask(index);
 
             const task = tasks[index];
-            console.log('Tarefa selecionada para menu:', task);
 
-            // Atualizar itens do menu
             const toggleCompleteItem = contextMenu.querySelector('[data-action="toggleComplete"]');
             if (toggleCompleteItem) {
-                toggleCompleteItem.textContent = task.completed ? 
+                toggleCompleteItem.textContent = task.completed ?
                     'Marcar como Não Completada' : 'Marcar como Completada';
             }
 
             const removeDateItem = contextMenu.querySelector('[data-action="removeDate"]');
             if (removeDateItem) {
-                removeDateItem.textContent = task.date ? 
+                removeDateItem.textContent = task.date ?
                     `Remover Data (${task.date})` : 'Remover Data';
             }
 
             updateDynamicSubmenus();
 
-            // Posicionar menu - CORREÇÃO PARA ANDROID
+            // Mostrar primeiro para podermos medir
+            contextMenu.style.display = 'block';
+
             let x = event.clientX || (event.touches && event.touches[0].clientX) || 0;
             let y = event.clientY || (event.touches && event.touches[0].clientY) || 0;
 
-            // Garantir que não sai da tela
             const rect = contextMenu.getBoundingClientRect();
             const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
             const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
@@ -866,60 +853,61 @@
 
             contextMenu.style.left = x + 'px';
             contextMenu.style.top = y + 'px';
-            contextMenu.style.display = 'block';
 
-            console.log('Menu posicionado em:', x, y);
+            // NOVO: bloquear scroll do fundo enquanto o menu estiver aberto
+            document.body.classList.add('no-scroll');
         }
 
         function hideContextMenu() {
             contextMenu.style.display = 'none';
             currentContextTaskIndex = -1;
+            // NOVO: voltar a permitir scroll
+            document.body.classList.remove('no-scroll');
         }
 
-        // RESTANTE DAS FUNÇÕES (mantidas iguais)
         function updateTaskList() {
             taskList.innerHTML = '';
-            
+
             tasks.forEach((task, index) => {
                 const li = document.createElement('li');
                 li.className = 'task-item';
-                
+
                 if (task.highlightColor === 'red') li.classList.add('highlight-red');
                 if (task.highlightColor === 'blue') li.classList.add('highlight-blue');
                 if (task.completed) li.classList.add('completed');
                 if (index === selectedTaskIndex) li.classList.add('selected');
-                
+
                 if (task.text === '┈┈') {
                     li.classList.add('separator');
                     li.textContent = '┈'.repeat(50);
                 } else {
                     const iconsDiv = document.createElement('div');
                     iconsDiv.className = 'task-icons';
-                    
+
                     if (task.completed) iconsDiv.innerHTML += '✓ ';
                     if (task.personalFolder) iconsDiv.innerHTML += '📁 ';
                     if (task.sharedFolder) iconsDiv.innerHTML += '👥 ';
                     if (task.link) iconsDiv.innerHTML += '🔗 ';
                     if (task.date) iconsDiv.innerHTML += '⏰ ';
-                    
+
                     const textDiv = document.createElement('div');
                     textDiv.className = 'task-text';
                     textDiv.textContent = (task.text || '').split('\n')[0];
-                    
+
                     li.appendChild(iconsDiv);
                     li.appendChild(textDiv);
                 }
-                
+
                 li.addEventListener('click', (e) => {
                     e.stopPropagation();
                     selectTask(index);
                 });
-                
+
                 li.addEventListener('dblclick', (e) => {
                     e.stopPropagation();
                     openProperties();
                 });
-                
+
                 taskList.appendChild(li);
             });
         }
@@ -927,13 +915,13 @@
         function selectTask(index) {
             selectedTaskIndex = index;
             updateTaskList();
-            
+
             const hasSelection = selectedTaskIndex !== -1;
             moveUpBtn.disabled = !hasSelection || selectedTaskIndex === 0;
             moveDownBtn.disabled = !hasSelection || selectedTaskIndex === tasks.length - 1;
             propertiesBtn.disabled = !hasSelection;
             removeTaskBtn.disabled = !hasSelection;
-            
+
             updateStatus(hasSelection ? `Tarefa ${selectedTaskIndex + 1} de ${tasks.length} selecionada` : 'Pronto');
         }
 
@@ -943,7 +931,7 @@
                 alert('Por favor, digite uma tarefa.');
                 return;
             }
-            
+
             const newTask = {
                 text: text,
                 completed: false,
@@ -953,7 +941,7 @@
                 date: null,
                 highlightColor: null
             };
-            
+
             if (selectedTaskIndex !== -1) {
                 tasks.splice(selectedTaskIndex + 1, 0, newTask);
                 selectTask(selectedTaskIndex + 1);
@@ -961,7 +949,7 @@
                 tasks.unshift(newTask);
                 selectTask(0);
             }
-            
+
             taskInput.value = '';
             updateTaskList();
             saveTasks();
@@ -989,18 +977,18 @@
                 alert('Por favor, selecione uma tarefa para ver as propriedades.');
                 return;
             }
-            
+
             const task = tasks[selectedTaskIndex];
             document.getElementById('propertiesTaskText').value = task.text;
             document.getElementById('propertiesPersonalFolder').value = task.personalFolder || '';
             document.getElementById('propertiesSharedFolder').value = task.sharedFolder || '';
             document.getElementById('propertiesLink').value = task.link || '';
             document.getElementById('propertiesDate').value = task.date || '';
-            
+
             document.getElementById('highlightNone').checked = !task.highlightColor;
             document.getElementById('highlightRed').checked = task.highlightColor === 'red';
             document.getElementById('highlightBlue').checked = task.highlightColor === 'blue';
-            
+
             propertiesModal.style.display = 'flex';
         }
 
@@ -1011,18 +999,18 @@
                 alert('A tarefa não pode estar vazia.');
                 return;
             }
-            
+
             task.text = newText;
             task.personalFolder = document.getElementById('propertiesPersonalFolder').value.trim() || null;
             task.sharedFolder = document.getElementById('propertiesSharedFolder').value.trim() || null;
             task.link = document.getElementById('propertiesLink').value.trim() || null;
-            
+
             const dateValue = document.getElementById('propertiesDate').value.trim();
             task.date = dateValue && isValidDate(dateValue) ? dateValue : null;
-            
+
             const highlightValue = document.querySelector('input[name="highlight"]:checked').value;
             task.highlightColor = highlightValue === 'none' ? null : highlightValue;
-            
+
             updateTaskList();
             saveTasks();
             closeModals();
@@ -1034,10 +1022,10 @@
                 alert('Por favor, selecione uma tarefa para eliminar.');
                 return;
             }
-            
+
             const taskText = tasks[selectedTaskIndex].text;
             const preview = taskText.length > 150 ? taskText.substring(0, 147) + '...' : taskText;
-            
+
             if (confirm(`Tem a certeza que pretende eliminar a tarefa?\n\n${preview}`)) {
                 tasks.splice(selectedTaskIndex, 1);
                 selectTask(Math.min(selectedTaskIndex, tasks.length - 1));
@@ -1052,7 +1040,7 @@
                 alert('Não há tarefas para limpar.');
                 return;
             }
-            
+
             if (confirm('Tem a certeza que deseja limpar TODAS as tarefas?\n\nATENÇÃO: esta ação não pode ser desfeita.')) {
                 tasks = [];
                 selectTask(-1);
@@ -1072,8 +1060,8 @@
                     link: task.link,
                     data: task.date,
                     destaque: task.highlightColor === 'red',
-                    destaque_cor: task.highlightColor === 'red' ? 'vermelho' : 
-                                 task.highlightColor === 'blue' ? 'azul' : null
+                    destaque_cor: task.highlightColor === 'red' ? 'vermelho' :
+                                  task.highlightColor === 'blue' ? 'azul' : null
                 })),
                 notas: notes,
                 ultimo_aviso_data: lastWarningDate,
@@ -1086,7 +1074,7 @@
                     pasta_documentos: execMenu.documentsFolder
                 }
             };
-            
+
             const dataStr = JSON.stringify(data, null, 2);
             const dataBlob = new Blob([dataStr], {type: 'application/json'});
             const url = URL.createObjectURL(dataBlob);
@@ -1097,28 +1085,23 @@
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
-            
+
             updateStatus('Dados exportados com sucesso');
         }
 
         function importFromJSON(event) {
             const file = event.target.files[0];
             if (!file) return;
-            
+
             const reader = new FileReader();
             reader.onload = function(e) {
                 try {
-                    console.log('=== INICIANDO IMPORTAÇÃO ===');
                     const data = JSON.parse(e.target.result);
-                    console.log('Dados importados:', data);
-                    
-                    // PROCESSAMENTO COMPATÍVEL COM SEU JSON
                     if (data.tarefas) {
                         tasks = data.tarefas.map(normalizeTask);
                         notes = data.notas || "";
                         lastWarningDate = data.ultimo_aviso_data || null;
-                        
-                        // Processar menu executar
+
                         if (data.executar_menu) {
                             execMenu = {
                                 programs: data.executar_menu.programas || [],
@@ -1132,22 +1115,19 @@
                     } else {
                         throw new Error('Formato de JSON inválido');
                     }
-                    
-                    console.log('Tarefas após importação:', tasks);
-                    
+
                     selectTask(-1);
                     updateTaskList();
                     notesTextarea.value = notes;
                     saveTasks();
-                    
+
                     updateStatus('Dados importados com sucesso');
                 } catch (error) {
-                    console.error('Erro na importação:', error);
                     alert('Erro ao importar ficheiro: ' + error.message);
                     updateStatus('Erro ao importar ficheiro');
                 }
             };
-            
+
             reader.readAsText(file);
             fileInput.value = '';
         }
@@ -1180,23 +1160,23 @@
                 alert('Por favor, introduza um termo para pesquisar.');
                 return;
             }
-            
+
             searchTerm = term;
             searchResults = [];
-            
+
             tasks.forEach((task, index) => {
                 if ((task.text || '').toLowerCase().includes(term.toLowerCase())) {
                     searchResults.push(index);
                 }
             });
-            
+
             if (!searchResults.length) {
                 alert(`Nenhum resultado encontrado para '${term}'.`);
                 selectTask(-1);
                 nextResultBtn.disabled = true;
                 return;
             }
-            
+
             currentSearchIndex = 0;
             nextResultBtn.disabled = false;
             selectTask(searchResults[currentSearchIndex]);
@@ -1205,13 +1185,12 @@
 
         function nextSearchResult() {
             if (!searchResults.length) return;
-            
+
             currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
             selectTask(searchResults[currentSearchIndex]);
         }
 
         function updateDynamicSubmenus() {
-            // Implementação básica - pode ser expandida
             programsSubmenu.innerHTML = '<div class="context-menu-item" data-action="managePrograms">Gerir Programas</div>';
             documentsSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageDocuments">Gerir Documentos</div>';
             favoritesSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageFavorites">Gerir Favoritos</div>';
@@ -1220,41 +1199,40 @@
         function handleContextMenuAction(action, index, element) {
             if (index === -1) return;
             const task = tasks[index];
-            
-            // Implementação básica das ações
+
             switch (action) {
                 case 'toggleComplete':
                     task.completed = !task.completed;
                     updateTaskList();
                     saveTasks();
                     break;
-                    
+
                 case 'edit':
                     openProperties();
                     break;
-                    
+
                 case 'remove':
                     removeTask();
                     break;
-                    
+
                 case 'highlightRed':
                     task.highlightColor = 'red';
                     updateTaskList();
                     saveTasks();
                     break;
-                    
+
                 case 'highlightBlue':
                     task.highlightColor = 'blue';
                     updateTaskList();
                     saveTasks();
                     break;
-                    
+
                 case 'removeHighlight':
                     task.highlightColor = null;
                     updateTaskList();
                     saveTasks();
                     break;
-                    
+
                 default:
                     alert(`Ação "${action}" - Em desenvolvimento`);
             }
@@ -1301,13 +1279,13 @@
             const regex = /^(\d{2})-(\d{2})-(\d{4})$/;
             const match = dateString.match(regex);
             if (!match) return false;
-            
+
             const day = parseInt(match[1], 10);
             const month = parseInt(match[2], 10);
             const year = parseInt(match[3], 10);
-            
+
             if (year < 1900 || year > 9999) return false;
-            
+
             const date = new Date(year, month - 1, day);
             return date.getDate() === day && date.getMonth() === month - 1 && date.getFullYear() === year;
         }
