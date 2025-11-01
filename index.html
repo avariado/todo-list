@@ -695,6 +695,56 @@
                 }
             });
 
+            // >>> NOVO: capturar cliques em submenus destacados (Windows e Android)
+            document.addEventListener('click', function(e) {
+                const item = e.target.closest('.context-menu-item');
+                if (!item) return;
+
+                // menu está visível?
+                const menuVisible = contextMenu.style.display === 'block';
+                const insideDetachedSubmenu = openSubmenuEl && openSubmenuEl.contains(item);
+
+                if (!menuVisible && !insideDetachedSubmenu) return;
+
+                // se for apenas "Pasta", "Link", etc. (só abre submenu), não fazemos nada
+                if (item.classList.contains('has-submenu') && !item.dataset.action) {
+                    return;
+                }
+
+                const action = item.dataset.action;
+                if (action) {
+                    const idx = currentContextTaskIndex !== -1 ? currentContextTaskIndex : selectedTaskIndex;
+                    handleContextMenuAction(action, idx, item);
+                    hideContextMenu();
+                    e.stopPropagation();
+                    e.preventDefault();
+                }
+            }, true);
+
+            // idem para toque (Android)
+            document.addEventListener('touchstart', function(e) {
+                const item = e.target.closest('.context-menu-item');
+                if (!item) return;
+
+                const menuVisible = contextMenu.style.display === 'block';
+                const insideDetachedSubmenu = openSubmenuEl && openSubmenuEl.contains(item);
+
+                if (!menuVisible && !insideDetachedSubmenu) return;
+
+                if (item.classList.contains('has-submenu') && !item.dataset.action) {
+                    return;
+                }
+
+                const action = item.dataset.action;
+                if (action) {
+                    const idx = currentContextTaskIndex !== -1 ? currentContextTaskIndex : selectedTaskIndex;
+                    handleContextMenuAction(action, idx, item);
+                    hideContextMenu();
+                    e.stopPropagation();
+                    e.preventDefault();
+                }
+            }, true);
+
             // long press Android
             let longPressTimer;
             taskList.addEventListener('touchstart', function(e) {
