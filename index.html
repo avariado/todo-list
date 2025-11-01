@@ -262,10 +262,10 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             z-index: 10000;
             min-width: 200px;
-            /* só vertical */
+            /* IMPORTANTE: rola na vertical, mas deixa o conteúdo sair na horizontal (para o submenu) */
             max-height: 70vh;
             overflow-y: auto;
-            overflow-x: hidden;
+            overflow-x: visible; /* ← esta linha é a correção */
             -webkit-overflow-scrolling: touch;
             touch-action: pan-y;
         }
@@ -510,7 +510,7 @@
         <div class="context-menu-item" data-action="edit">Editar Tarefa</div>
         <div class="context-menu-item" data-action="remove">Remover Tarefa</div>
         <div class="context-menu-separator"></div>
-        
+
         <div class="context-menu-item has-submenu">
             Pasta
             <div class="context-submenu">
@@ -691,13 +691,11 @@
                 const hasSubmenu = item.classList.contains('has-submenu');
                 const action = item.getAttribute('data-action');
 
-                // SE TEM SUBMENU E NÃO TEM AÇÃO: não fechamos o menu
+                // se for um item que abre submenu, NÃO fecha o menu
                 if (hasSubmenu && !action) {
-                    // deixa o :hover fazer o trabalho
                     return;
                 }
 
-                // se tem ação, então sim
                 if (action) {
                     handleContextMenuAction(action, currentContextTaskIndex, item);
                     hideContextMenu();
