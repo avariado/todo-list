@@ -695,6 +695,56 @@
                 }
             });
 
+            // >>> NOVO: capturar cliques em submenus destacados (Windows e Android)
+            document.addEventListener('click', function(e) {
+                const item = e.target.closest('.context-menu-item');
+                if (!item) return;
+
+                // menu está visível?
+                const menuVisible = contextMenu.style.display === 'block';
+                const insideDetachedSubmenu = openSubmenuEl && openSubmenuEl.contains(item);
+
+                if (!menuVisible && !insideDetachedSubmenu) return;
+
+                // se for apenas "Pasta", "Link", etc. (só abre submenu), não fazemos nada
+                if (item.classList.contains('has-submenu') && !item.dataset.action) {
+                    return;
+                }
+
+                const action = item.dataset.action;
+                if (action) {
+                    const idx = currentContextTaskIndex !== -1 ? currentContextTaskIndex : selectedTaskIndex;
+                    handleContextMenuAction(action, idx, item);
+                    hideContextMenu();
+                    e.stopPropagation();
+                    e.preventDefault();
+                }
+            }, true);
+
+            // idem para toque (Android)
+            document.addEventListener('touchstart', function(e) {
+                const item = e.target.closest('.context-menu-item');
+                if (!item) return;
+
+                const menuVisible = contextMenu.style.display === 'block';
+                const insideDetachedSubmenu = openSubmenuEl && openSubmenuEl.contains(item);
+
+                if (!menuVisible && !insideDetachedSubmenu) return;
+
+                if (item.classList.contains('has-submenu') && !item.dataset.action) {
+                    return;
+                }
+
+                const action = item.dataset.action;
+                if (action) {
+                    const idx = currentContextTaskIndex !== -1 ? currentContextTaskIndex : selectedTaskIndex;
+                    handleContextMenuAction(action, idx, item);
+                    hideContextMenu();
+                    e.stopPropagation();
+                    e.preventDefault();
+                }
+            }, true);
+
             // long press Android
             let longPressTimer;
             taskList.addEventListener('touchstart', function(e) {
@@ -1273,6 +1323,7 @@
         }
 
         function updateDynamicSubmenus() {
+            // Implementação básica - manter estrutura original
             programsSubmenu.innerHTML = '<div class="context-menu-item" data-action="managePrograms">Gerir Programas</div>';
             documentsSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageDocuments">Gerir Documentos</div>';
             favoritesSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageFavorites">Gerir Favoritos</div>';
@@ -1285,33 +1336,237 @@
             switch (action) {
                 case 'toggleComplete':
                     task.completed = !task.completed;
+                    if (task.completed) {
+                        // Mover para o final se estiver completada (como no Python)
+                        const completedTask = tasks.splice(index, 1)[0];
+                        tasks.push(completedTask);
+                        selectTask(tasks.length - 1);
+                    }
                     updateTaskList();
                     saveTasks();
+                    updateStatus(`Tarefa ${task.completed ? 'completada' : 'não completada'}`);
                     break;
+
                 case 'edit':
                     openProperties();
                     break;
+
                 case 'remove':
                     removeTask();
                     break;
+
+                case 'openPersonalFolder':
+                    if (task.personalFolder) {
+                        // Em ambiente web, não podemos abrir pastas locais
+                        alert(`Pasta Pessoal: ${task.personalFolder}\n\nEm ambiente web, não é possível abrir pastas locais.`);
+                    } else {
+                        alert('Nenhuma pasta pessoal associada a esta tarefa.');
+                    }
+                    break;
+
+                case 'openSharedFolder':
+                    if (task.sharedFolder) {
+                        alert(`Pasta Partilhada: ${task.sharedFolder}\n\nEm ambiente web, não é possível abrir pastas locais.`);
+                    } else {
+                        alert('Nenhuma pasta partilhada associada a esta tarefa.');
+                    }
+                    break;
+
+                case 'removePersonalFolder':
+                    if (task.personalFolder) {
+                        task.personalFolder = null;
+                        updateTaskList();
+                        saveTasks();
+                        updateStatus('Pasta pessoal removida');
+                    } else {
+                        alert('A tarefa não tem pasta pessoal associada.');
+                    }
+                    break;
+
+                case 'removeSharedFolder':
+                    if (task.sharedFolder) {
+                        task.sharedFolder = null;
+                        updateTaskList();
+                        saveTasks();
+                        updateStatus('Pasta partilhada removida');
+                    } else {
+                        alert('A tarefa não tem pasta partilhada associada.');
+                    }
+                    break;
+
+                case 'openLink':
+                    if (task.link) {
+                        window.open(task.link, '_blank');
+                    } else {
+                        alert('Nenhum link associado a esta tarefa.');
+                    }
+                    break;
+
+                case 'associateLink':
+                    const link = prompt('Indique o URL para associar à tarefa:', 'https://');
+                    if (link && link.trim()) {
+                        let finalLink = link.trim();
+                        if (!finalLink.startsWith('http://') && !finalLink.startsWith('https://')) {
+                            finalLink = 'https://' + finalLink;
+                        }
+                        task.link = finalLink;
+                        updateTaskList();
+                        saveTasks();
+                        updateStatus(`Link associado à tarefa: ${finalLink}`);
+                    }
+                    break;
+
+                case 'removeLink':
+                    if (task.link) {
+                        task.link = null;
+                        updateTaskList();
+                        saveTasks();
+                        updateStatus('Link removido');
+                    } else {
+                        alert('A tarefa não tem link associado.');
+                    }
+                    break;
+
+                case 'addDate':
+                    const today = new Date();
+                    const defaultDate = `${String(today.getDate()).padStart(2, '0')}-${String(today.getMonth() + 1).padStart(2, '0')}-${today.getFullYear()}`;
+                    const date = prompt('Indique a data no formato DD-MM-AAAA:', defaultDate);
+                    if (date && date.trim()) {
+                        if (isValidDate(date.trim())) {
+                            task.date = date.trim();
+                            updateTaskList();
+                            saveTasks();
+                            updateStatus(`Data ${task.date} associada à tarefa`);
+                        } else {
+                            alert('Formato inválido. Utilize DD-MM-AAAA (ex.: 05-11-2025).');
+                        }
+                    }
+                    break;
+
+                case 'removeDate':
+                    if (task.date) {
+                        task.date = null;
+                        updateTaskList();
+                        saveTasks();
+                        updateStatus('Data removida');
+                    } else {
+                        alert('A tarefa não tem data associada.');
+                    }
+                    break;
+
                 case 'highlightRed':
                     task.highlightColor = 'red';
                     updateTaskList();
                     saveTasks();
+                    updateStatus('Tarefa destacada em vermelho');
                     break;
+
                 case 'highlightBlue':
                     task.highlightColor = 'blue';
                     updateTaskList();
                     saveTasks();
+                    updateStatus('Tarefa destacada em azul');
                     break;
+
                 case 'removeHighlight':
                     task.highlightColor = null;
                     updateTaskList();
                     saveTasks();
+                    updateStatus('Destaque removido');
                     break;
+
+                case 'insertSeparator':
+                    const separator = {
+                        text: '┈┈',
+                        completed: false,
+                        personalFolder: null,
+                        sharedFolder: null,
+                        link: null,
+                        date: null,
+                        highlightColor: null
+                    };
+                    tasks.splice(index + 1, 0, separator);
+                    selectTask(index + 1);
+                    updateTaskList();
+                    saveTasks();
+                    updateStatus('Separador inserido');
+                    break;
+
+                case 'removeSeparator':
+                    if (task.text === '┈┈') {
+                        tasks.splice(index, 1);
+                        selectTask(Math.min(index, tasks.length - 1));
+                        updateTaskList();
+                        saveTasks();
+                        updateStatus('Separador removido');
+                    } else {
+                        alert('Esta não é uma tarefa separadora.');
+                    }
+                    break;
+
+                case 'generateReport':
+                    generateReport();
+                    break;
+
+                case 'managePrograms':
+                case 'manageDocuments':
+                case 'manageFavorites':
+                    alert(`Funcionalidade "${action}" - Em desenvolvimento`);
+                    break;
+
                 default:
-                    alert(`Ação "${action}" - Em desenvolvimento`);
+                    console.log(`Ação "${action}" não implementada`);
             }
+        }
+
+        function generateReport() {
+            const activeTasks = tasks.filter(t => !t.completed && t.text !== '┈┈');
+            
+            if (!activeTasks.length) {
+                alert('Não existem tarefas ativas para gerar relatório.');
+                return;
+            }
+
+            let report = `RELATÓRIO DE TAREFAS - ${new Date().toLocaleDateString('pt-PT')}\n\n`;
+            
+            activeTasks.forEach((task, index) => {
+                report += `Tarefa ${index + 1}:\n`;
+                report += `Tarefa: ${task.text}\n`;
+                
+                if (task.personalFolder) {
+                    report += `Pasta Pessoal: ${task.personalFolder}\n`;
+                }
+                if (task.sharedFolder) {
+                    report += `Pasta Partilhada: ${task.sharedFolder}\n`;
+                }
+                
+                if (task.link) {
+                    report += `Link: ${task.link}\n`;
+                } else {
+                    report += `Link: \n`;
+                }
+                
+                if (task.date) {
+                    report += `Data: ${task.date}\n`;
+                } else {
+                    report += `Data: n/a\n`;
+                }
+                
+                report += `\n`;
+            });
+
+            // Criar e fazer download do relatório
+            const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Relatório_${new Date().toLocaleDateString('pt-PT').replace(/\//g, '_')}.txt`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            updateStatus('Relatório gerado com sucesso');
         }
 
         function updateStatus(message) {
