@@ -252,18 +252,15 @@
             border-radius: 4px;
         }
 
-        /* =========================
-           MENU DE CONTEXTO (2 CAMADAS)
-           ========================= */
-        /* camada externa: sem scroll, deixa os submenus sair */
+        /* ====== MENU DE CONTEXTO (com corpo rolável) ====== */
         .context-menu {
             display: none;
             position: fixed;
-            background-color: transparent; /* o fundo está na camada interna */
             z-index: 10000;
-            overflow: visible; /* deixa o submenu sair */
+            /* esta camada NÃO rola e NÃO corta submenus */
+            overflow: visible;
         }
-        /* camada interna: esta sim rola na vertical e NÃO rola na horizontal */
+
         .context-menu-body {
             background-color: white;
             border: 1px solid var(--border-color);
@@ -272,7 +269,7 @@
             min-width: 200px;
             max-height: 70vh;
             overflow-y: auto;
-            overflow-x: hidden; /* ← NÃO há scroll horizontal */
+            overflow-x: hidden; /* ← o que pediste: NADA de scroll lateral */
             -webkit-overflow-scrolling: touch;
             touch-action: pan-y;
         }
@@ -306,23 +303,10 @@
             margin: 5px 0;
         }
 
-        /* submenu: fica FORA da camada que rola */
+        /* os submenus ORIGINAIS ficam escondidos dentro do item,
+           mas vamos arrancá-los por JS quando abrirmos */
         .context-submenu {
             display: none;
-            position: absolute;
-            left: 100%;
-            top: 0;
-            background-color: white;
-            border: 1px solid var(--border-color);
-            border-radius: 4px;
-            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            min-width: 180px;
-            z-index: 10001;
-        }
-
-        /* desktop: abre por hover */
-        .context-menu-item.has-submenu:hover > .context-submenu {
-            display: block;
         }
 
         .notes-container {
@@ -404,13 +388,6 @@
 
             .context-menu-item {
                 padding: 12px 15px;
-            }
-
-            /* mobile: submenu continua a abrir para a direita */
-            .context-submenu {
-                min-width: 160px;
-                left: 100%;
-                right: auto;
             }
         }
     </style>
@@ -513,7 +490,7 @@
         </div>
     </div>
 
-    <!-- MENU DE CONTEXTO: 2 CAMADAS -->
+    <!-- MENU DE CONTEXTO -->
     <div id="contextMenu" class="context-menu">
         <div id="contextMenuBody" class="context-menu-body">
             <div class="context-menu-item" data-action="toggleComplete">Marcar como Completada</div>
@@ -607,7 +584,9 @@
     <input type="file" id="fileInput" class="file-input" accept=".json">
 
     <script>
-        // DADOS
+        // =========================
+        // ESTADO
+        // =========================
         let tasks = [];
         let notes = "";
         let lastWarningDate = null;
@@ -627,7 +606,13 @@
         let notesVisible = false;
         let currentContextTaskIndex = -1;
 
+        // submenu destacado
+        let openSubmenuEl = null;
+        let openSubmenuOriginalParent = null;
+
+        // =========================
         // DOM
+        // =========================
         const taskInput = document.getElementById('taskInput');
         const addTaskBtn = document.getElementById('addTaskBtn');
         const taskList = document.getElementById('taskList');
@@ -660,6 +645,9 @@
             updateStatus('Pronto');
         });
 
+        // =========================
+        // EVENTOS
+        // =========================
         function setupEventListeners() {
             addTaskBtn.addEventListener('click', addTask);
             moveUpBtn.addEventListener('click', moveTaskUp);
@@ -677,7 +665,7 @@
                 if (e.key === 'Enter') executeSearch();
             });
 
-            // Fechar modal
+            // fechar modal
             document.querySelectorAll('.close-btn').forEach(btn => {
                 btn.addEventListener('click', closeModals);
             });
@@ -693,21 +681,15 @@
                 return false;
             });
 
-            // clique dentro do menu (apenas no BODY)
+            // clique dentro do menu (ações simples)
             contextMenuBody.addEventListener('click', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-
                 const item = e.target.closest('.context-menu-item');
                 if (!item) return;
-
                 const hasSubmenu = item.classList.contains('has-submenu');
                 const action = item.getAttribute('data-action');
 
-                // item que só abre submenu: não fecha
-                if (hasSubmenu && !action) {
-                    return;
-                }
+                // se for item com submenu e sem ação, não fecha
+                if (hasSubmenu && !action) return;
 
                 if (action) {
                     handleContextMenuAction(action, currentContextTaskIndex, item);
@@ -715,7 +697,7 @@
                 }
             });
 
-            // toque longo (Android)
+            // long press Android
             let longPressTimer;
             taskList.addEventListener('touchstart', function(e) {
                 const taskItem = e.target.closest('.task-item');
@@ -737,7 +719,7 @@
 
             // fechar ao clicar fora
             document.addEventListener('click', function(e) {
-                if (contextMenu.style.display === 'block' && !contextMenu.contains(e.target)) {
+                if (contextMenu.style.display === 'block' && !contextMenu.contains(e.target) && e.target !== openSubmenuEl) {
                     hideContextMenu();
                 }
             });
@@ -750,7 +732,7 @@
                 }
             });
 
-            // prevenir fuga de scroll (Android) — SÓ no body interno
+            // impedir que o scroll "escape" para a lista (Android)
             let menuTouchStartY = 0;
             contextMenuBody.addEventListener('touchstart', function(e) {
                 if (e.touches && e.touches.length === 1) {
@@ -777,6 +759,7 @@
                 e.stopPropagation();
             }, {passive: false});
 
+            // input de ficheiro
             fileInput.addEventListener('change', importFromJSON);
 
             // atalhos
@@ -790,58 +773,134 @@
                     nextSearchResult();
                 }
             });
+
+            // ABERTURA DE SUBMENUS (desktop + touch)
+            // vamos interceptar os .has-submenu e abrir via JS
+            contextMenuBody.querySelectorAll('.context-menu-item.has-submenu').forEach(item => {
+                // desktop: abre ao passar
+                item.addEventListener('mouseenter', () => {
+                    if (isTouchDevice()) return; // no touch abrimos no toque
+                    openSubmenu(item);
+                });
+                item.addEventListener('mouseleave', (ev) => {
+                    if (isTouchDevice()) return;
+                    // se o rato sai para dentro do submenu solto, não fechamos já
+                    setTimeout(() => {
+                        if (openSubmenuEl && !openSubmenuEl.matches(':hover')) {
+                            closeSubmenu();
+                        }
+                    }, 150);
+                });
+
+                // touch / clique: alterna
+                item.addEventListener('click', (e) => {
+                    // se o item tiver data-action, já foi tratado acima
+                    if (item.classList.contains('has-submenu') && !item.getAttribute('data-action')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (openSubmenuEl && openSubmenuEl.dataset.sourceItem === item.dataset.submenuId) {
+                            // já está aberto este → fecha
+                            closeSubmenu();
+                        } else {
+                            openSubmenu(item);
+                        }
+                    }
+                });
+            });
         }
 
-        function normalizeTask(task) {
-            if (!task || typeof task !== 'object') {
-                return createDefaultTask();
+        // =========================
+        // FUNÇÕES DE SUBMENU
+        // =========================
+        function isTouchDevice() {
+            return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        }
+
+        function openSubmenu(item) {
+            const submenu = item.querySelector('.context-submenu');
+            if (!submenu) return;
+
+            // se já houver submenu aberto, fecha-o
+            closeSubmenu();
+
+            // vamos guardar o pai original
+            openSubmenuOriginalParent = item;
+            openSubmenuEl = submenu;
+
+            // tirar do item e pôr no body
+            document.body.appendChild(submenu);
+            submenu.style.display = 'block';
+            submenu.style.position = 'fixed';
+            submenu.style.zIndex = 10001;
+            submenu.style.maxHeight = '60vh';
+            submenu.style.overflowY = 'auto';
+            submenu.style.overflowX = 'hidden';
+            submenu.style.background = 'white';
+            submenu.style.border = '1px solid #ccc';
+            submenu.style.borderRadius = '4px';
+            submenu.style.boxShadow = '0 2px 10px rgba(0,0,0,0.2)';
+
+            // posicionar ao lado do item
+            const rect = item.getBoundingClientRect();
+            let left = rect.right;
+            let top = rect.top;
+
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const subRect = submenu.getBoundingClientRect();
+
+            // se não couber à direita, mete à esquerda
+            if (left + subRect.width > vw) {
+                left = rect.left - subRect.width;
+                if (left < 0) left = 5;
             }
 
-            if (task.text !== undefined) {
-                return {
-                    text: String(task.text || ''),
-                    completed: Boolean(task.completed),
-                    personalFolder: task.personalFolder || null,
-                    sharedFolder: task.sharedFolder || null,
-                    link: task.link || null,
-                    date: task.date || null,
-                    highlightColor: task.highlightColor || null
-                };
+            // se não couber em baixo, sobe
+            if (top + subRect.height > vh) {
+                top = vh - subRect.height - 5;
+                if (top < 5) top = 5;
             }
 
-            if (task.texto !== undefined) {
-                let highlightColor = null;
-                if (task.destaque_cor) {
-                    if (task.destaque_cor === 'vermelho') highlightColor = 'red';
-                    else if (task.destaque_cor === 'azul') highlightColor = 'blue';
-                } else if (task.destaque === true) {
-                    highlightColor = 'red';
+            submenu.style.left = left + 'px';
+            submenu.style.top = top + 'px';
+
+            // para podermos saber de que item veio
+            const id = 'submenu-' + Math.random().toString(36).slice(2);
+            item.dataset.submenuId = id;
+            submenu.dataset.sourceItem = id;
+
+            // impedir que clique dentro do submenu feche tudo
+            submenu.addEventListener('click', submenuClickStop, {once: false});
+            submenu.addEventListener('mouseenter', () => {/* mantém aberto */});
+            submenu.addEventListener('mouseleave', () => {
+                if (!isTouchDevice()) {
+                    setTimeout(() => {
+                        if (openSubmenuEl && !openSubmenuEl.matches(':hover')) {
+                            closeSubmenu();
+                        }
+                    }, 120);
                 }
-                return {
-                    text: String(task.texto || ''),
-                    completed: Boolean(task.completada),
-                    personalFolder: task.pasta_pessoal || null,
-                    sharedFolder: task.pasta_partilhada || null,
-                    link: task.link || null,
-                    date: task.data || null,
-                    highlightColor: highlightColor
-                };
+            });
+        }
+
+        function submenuClickStop(e) {
+            e.stopPropagation();
+        }
+
+        function closeSubmenu() {
+            if (openSubmenuEl && openSubmenuOriginalParent) {
+                // voltar a meter no sítio
+                openSubmenuOriginalParent.appendChild(openSubmenuEl);
+                openSubmenuEl.style.display = 'none';
+                openSubmenuEl.removeEventListener('click', submenuClickStop);
             }
-
-            return createDefaultTask();
+            openSubmenuEl = null;
+            openSubmenuOriginalParent = null;
         }
 
-        function createDefaultTask() {
-            return {
-                text: '',
-                completed: false,
-                personalFolder: null,
-                sharedFolder: null,
-                link: null,
-                date: null,
-                highlightColor: null
-            };
-        }
+        // =========================
+        // RESTO DO CÓDIGO (iguais)
+        // =========================
 
         function showContextMenu(event, taskItem) {
             const index = Array.from(taskList.children).indexOf(taskItem);
@@ -882,13 +941,17 @@
             contextMenu.style.left = x + 'px';
             contextMenu.style.top = y + 'px';
 
-            // reset do scroll interno
+            // reset scroll
             contextMenuBody.scrollTop = 0;
+
+            // fecha qualquer submenu aberto anterior
+            closeSubmenu();
         }
 
         function hideContextMenu() {
             contextMenu.style.display = 'none';
             currentContextTaskIndex = -1;
+            closeSubmenu();
         }
 
         function updateTaskList() {
@@ -1217,6 +1280,7 @@
         }
 
         function updateDynamicSubmenus() {
+            // aqui podes popular dinamicamente
             programsSubmenu.innerHTML = '<div class="context-menu-item" data-action="managePrograms">Gerir Programas</div>';
             documentsSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageDocuments">Gerir Documentos</div>';
             favoritesSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageFavorites">Gerir Favoritos</div>';
@@ -1293,6 +1357,57 @@
                 execMenu: execMenu
             };
             localStorage.setItem('organizadorTarefas', JSON.stringify(data));
+        }
+
+        function normalizeTask(task) {
+            if (!task || typeof task !== 'object') {
+                return createDefaultTask();
+            }
+
+            if (task.text !== undefined) {
+                return {
+                    text: String(task.text || ''),
+                    completed: Boolean(task.completed),
+                    personalFolder: task.personalFolder || null,
+                    sharedFolder: task.sharedFolder || null,
+                    link: task.link || null,
+                    date: task.date || null,
+                    highlightColor: task.highlightColor || null
+                };
+            }
+
+            if (task.texto !== undefined) {
+                let highlightColor = null;
+                if (task.destaque_cor) {
+                    if (task.destaque_cor === 'vermelho') highlightColor = 'red';
+                    else if (task.destaque_cor === 'azul') highlightColor = 'blue';
+                } else if (task.destaque === true) {
+                    highlightColor = 'red';
+                }
+                return {
+                    text: String(task.texto || ''),
+                    completed: Boolean(task.completada),
+                    personalFolder: task.pasta_pessoal || null,
+                    sharedFolder: task.pasta_partilhada || null,
+                    link: task.link || null,
+                    date: task.data || null,
+                    highlightColor: highlightColor
+                };
+            }
+
+            return createDefaultTask();
+        }
+
+        function createDefaultTask() {
+            return {
+                text: '',
+                completed: false,
+                personalFolder: null,
+                sharedFolder: null,
+                link: null,
+                date: null,
+                highlightColor: null
+            };
         }
 
         function isValidDate(dateString) {
