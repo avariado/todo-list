@@ -252,20 +252,27 @@
             border-radius: 4px;
         }
 
-        /* MENU DE CONTEXTO */
+        /* =========================
+           MENU DE CONTEXTO (2 CAMADAS)
+           ========================= */
+        /* camada externa: sem scroll, deixa os submenus sair */
         .context-menu {
             display: none;
             position: fixed;
+            background-color: transparent; /* o fundo está na camada interna */
+            z-index: 10000;
+            overflow: visible; /* deixa o submenu sair */
+        }
+        /* camada interna: esta sim rola na vertical e NÃO rola na horizontal */
+        .context-menu-body {
             background-color: white;
             border: 1px solid var(--border-color);
             border-radius: 4px;
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
-            z-index: 10000;
             min-width: 200px;
-            /* IMPORTANTE: rola na vertical, mas deixa o conteúdo sair na horizontal (para o submenu) */
             max-height: 70vh;
             overflow-y: auto;
-            overflow-x: visible; /* ← esta linha é a correção */
+            overflow-x: hidden; /* ← NÃO há scroll horizontal */
             -webkit-overflow-scrolling: touch;
             touch-action: pan-y;
         }
@@ -279,6 +286,7 @@
             width: 100%;
             text-align: left;
             font-size: 14px;
+            white-space: nowrap;
         }
 
         .context-menu-item:hover {
@@ -298,6 +306,7 @@
             margin: 5px 0;
         }
 
+        /* submenu: fica FORA da camada que rola */
         .context-submenu {
             display: none;
             position: absolute;
@@ -311,7 +320,7 @@
             z-index: 10001;
         }
 
-        /* SUBMENUS COM HOVER (desktop) */
+        /* desktop: abre por hover */
         .context-menu-item.has-submenu:hover > .context-submenu {
             display: block;
         }
@@ -388,7 +397,7 @@
                 flex-direction: column;
             }
 
-            .context-menu {
+            .context-menu-body {
                 min-width: 180px;
                 font-size: 14px;
             }
@@ -397,7 +406,7 @@
                 padding: 12px 15px;
             }
 
-            /* MOBILE: submenu continua a abrir para a direita */
+            /* mobile: submenu continua a abrir para a direita */
             .context-submenu {
                 min-width: 160px;
                 left: 100%;
@@ -504,90 +513,93 @@
         </div>
     </div>
 
+    <!-- MENU DE CONTEXTO: 2 CAMADAS -->
     <div id="contextMenu" class="context-menu">
-        <div class="context-menu-item" data-action="toggleComplete">Marcar como Completada</div>
-        <div class="context-menu-separator"></div>
-        <div class="context-menu-item" data-action="edit">Editar Tarefa</div>
-        <div class="context-menu-item" data-action="remove">Remover Tarefa</div>
-        <div class="context-menu-separator"></div>
+        <div id="contextMenuBody" class="context-menu-body">
+            <div class="context-menu-item" data-action="toggleComplete">Marcar como Completada</div>
+            <div class="context-menu-separator"></div>
+            <div class="context-menu-item" data-action="edit">Editar Tarefa</div>
+            <div class="context-menu-item" data-action="remove">Remover Tarefa</div>
+            <div class="context-menu-separator"></div>
 
-        <div class="context-menu-item has-submenu">
-            Pasta
-            <div class="context-submenu">
-                <div class="context-menu-item" data-action="openPersonalFolder">Abrir Pasta Pessoal</div>
-                <div class="context-menu-item" data-action="openSharedFolder">Abrir Pasta Partilhada</div>
-                <div class="context-menu-separator"></div>
-                <div class="context-menu-item" data-action="removePersonalFolder">Remover Pasta Pessoal</div>
-                <div class="context-menu-item" data-action="removeSharedFolder">Remover Pasta Partilhada</div>
+            <div class="context-menu-item has-submenu">
+                Pasta
+                <div class="context-submenu">
+                    <div class="context-menu-item" data-action="openPersonalFolder">Abrir Pasta Pessoal</div>
+                    <div class="context-menu-item" data-action="openSharedFolder">Abrir Pasta Partilhada</div>
+                    <div class="context-menu-separator"></div>
+                    <div class="context-menu-item" data-action="removePersonalFolder">Remover Pasta Pessoal</div>
+                    <div class="context-menu-item" data-action="removeSharedFolder">Remover Pasta Partilhada</div>
+                </div>
             </div>
-        </div>
 
-        <div class="context-menu-separator"></div>
+            <div class="context-menu-separator"></div>
 
-        <div class="context-menu-item has-submenu">
-            Link
-            <div class="context-submenu">
-                <div class="context-menu-item" data-action="openLink">Abrir Link</div>
-                <div class="context-menu-item" data-action="associateLink">Definir Link</div>
-                <div class="context-menu-item" data-action="removeLink">Remover Link</div>
+            <div class="context-menu-item has-submenu">
+                Link
+                <div class="context-submenu">
+                    <div class="context-menu-item" data-action="openLink">Abrir Link</div>
+                    <div class="context-menu-item" data-action="associateLink">Definir Link</div>
+                    <div class="context-menu-item" data-action="removeLink">Remover Link</div>
+                </div>
             </div>
-        </div>
 
-        <div class="context-menu-separator"></div>
+            <div class="context-menu-separator"></div>
 
-        <div class="context-menu-item has-submenu">
-            Data
-            <div class="context-submenu">
-                <div class="context-menu-item" data-action="addDate">Definir Data</div>
-                <div class="context-menu-item" data-action="removeDate">Remover Data</div>
+            <div class="context-menu-item has-submenu">
+                Data
+                <div class="context-submenu">
+                    <div class="context-menu-item" data-action="addDate">Definir Data</div>
+                    <div class="context-menu-item" data-action="removeDate">Remover Data</div>
+                </div>
             </div>
-        </div>
 
-        <div class="context-menu-separator"></div>
+            <div class="context-menu-separator"></div>
 
-        <div class="context-menu-item has-submenu">
-            Destacar
-            <div class="context-submenu">
-                <div class="context-menu-item" data-action="highlightRed">Vermelho</div>
-                <div class="context-menu-item" data-action="highlightBlue">Azul</div>
-                <div class="context-menu-item" data-action="removeHighlight">Nenhum</div>
+            <div class="context-menu-item has-submenu">
+                Destacar
+                <div class="context-submenu">
+                    <div class="context-menu-item" data-action="highlightRed">Vermelho</div>
+                    <div class="context-menu-item" data-action="highlightBlue">Azul</div>
+                    <div class="context-menu-item" data-action="removeHighlight">Nenhum</div>
+                </div>
             </div>
-        </div>
 
-        <div class="context-menu-separator"></div>
+            <div class="context-menu-separator"></div>
 
-        <div class="context-menu-item has-submenu">
-            Separador
-            <div class="context-submenu">
-                <div class="context-menu-item" data-action="insertSeparator">Inserir Separador</div>
-                <div class="context-menu-item" data-action="removeSeparator">Remover Separador</div>
+            <div class="context-menu-item has-submenu">
+                Separador
+                <div class="context-submenu">
+                    <div class="context-menu-item" data-action="insertSeparator">Inserir Separador</div>
+                    <div class="context-menu-item" data-action="removeSeparator">Remover Separador</div>
+                </div>
             </div>
-        </div>
 
-        <div class="context-menu-separator"></div>
+            <div class="context-menu-separator"></div>
 
-        <div class="context-menu-item" data-action="generateReport">Relatório</div>
+            <div class="context-menu-item" data-action="generateReport">Relatório</div>
 
-        <div class="context-menu-separator"></div>
+            <div class="context-menu-separator"></div>
 
-        <div class="context-menu-item has-submenu">
-            Programas
-            <div class="context-submenu" id="programsSubmenu">
-                <div class="context-menu-item" data-action="managePrograms">Gerir Programas</div>
+            <div class="context-menu-item has-submenu">
+                Programas
+                <div class="context-submenu" id="programsSubmenu">
+                    <div class="context-menu-item" data-action="managePrograms">Gerir Programas</div>
+                </div>
             </div>
-        </div>
 
-        <div class="context-menu-item has-submenu">
-            Documentos
-            <div class="context-submenu" id="documentsSubmenu">
-                <div class="context-menu-item" data-action="manageDocuments">Gerir Documentos</div>
+            <div class="context-menu-item has-submenu">
+                Documentos
+                <div class="context-submenu" id="documentsSubmenu">
+                    <div class="context-menu-item" data-action="manageDocuments">Gerir Documentos</div>
+                </div>
             </div>
-        </div>
 
-        <div class="context-menu-item has-submenu">
-            Favoritos
-            <div class="context-submenu" id="favoritesSubmenu">
-                <div class="context-menu-item" data-action="manageFavorites">Gerir Favoritos</div>
+            <div class="context-menu-item has-submenu">
+                Favoritos
+                <div class="context-submenu" id="favoritesSubmenu">
+                    <div class="context-menu-item" data-action="manageFavorites">Gerir Favoritos</div>
+                </div>
             </div>
         </div>
     </div>
@@ -635,6 +647,7 @@
         const statusText = document.getElementById('statusText');
         const propertiesModal = document.getElementById('propertiesModal');
         const contextMenu = document.getElementById('contextMenu');
+        const contextMenuBody = document.getElementById('contextMenuBody');
         const fileInput = document.getElementById('fileInput');
         const programsSubmenu = document.getElementById('programsSubmenu');
         const documentsSubmenu = document.getElementById('documentsSubmenu');
@@ -664,14 +677,14 @@
                 if (e.key === 'Enter') executeSearch();
             });
 
-            // MODAIS
+            // Fechar modal
             document.querySelectorAll('.close-btn').forEach(btn => {
                 btn.addEventListener('click', closeModals);
             });
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
 
-            // MENU DE CONTEXTO (rato)
+            // menu de contexto (rato)
             taskList.addEventListener('contextmenu', function(e) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
@@ -680,8 +693,8 @@
                 return false;
             });
 
-            // CLIQUES NO MENU
-            contextMenu.addEventListener('click', function(e) {
+            // clique dentro do menu (apenas no BODY)
+            contextMenuBody.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
 
@@ -691,7 +704,7 @@
                 const hasSubmenu = item.classList.contains('has-submenu');
                 const action = item.getAttribute('data-action');
 
-                // se for um item que abre submenu, NÃO fecha o menu
+                // item que só abre submenu: não fecha
                 if (hasSubmenu && !action) {
                     return;
                 }
@@ -702,7 +715,7 @@
                 }
             });
 
-            // TOQUE LONGO (Android)
+            // toque longo (Android)
             let longPressTimer;
             taskList.addEventListener('touchstart', function(e) {
                 const taskItem = e.target.closest('.task-item');
@@ -722,7 +735,7 @@
                 clearTimeout(longPressTimer);
             });
 
-            // FECHAR MENU AO CLICAR FORA
+            // fechar ao clicar fora
             document.addEventListener('click', function(e) {
                 if (contextMenu.style.display === 'block' && !contextMenu.contains(e.target)) {
                     hideContextMenu();
@@ -737,31 +750,30 @@
                 }
             });
 
-            // PREVENIR "FUGA" DO SCROLL NO ANDROID
+            // prevenir fuga de scroll (Android) — SÓ no body interno
             let menuTouchStartY = 0;
-            contextMenu.addEventListener('touchstart', function(e) {
+            contextMenuBody.addEventListener('touchstart', function(e) {
                 if (e.touches && e.touches.length === 1) {
                     menuTouchStartY = e.touches[0].clientY;
                 }
             }, {passive: true});
 
-            contextMenu.addEventListener('touchmove', function(e) {
-                const menu = contextMenu;
-                const scrollTop = menu.scrollTop;
-                const scrollHeight = menu.scrollHeight;
-                const offsetHeight = menu.offsetHeight;
+            contextMenuBody.addEventListener('touchmove', function(e) {
+                const el = contextMenuBody;
+                const scrollTop = el.scrollTop;
+                const scrollHeight = el.scrollHeight;
+                const offsetHeight = el.offsetHeight;
 
                 const currentY = e.touches[0].clientY;
-                const isScrollingDown = currentY < menuTouchStartY;
-                const isScrollingUp = currentY > menuTouchStartY;
+                const isDown = currentY < menuTouchStartY;
+                const isUp = currentY > menuTouchStartY;
 
                 const atTop = scrollTop === 0;
                 const atBottom = scrollTop + offsetHeight >= scrollHeight - 1;
 
-                if ((atTop && isScrollingUp) || (atBottom && isScrollingDown)) {
+                if ((atTop && isUp) || (atBottom && isDown)) {
                     e.preventDefault();
                 }
-
                 e.stopPropagation();
             }, {passive: false});
 
@@ -839,14 +851,13 @@
             selectTask(index);
 
             const task = tasks[index];
-
-            const toggleCompleteItem = contextMenu.querySelector('[data-action="toggleComplete"]');
+            const toggleCompleteItem = contextMenuBody.querySelector('[data-action="toggleComplete"]');
             if (toggleCompleteItem) {
                 toggleCompleteItem.textContent = task.completed ?
                     'Marcar como Não Completada' : 'Marcar como Completada';
             }
 
-            const removeDateItem = contextMenu.querySelector('[data-action="removeDate"]');
+            const removeDateItem = contextMenuBody.querySelector('[data-action="removeDate"]');
             if (removeDateItem) {
                 removeDateItem.textContent = task.date ?
                     `Remover Data (${task.date})` : 'Remover Data';
@@ -859,7 +870,7 @@
             let x = event.clientX || (event.touches && event.touches[0].clientX) || 0;
             let y = event.clientY || (event.touches && event.touches[0].clientY) || 0;
 
-            const rect = contextMenu.getBoundingClientRect();
+            const rect = contextMenuBody.getBoundingClientRect();
             const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
             const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
 
@@ -870,6 +881,9 @@
 
             contextMenu.style.left = x + 'px';
             contextMenu.style.top = y + 'px';
+
+            // reset do scroll interno
+            contextMenuBody.scrollTop = 0;
         }
 
         function hideContextMenu() {
