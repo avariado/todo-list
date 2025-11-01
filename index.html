@@ -262,7 +262,7 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             z-index: 10000;
             min-width: 200px;
-            /* AQUI: só queremos scroll vertical dentro do menu */
+            /* só vertical */
             max-height: 70vh;
             overflow-y: auto;
             overflow-x: hidden;
@@ -311,7 +311,7 @@
             z-index: 10001;
         }
 
-        /* SUBMENUS COM HOVER */
+        /* SUBMENUS COM HOVER (desktop) */
         .context-menu-item.has-submenu:hover > .context-submenu {
             display: block;
         }
@@ -397,7 +397,7 @@
                 padding: 12px 15px;
             }
 
-            /* Aqui estava o teu problema original: agora abre para a direita também em mobile */
+            /* MOBILE: submenu continua a abrir para a direita */
             .context-submenu {
                 min-width: 160px;
                 left: 100%;
@@ -510,7 +510,7 @@
         <div class="context-menu-item" data-action="edit">Editar Tarefa</div>
         <div class="context-menu-item" data-action="remove">Remover Tarefa</div>
         <div class="context-menu-separator"></div>
-
+        
         <div class="context-menu-item has-submenu">
             Pasta
             <div class="context-submenu">
@@ -595,6 +595,7 @@
     <input type="file" id="fileInput" class="file-input" accept=".json">
 
     <script>
+        // DADOS
         let tasks = [];
         let notes = "";
         let lastWarningDate = null;
@@ -614,6 +615,7 @@
         let notesVisible = false;
         let currentContextTaskIndex = -1;
 
+        // DOM
         const taskInput = document.getElementById('taskInput');
         const addTaskBtn = document.getElementById('addTaskBtn');
         const taskList = document.getElementById('taskList');
@@ -638,7 +640,7 @@
         const documentsSubmenu = document.getElementById('documentsSubmenu');
         const favoritesSubmenu = document.getElementById('favoritesSubmenu');
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', () => {
             loadTasks();
             updateTaskList();
             setupEventListeners();
@@ -658,33 +660,46 @@
 
             searchBtn.addEventListener('click', executeSearch);
             nextResultBtn.addEventListener('click', nextSearchResult);
-            searchInput.addEventListener('keyup', function(e) {
+            searchInput.addEventListener('keyup', (e) => {
                 if (e.key === 'Enter') executeSearch();
             });
 
+            // MODAIS
             document.querySelectorAll('.close-btn').forEach(btn => {
                 btn.addEventListener('click', closeModals);
             });
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
 
+            // MENU DE CONTEXTO (rato)
             taskList.addEventListener('contextmenu', function(e) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
                 const taskItem = e.target.closest('.task-item');
-                if (taskItem) {
-                    showContextMenu(e, taskItem);
-                }
+                if (taskItem) showContextMenu(e, taskItem);
                 return false;
             });
 
+            // CLIQUES NO MENU
             contextMenu.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
-                const menuItem = e.target.closest('.context-menu-item');
-                if (menuItem && menuItem.getAttribute('data-action')) {
-                    const action = menuItem.getAttribute('data-action');
-                    handleContextMenuAction(action, currentContextTaskIndex, menuItem);
+
+                const item = e.target.closest('.context-menu-item');
+                if (!item) return;
+
+                const hasSubmenu = item.classList.contains('has-submenu');
+                const action = item.getAttribute('data-action');
+
+                // SE TEM SUBMENU E NÃO TEM AÇÃO: não fechamos o menu
+                if (hasSubmenu && !action) {
+                    // deixa o :hover fazer o trabalho
+                    return;
+                }
+
+                // se tem ação, então sim
+                if (action) {
+                    handleContextMenuAction(action, currentContextTaskIndex, item);
                     hideContextMenu();
                 }
             });
@@ -709,7 +724,7 @@
                 clearTimeout(longPressTimer);
             });
 
-            // FECHAR AO CLICAR FORA
+            // FECHAR MENU AO CLICAR FORA
             document.addEventListener('click', function(e) {
                 if (contextMenu.style.display === 'block' && !contextMenu.contains(e.target)) {
                     hideContextMenu();
@@ -724,7 +739,7 @@
                 }
             });
 
-            // IMPEDIR QUE O SCROLL DO MENU “CAIA” NO FUNDO (Android)
+            // PREVENIR "FUGA" DO SCROLL NO ANDROID
             let menuTouchStartY = 0;
             contextMenu.addEventListener('touchstart', function(e) {
                 if (e.touches && e.touches.length === 1) {
@@ -733,30 +748,28 @@
             }, {passive: true});
 
             contextMenu.addEventListener('touchmove', function(e) {
-                // vamos controlar o “rubber band”
                 const menu = contextMenu;
                 const scrollTop = menu.scrollTop;
                 const scrollHeight = menu.scrollHeight;
                 const offsetHeight = menu.offsetHeight;
 
                 const currentY = e.touches[0].clientY;
-                const isScrollingDown = currentY < menuTouchStartY; // dedo para cima -> scroll para baixo
-                const isScrollingUp = currentY > menuTouchStartY;   // dedo para baixo -> scroll para cima
+                const isScrollingDown = currentY < menuTouchStartY;
+                const isScrollingUp = currentY > menuTouchStartY;
 
                 const atTop = scrollTop === 0;
                 const atBottom = scrollTop + offsetHeight >= scrollHeight - 1;
 
-                // se estamos no topo e o utilizador quer subir mais -> não deixamos
                 if ((atTop && isScrollingUp) || (atBottom && isScrollingDown)) {
-                    e.preventDefault(); // não passa para o elemento de baixo
+                    e.preventDefault();
                 }
 
-                // de qualquer forma, não propagamos para não fazer scroll na lista
                 e.stopPropagation();
             }, {passive: false});
 
             fileInput.addEventListener('change', importFromJSON);
 
+            // atalhos
             document.addEventListener('keydown', function(e) {
                 if (e.ctrlKey && e.key === 'f') {
                     e.preventDefault();
@@ -843,7 +856,6 @@
 
             updateDynamicSubmenus();
 
-            // Mostrar para poder medir
             contextMenu.style.display = 'block';
 
             let x = event.clientX || (event.touches && event.touches[0].clientX) || 0;
@@ -1063,7 +1075,7 @@
                     data: task.date,
                     destaque: task.highlightColor === 'red',
                     destaque_cor: task.highlightColor === 'red' ? 'vermelho' :
-                                    task.highlightColor === 'blue' ? 'azul' : null
+                                  task.highlightColor === 'blue' ? 'azul' : null
                 })),
                 notas: notes,
                 ultimo_aviso_data: lastWarningDate,
@@ -1099,7 +1111,6 @@
             reader.onload = function(e) {
                 try {
                     const data = JSON.parse(e.target.result);
-
                     if (data.tarefas) {
                         tasks = data.tarefas.map(normalizeTask);
                         notes = data.notas || "";
@@ -1188,6 +1199,7 @@
 
         function nextSearchResult() {
             if (!searchResults.length) return;
+
             currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
             selectTask(searchResults[currentSearchIndex]);
         }
