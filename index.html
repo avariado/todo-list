@@ -359,6 +359,70 @@
             flex: 1;
         }
 
+        .folder-buttons {
+            display: flex;
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .folder-buttons button {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+
+        .modal-small {
+            max-width: 400px;
+        }
+
+        .modal-medium {
+            max-width: 500px;
+        }
+
+        .items-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .items-list-item {
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .items-list-item:hover {
+            background-color: var(--hover-color);
+        }
+
+        .items-list-item.selected {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .item-actions button {
+            padding: 3px 8px;
+            font-size: 12px;
+        }
+
+        .edit-form {
+            display: none;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 10px;
+            background-color: var(--secondary-color);
+        }
+
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -450,10 +514,16 @@
                     <div class="folder-field">
                         <label for="propertiesPersonalFolder">Pasta Pessoal:</label>
                         <input type="text" id="propertiesPersonalFolder">
+                        <div class="folder-buttons">
+                            <button id="browsePersonalFolder">Procurar...</button>
+                        </div>
                     </div>
                     <div class="folder-field">
                         <label for="propertiesSharedFolder">Pasta Partilhada:</label>
                         <input type="text" id="propertiesSharedFolder">
+                        <div class="folder-buttons">
+                            <button id="browseSharedFolder">Procurar...</button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -489,6 +559,80 @@
         </div>
     </div>
 
+    <!-- MODAL PARA GERIR ITENS (Programas, Documentos, Favoritos) -->
+    <div id="manageItemsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="manageItemsTitle">Gerir Itens</div>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="items-list" id="itemsList"></div>
+            <div class="form-group">
+                <button id="addItemBtn">Novo Item</button>
+                <button id="editItemBtn" disabled>Editar</button>
+                <button id="removeItemBtn" disabled>Remover</button>
+                <button id="moveItemUpBtn" disabled>▲ Subir</button>
+                <button id="moveItemDownBtn" disabled>▼ Descer</button>
+            </div>
+            <div class="edit-form" id="editItemForm">
+                <div class="form-group">
+                    <label for="editItemName">Nome:</label>
+                    <input type="text" id="editItemName">
+                </div>
+                <div class="form-group">
+                    <label id="editItemPathLabel" for="editItemPath">Caminho:</label>
+                    <input type="text" id="editItemPath">
+                    <div class="folder-buttons" id="browseItemPathContainer" style="display: none;">
+                        <button id="browseItemPath">Procurar...</button>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button id="saveItemBtn">Salvar</button>
+                    <button id="cancelItemBtn">Cancelar</button>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button id="closeItemsBtn">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA DATA -->
+    <div id="dateModal" class="modal">
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <div class="modal-title">Definir Data</div>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="dateInput">Data (DD-MM-AAAA):</label>
+                <input type="text" id="dateInput">
+            </div>
+            <div class="modal-actions">
+                <button id="saveDateBtn">Confirmar</button>
+                <button id="cancelDateBtn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PARA LINK -->
+    <div id="linkModal" class="modal">
+        <div class="modal-content modal-small">
+            <div class="modal-header">
+                <div class="modal-title">Associar Link</div>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="form-group">
+                <label for="linkInput">URL:</label>
+                <input type="text" id="linkInput" placeholder="https://">
+            </div>
+            <div class="modal-actions">
+                <button id="saveLinkBtn">Confirmar</button>
+                <button id="cancelLinkBtn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MENU DE CONTEXTO -->
     <div id="contextMenu" class="context-menu">
         <div id="contextMenuBody" class="context-menu-body">
@@ -503,6 +647,9 @@
                 <div class="context-submenu">
                     <div class="context-menu-item" data-action="openPersonalFolder">Abrir Pasta Pessoal</div>
                     <div class="context-menu-item" data-action="openSharedFolder">Abrir Pasta Partilhada</div>
+                    <div class="context-menu-separator"></div>
+                    <div class="context-menu-item" data-action="associatePersonalFolder">Definir Pasta Pessoal</div>
+                    <div class="context-menu-item" data-action="associateSharedFolder">Definir Pasta Partilhada</div>
                     <div class="context-menu-separator"></div>
                     <div class="context-menu-item" data-action="removePersonalFolder">Remover Pasta Pessoal</div>
                     <div class="context-menu-item" data-action="removeSharedFolder">Remover Pasta Partilhada</div>
@@ -581,6 +728,7 @@
     </div>
 
     <input type="file" id="fileInput" class="file-input" accept=".json">
+    <input type="file" id="folderInput" class="file-input" webkitdirectory multiple style="display: none;">
 
     <script>
         // =========================
@@ -604,6 +752,9 @@
         let searchTerm = "";
         let notesVisible = false;
         let currentContextTaskIndex = -1;
+        let currentManageItemsType = '';
+        let selectedItemIndex = -1;
+        let editingItemIndex = -1;
 
         // submenus destacados
         let openSubmenuEl = null;
@@ -634,15 +785,20 @@
         const contextMenu = document.getElementById('contextMenu');
         const contextMenuBody = document.getElementById('contextMenuBody');
         const fileInput = document.getElementById('fileInput');
+        const folderInput = document.getElementById('folderInput');
         const programsSubmenu = document.getElementById('programsSubmenu');
         const documentsSubmenu = document.getElementById('documentsSubmenu');
         const favoritesSubmenu = document.getElementById('favoritesSubmenu');
+        const manageItemsModal = document.getElementById('manageItemsModal');
+        const dateModal = document.getElementById('dateModal');
+        const linkModal = document.getElementById('linkModal');
 
         document.addEventListener('DOMContentLoaded', () => {
             loadTasks();
             updateTaskList();
             setupEventListeners();
             updateStatus('Pronto');
+            checkTodayTasks();
         });
 
         function setupEventListeners() {
@@ -662,12 +818,33 @@
                 if (e.key === 'Enter') executeSearch();
             });
 
-            // Fechar modal
+            // Pastas nas propriedades
+            document.getElementById('browsePersonalFolder').addEventListener('click', () => browseFolder('personal'));
+            document.getElementById('browseSharedFolder').addEventListener('click', () => browseFolder('shared'));
+
+            // Fechar modais
             document.querySelectorAll('.close-btn').forEach(btn => {
                 btn.addEventListener('click', closeModals);
             });
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
+            document.getElementById('closeItemsBtn').addEventListener('click', () => manageItemsModal.style.display = 'none');
+            document.getElementById('cancelDateBtn').addEventListener('click', () => dateModal.style.display = 'none');
+            document.getElementById('cancelLinkBtn').addEventListener('click', () => linkModal.style.display = 'none');
+
+            // Data e Link
+            document.getElementById('saveDateBtn').addEventListener('click', saveDate);
+            document.getElementById('saveLinkBtn').addEventListener('click', saveLink);
+
+            // Gerir itens
+            document.getElementById('addItemBtn').addEventListener('click', addNewItem);
+            document.getElementById('editItemBtn').addEventListener('click', editSelectedItem);
+            document.getElementById('removeItemBtn').addEventListener('click', removeSelectedItem);
+            document.getElementById('moveItemUpBtn').addEventListener('click', () => moveItem(-1));
+            document.getElementById('moveItemDownBtn').addEventListener('click', () => moveItem(1));
+            document.getElementById('saveItemBtn').addEventListener('click', saveItem);
+            document.getElementById('cancelItemBtn').addEventListener('click', cancelEditItem);
+            document.getElementById('browseItemPath').addEventListener('click', browseItemPath);
 
             // MENU DE CONTEXTO - rato
             taskList.addEventListener('contextmenu', function(e) {
@@ -760,6 +937,7 @@
             }, {passive: false});
 
             fileInput.addEventListener('change', importFromJSON);
+            folderInput.addEventListener('change', handleFolderSelection);
 
             // atalhos
             document.addEventListener('keydown', function(e) {
@@ -896,7 +1074,7 @@
         }
 
         // =========================
-        // RESTANTES FUNÇÕES
+        // FUNÇÕES PRINCIPAIS
         // =========================
         function showContextMenu(event, taskItem) {
             const index = Array.from(taskList.children).indexOf(taskItem);
@@ -1234,6 +1412,9 @@
 
         function closeModals() {
             propertiesModal.style.display = 'none';
+            manageItemsModal.style.display = 'none';
+            dateModal.style.display = 'none';
+            linkModal.style.display = 'none';
         }
 
         function executeSearch() {
@@ -1272,46 +1453,693 @@
             selectTask(searchResults[currentSearchIndex]);
         }
 
+        // =========================
+        // FUNÇÕES DO MENU DE CONTEXTO
+        // =========================
         function updateDynamicSubmenus() {
+            // Atualizar submenu de Programas
             programsSubmenu.innerHTML = '<div class="context-menu-item" data-action="managePrograms">Gerir Programas</div>';
+            if (execMenu.programs && execMenu.programs.length > 0) {
+                programsSubmenu.innerHTML += '<div class="context-menu-separator"></div>';
+                execMenu.programs.forEach((program, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'context-menu-item';
+                    item.setAttribute('data-action', 'openProgram');
+                    item.setAttribute('data-index', index);
+                    item.textContent = program.label;
+                    programsSubmenu.appendChild(item);
+                });
+            }
+            if (execMenu.programsFolder) {
+                programsSubmenu.innerHTML += '<div class="context-menu-separator"></div>';
+                programsSubmenu.innerHTML += '<div class="context-menu-item" data-action="openProgramsFolder">Abrir Pasta de Programas</div>';
+            }
+
+            // Atualizar submenu de Documentos
             documentsSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageDocuments">Gerir Documentos</div>';
+            if (execMenu.documents && execMenu.documents.length > 0) {
+                documentsSubmenu.innerHTML += '<div class="context-menu-separator"></div>';
+                execMenu.documents.forEach((document, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'context-menu-item';
+                    item.setAttribute('data-action', 'openDocument');
+                    item.setAttribute('data-index', index);
+                    item.textContent = document.label;
+                    documentsSubmenu.appendChild(item);
+                });
+            }
+            if (execMenu.documentsFolder) {
+                documentsSubmenu.innerHTML += '<div class="context-menu-separator"></div>';
+                documentsSubmenu.innerHTML += '<div class="context-menu-item" data-action="openDocumentsFolder">Abrir Pasta de Documentos</div>';
+            }
+
+            // Atualizar submenu de Favoritos
             favoritesSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageFavorites">Gerir Favoritos</div>';
+            if (execMenu.favorites && execMenu.favorites.length > 0) {
+                favoritesSubmenu.innerHTML += '<div class="context-menu-separator"></div>';
+                execMenu.favorites.forEach((favorite, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'context-menu-item';
+                    item.setAttribute('data-action', 'openFavorite');
+                    item.setAttribute('data-index', index);
+                    item.textContent = favorite.label;
+                    favoritesSubmenu.appendChild(item);
+                });
+            }
+            if (execMenu.linksFolder) {
+                favoritesSubmenu.innerHTML += '<div class="context-menu-separator"></div>';
+                favoritesSubmenu.innerHTML += '<div class="context-menu-item" data-action="openLinksFolder">Abrir Pasta de Favoritos</div>';
+            }
         }
 
         function handleContextMenuAction(action, index, element) {
-            if (index === -1) return;
+            if (index === -1 && !action.startsWith('open') && action !== 'managePrograms' && action !== 'manageDocuments' && action !== 'manageFavorites') {
+                return;
+            }
+
             const task = tasks[index];
 
             switch (action) {
                 case 'toggleComplete':
                     task.completed = !task.completed;
+                    if (task.completed) {
+                        // Mover para o final se estiver completada
+                        const completedTask = tasks.splice(index, 1)[0];
+                        tasks.push(completedTask);
+                        selectTask(tasks.length - 1);
+                    }
                     updateTaskList();
                     saveTasks();
+                    updateStatus(`Tarefa ${task.completed ? 'completada' : 'não completada'}`);
                     break;
+
                 case 'edit':
                     openProperties();
                     break;
+
                 case 'remove':
                     removeTask();
                     break;
+
+                case 'openPersonalFolder':
+                    if (task.personalFolder) {
+                        openFolder(task.personalFolder);
+                    } else {
+                        alert('Nenhuma pasta pessoal associada a esta tarefa.');
+                    }
+                    break;
+
+                case 'openSharedFolder':
+                    if (task.sharedFolder) {
+                        openFolder(task.sharedFolder);
+                    } else {
+                        alert('Nenhuma pasta partilhada associada a esta tarefa.');
+                    }
+                    break;
+
+                case 'associatePersonalFolder':
+                    browseFolderForTask('personal', index);
+                    break;
+
+                case 'associateSharedFolder':
+                    browseFolderForTask('shared', index);
+                    break;
+
+                case 'removePersonalFolder':
+                    if (task.personalFolder) {
+                        task.personalFolder = null;
+                        updateTaskList();
+                        saveTasks();
+                        updateStatus('Pasta pessoal removida');
+                    } else {
+                        alert('A tarefa não tem pasta pessoal associada.');
+                    }
+                    break;
+
+                case 'removeSharedFolder':
+                    if (task.sharedFolder) {
+                        task.sharedFolder = null;
+                        updateTaskList();
+                        saveTasks();
+                        updateStatus('Pasta partilhada removida');
+                    } else {
+                        alert('A tarefa não tem pasta partilhada associada.');
+                    }
+                    break;
+
+                case 'openLink':
+                    if (task.link) {
+                        window.open(task.link, '_blank');
+                    } else {
+                        alert('Nenhum link associado a esta tarefa.');
+                    }
+                    break;
+
+                case 'associateLink':
+                    openLinkModal(index);
+                    break;
+
+                case 'removeLink':
+                    if (task.link) {
+                        task.link = null;
+                        updateTaskList();
+                        saveTasks();
+                        updateStatus('Link removido');
+                    } else {
+                        alert('A tarefa não tem link associado.');
+                    }
+                    break;
+
+                case 'addDate':
+                    openDateModal(index);
+                    break;
+
+                case 'removeDate':
+                    if (task.date) {
+                        task.date = null;
+                        updateTaskList();
+                        saveTasks();
+                        updateStatus('Data removida');
+                    } else {
+                        alert('A tarefa não tem data associada.');
+                    }
+                    break;
+
                 case 'highlightRed':
                     task.highlightColor = 'red';
                     updateTaskList();
                     saveTasks();
+                    updateStatus('Tarefa destacada em vermelho');
                     break;
+
                 case 'highlightBlue':
                     task.highlightColor = 'blue';
                     updateTaskList();
                     saveTasks();
+                    updateStatus('Tarefa destacada em azul');
                     break;
+
                 case 'removeHighlight':
                     task.highlightColor = null;
                     updateTaskList();
                     saveTasks();
+                    updateStatus('Destaque removido');
                     break;
+
+                case 'insertSeparator':
+                    insertSeparator(index);
+                    break;
+
+                case 'removeSeparator':
+                    if (task.text === '┈┈') {
+                        tasks.splice(index, 1);
+                        selectTask(Math.min(index, tasks.length - 1));
+                        updateTaskList();
+                        saveTasks();
+                        updateStatus('Separador removido');
+                    } else {
+                        alert('Esta não é uma tarefa separadora.');
+                    }
+                    break;
+
+                case 'generateReport':
+                    generateReport();
+                    break;
+
+                case 'managePrograms':
+                    openManageItemsModal('programs');
+                    break;
+
+                case 'manageDocuments':
+                    openManageItemsModal('documents');
+                    break;
+
+                case 'manageFavorites':
+                    openManageItemsModal('favorites');
+                    break;
+
+                case 'openProgram':
+                    const programIndex = parseInt(element.getAttribute('data-index'));
+                    openProgram(programIndex);
+                    break;
+
+                case 'openDocument':
+                    const documentIndex = parseInt(element.getAttribute('data-index'));
+                    openDocument(documentIndex);
+                    break;
+
+                case 'openFavorite':
+                    const favoriteIndex = parseInt(element.getAttribute('data-index'));
+                    openFavorite(favoriteIndex);
+                    break;
+
+                case 'openProgramsFolder':
+                    if (execMenu.programsFolder) {
+                        openFolder(execMenu.programsFolder);
+                    }
+                    break;
+
+                case 'openDocumentsFolder':
+                    if (execMenu.documentsFolder) {
+                        openFolder(execMenu.documentsFolder);
+                    }
+                    break;
+
+                case 'openLinksFolder':
+                    if (execMenu.linksFolder) {
+                        openFolder(execMenu.linksFolder);
+                    }
+                    break;
+
                 default:
-                    alert(`Ação "${action}" - Em desenvolvimento`);
+                    console.log(`Ação "${action}" não implementada`);
             }
+        }
+
+        // =========================
+        // FUNÇÕES AUXILIARES
+        // =========================
+        function browseFolder(type) {
+            folderInput.click();
+            folderInput.onchange = (e) => handleFolderSelection(e, type);
+        }
+
+        function handleFolderSelection(event, type) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                const path = files[0].webkitRelativePath;
+                const folderPath = path.substring(0, path.indexOf('/'));
+                
+                if (type === 'personal') {
+                    document.getElementById('propertiesPersonalFolder').value = folderPath;
+                } else if (type === 'shared') {
+                    document.getElementById('propertiesSharedFolder').value = folderPath;
+                }
+            }
+            folderInput.value = '';
+        }
+
+        function browseFolderForTask(type, index) {
+            folderInput.click();
+            folderInput.onchange = (e) => {
+                const files = e.target.files;
+                if (files.length > 0) {
+                    const path = files[0].webkitRelativePath;
+                    const folderPath = path.substring(0, path.indexOf('/'));
+                    
+                    if (type === 'personal') {
+                        tasks[index].personalFolder = folderPath;
+                    } else if (type === 'shared') {
+                        tasks[index].sharedFolder = folderPath;
+                    }
+                    
+                    updateTaskList();
+                    saveTasks();
+                    updateStatus(`Pasta ${type === 'personal' ? 'pessoal' : 'partilhada'} associada`);
+                }
+                folderInput.value = '';
+            };
+        }
+
+        function openFolder(path) {
+            // Em um ambiente web, não podemos abrir pastas diretamente
+            // Mas podemos tentar abrir em uma nova janela se for uma URL
+            if (path.startsWith('http')) {
+                window.open(path, '_blank');
+            } else {
+                alert(`Em um ambiente web, não é possível abrir pastas locais.\n\nCaminho: ${path}`);
+            }
+        }
+
+        function openDateModal(index) {
+            currentContextTaskIndex = index;
+            const task = tasks[index];
+            document.getElementById('dateInput').value = task.date || getTodayDate();
+            dateModal.style.display = 'flex';
+        }
+
+        function saveDate() {
+            const dateValue = document.getElementById('dateInput').value.trim();
+            if (!dateValue) {
+                dateModal.style.display = 'none';
+                return;
+            }
+
+            if (!isValidDate(dateValue)) {
+                alert('Formato inválido. Utilize DD-MM-AAAA (ex.: 05-11-2025).');
+                return;
+            }
+
+            tasks[currentContextTaskIndex].date = dateValue;
+            updateTaskList();
+            saveTasks();
+            dateModal.style.display = 'none';
+            updateStatus(`Data ${dateValue} associada à tarefa`);
+        }
+
+        function openLinkModal(index) {
+            currentContextTaskIndex = index;
+            const task = tasks[index];
+            document.getElementById('linkInput').value = task.link || 'https://';
+            linkModal.style.display = 'flex';
+        }
+
+        function saveLink() {
+            let linkValue = document.getElementById('linkInput').value.trim();
+            if (!linkValue) {
+                linkModal.style.display = 'none';
+                return;
+            }
+
+            if (!linkValue.startsWith('http://') && !linkValue.startsWith('https://')) {
+                linkValue = 'https://' + linkValue;
+            }
+
+            tasks[currentContextTaskIndex].link = linkValue;
+            updateTaskList();
+            saveTasks();
+            linkModal.style.display = 'none';
+            updateStatus(`Link associado à tarefa: ${linkValue}`);
+        }
+
+        function insertSeparator(index) {
+            const separator = {
+                text: '┈┈',
+                completed: false,
+                personalFolder: null,
+                sharedFolder: null,
+                link: null,
+                date: null,
+                highlightColor: null
+            };
+            tasks.splice(index + 1, 0, separator);
+            selectTask(index + 1);
+            updateTaskList();
+            saveTasks();
+            updateStatus('Separador inserido');
+        }
+
+        function generateReport() {
+            const activeTasks = tasks.filter(t => !t.completed && t.text !== '┈┈');
+            
+            if (!activeTasks.length) {
+                alert('Não existem tarefas ativas para gerar relatório.');
+                return;
+            }
+
+            let report = `RELATÓRIO DE TAREFAS - ${getTodayDate()}\n\n`;
+            
+            activeTasks.forEach((task, index) => {
+                report += `Tarefa ${index + 1}:\n`;
+                report += `Tarefa: ${task.text}\n`;
+                
+                if (task.personalFolder) {
+                    report += `Pasta Pessoal: ${task.personalFolder}\n`;
+                }
+                if (task.sharedFolder) {
+                    report += `Pasta Partilhada: ${task.sharedFolder}\n`;
+                }
+                
+                if (task.link) {
+                    report += `Link: ${task.link}\n`;
+                } else {
+                    report += `Link: \n`;
+                }
+                
+                if (task.date) {
+                    report += `Data: ${task.date}\n`;
+                } else {
+                    report += `Data: n/a\n`;
+                }
+                
+                report += `\n`;
+            });
+
+            // Criar e fazer download do relatório
+            const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Relatório_${getTodayDate().replace(/-/g, '_')}.txt`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            updateStatus('Relatório gerado com sucesso');
+        }
+
+        function openManageItemsModal(type) {
+            currentManageItemsType = type;
+            const titles = {
+                'programs': 'Gerir Programas',
+                'documents': 'Gerir Documentos', 
+                'favorites': 'Gerir Favoritos'
+            };
+            document.getElementById('manageItemsTitle').textContent = titles[type] || 'Gerir Itens';
+            
+            updateItemsList();
+            manageItemsModal.style.display = 'flex';
+            document.getElementById('browseItemPathContainer').style.display = type === 'favorites' ? 'none' : 'block';
+            document.getElementById('editItemPathLabel').textContent = type === 'favorites' ? 'URL:' : 'Caminho:';
+        }
+
+        function updateItemsList() {
+            const itemsList = document.getElementById('itemsList');
+            itemsList.innerHTML = '';
+            
+            const items = execMenu[currentManageItemsType] || [];
+            
+            items.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'items-list-item';
+                if (index === selectedItemIndex) {
+                    div.classList.add('selected');
+                }
+                
+                let displayText = item.label;
+                if (currentManageItemsType === 'favorites') {
+                    displayText += ` → ${item.url}`;
+                } else {
+                    displayText += ` → ${item.path}`;
+                }
+                
+                div.textContent = displayText;
+                
+                div.addEventListener('click', () => {
+                    selectedItemIndex = index;
+                    updateItemsList();
+                    updateItemButtons();
+                });
+                
+                itemsList.appendChild(div);
+            });
+            
+            updateItemButtons();
+        }
+
+        function updateItemButtons() {
+            const hasSelection = selectedItemIndex !== -1;
+            const items = execMenu[currentManageItemsType] || [];
+            
+            document.getElementById('editItemBtn').disabled = !hasSelection;
+            document.getElementById('removeItemBtn').disabled = !hasSelection;
+            document.getElementById('moveItemUpBtn').disabled = !hasSelection || selectedItemIndex === 0;
+            document.getElementById('moveItemDownBtn').disabled = !hasSelection || selectedItemIndex === items.length - 1;
+        }
+
+        function addNewItem() {
+            editingItemIndex = -1;
+            document.getElementById('editItemName').value = '';
+            document.getElementById('editItemPath').value = currentManageItemsType === 'favorites' ? 'https://' : '';
+            document.getElementById('editItemForm').style.display = 'block';
+        }
+
+        function editSelectedItem() {
+            if (selectedItemIndex === -1) return;
+            
+            editingItemIndex = selectedItemIndex;
+            const items = execMenu[currentManageItemsType] || [];
+            const item = items[selectedItemIndex];
+            
+            document.getElementById('editItemName').value = item.label || '';
+            if (currentManageItemsType === 'favorites') {
+                document.getElementById('editItemPath').value = item.url || '';
+            } else {
+                document.getElementById('editItemPath').value = item.path || '';
+            }
+            
+            document.getElementById('editItemForm').style.display = 'block';
+        }
+
+        function removeSelectedItem() {
+            if (selectedItemIndex === -1) return;
+            
+            const items = execMenu[currentManageItemsType] || [];
+            const item = items[selectedItemIndex];
+            
+            if (confirm(`Tem a certeza que pretende remover:\n${item.label}?`)) {
+                items.splice(selectedItemIndex, 1);
+                selectedItemIndex = -1;
+                updateItemsList();
+                saveTasks();
+                updateDynamicSubmenus();
+            }
+        }
+
+        function moveItem(direction) {
+            if (selectedItemIndex === -1) return;
+            
+            const items = execMenu[currentManageItemsType] || [];
+            const newIndex = selectedItemIndex + direction;
+            
+            if (newIndex >= 0 && newIndex < items.length) {
+                [items[selectedItemIndex], items[newIndex]] = [items[newIndex], items[selectedItemIndex]];
+                selectedItemIndex = newIndex;
+                updateItemsList();
+                saveTasks();
+                updateDynamicSubmenus();
+            }
+        }
+
+        function saveItem() {
+            const name = document.getElementById('editItemName').value.trim();
+            const path = document.getElementById('editItemPath').value.trim();
+            
+            if (!name) {
+                alert('O nome não pode estar vazio.');
+                return;
+            }
+            
+            if (!path) {
+                const fieldName = currentManageItemsType === 'favorites' ? 'URL' : 'caminho';
+                alert(`O ${fieldName} não pode estar vazio.`);
+                return;
+            }
+            
+            const items = execMenu[currentManageItemsType] || [];
+            
+            if (editingItemIndex === -1) {
+                // Novo item
+                if (currentManageItemsType === 'favorites') {
+                    items.push({
+                        label: name,
+                        url: path
+                    });
+                } else {
+                    items.push({
+                        label: name,
+                        path: path
+                    });
+                }
+                selectedItemIndex = items.length - 1;
+            } else {
+                // Editar item existente
+                if (currentManageItemsType === 'favorites') {
+                    items[editingItemIndex] = {
+                        label: name,
+                        url: path
+                    };
+                } else {
+                    items[editingItemIndex] = {
+                        label: name,
+                        path: path
+                    };
+                }
+            }
+            
+            cancelEditItem();
+            updateItemsList();
+            saveTasks();
+            updateDynamicSubmenus();
+        }
+
+        function cancelEditItem() {
+            document.getElementById('editItemForm').style.display = 'none';
+            editingItemIndex = -1;
+        }
+
+        function browseItemPath() {
+            if (currentManageItemsType === 'favorites') return;
+            
+            fileInput.click();
+            fileInput.onchange = (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    document.getElementById('editItemPath').value = file.name;
+                }
+                fileInput.value = '';
+            };
+        }
+
+        function openProgram(index) {
+            const program = execMenu.programs[index];
+            if (program && program.path) {
+                // Em ambiente web, não podemos executar programas
+                // Mas podemos tentar abrir URLs ou mostrar informações
+                if (program.path.startsWith('http')) {
+                    window.open(program.path, '_blank');
+                } else {
+                    alert(`Em ambiente web, não é possível executar programas locais.\n\nPrograma: ${program.label}\nCaminho: ${program.path}`);
+                }
+            }
+        }
+
+        function openDocument(index) {
+            const document = execMenu.documents[index];
+            if (document && document.path) {
+                if (document.path.startsWith('http')) {
+                    window.open(document.path, '_blank');
+                } else {
+                    alert(`Em ambiente web, não é possível abrir documentos locais.\n\nDocumento: ${document.label}\nCaminho: ${document.path}`);
+                }
+            }
+        }
+
+        function openFavorite(index) {
+            const favorite = execMenu.favorites[index];
+            if (favorite && favorite.url) {
+                window.open(favorite.url, '_blank');
+            }
+        }
+
+        function checkTodayTasks() {
+            const today = new Date().toLocaleDateString('pt-PT');
+            const todayFormatted = formatDateForTask(today);
+            
+            const todayTasks = tasks.filter(task => 
+                task.date === todayFormatted && !task.completed && task.text !== '┈┈'
+            );
+            
+            if (todayTasks.length > 0 && lastWarningDate !== today) {
+                let message = `Tarefas agendadas para hoje, dia ${todayFormatted}:\n\n`;
+                todayTasks.forEach((task, index) => {
+                    const preview = task.text.length > 120 ? task.text.substring(0, 117) + '...' : task.text;
+                    message += `${index + 1}. ${preview}\n`;
+                });
+                
+                if (confirm(message + '\nClique em OK para continuar.')) {
+                    lastWarningDate = today;
+                    saveTasks();
+                }
+            }
+        }
+
+        function formatDateForTask(dateString) {
+            // Converte de DD/MM/AAAA para DD-MM-AAAA
+            const parts = dateString.split('/');
+            if (parts.length === 3) {
+                return `${parts[0]}-${parts[1]}-${parts[2]}`;
+            }
+            return dateString;
+        }
+
+        function getTodayDate() {
+            const today = new Date();
+            const day = String(today.getDate()).padStart(2, '0');
+            const month = String(today.getMonth() + 1).padStart(2, '0');
+            const year = today.getFullYear();
+            return `${day}-${month}-${year}`;
         }
 
         function updateStatus(message) {
