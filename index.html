@@ -30,14 +30,6 @@
             -webkit-user-select: none;
         }
 
-        /* NOVO: quando o menu de contexto está aberto, impedimos o scroll do fundo.
-           Isto resolve o problema do Android: ao tentar rolar o menu, não rola a lista. */
-        body.no-scroll {
-            overflow: hidden;
-            position: fixed;
-            width: 100%;
-        }
-
         .container {
             max-width: 900px;
             margin: 0 auto;
@@ -270,9 +262,10 @@
             box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
             z-index: 10000;
             min-width: 200px;
-            /* NOVO: permitir scroll dentro do menu no Android */
+            /* AQUI: só queremos scroll vertical dentro do menu */
             max-height: 70vh;
             overflow-y: auto;
+            overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
             touch-action: pan-y;
         }
@@ -404,7 +397,7 @@
                 padding: 12px 15px;
             }
 
-            /* NOVO: no mobile o submenu também abre para a direita */
+            /* Aqui estava o teu problema original: agora abre para a direita também em mobile */
             .context-submenu {
                 min-width: 160px;
                 left: 100%;
@@ -602,7 +595,6 @@
     <input type="file" id="fileInput" class="file-input" accept=".json">
 
     <script>
-        // DADOS INICIAIS
         let tasks = [];
         let notes = "";
         let lastWarningDate = null;
@@ -622,7 +614,6 @@
         let notesVisible = false;
         let currentContextTaskIndex = -1;
 
-        // ELEMENTOS
         const taskInput = document.getElementById('taskInput');
         const addTaskBtn = document.getElementById('addTaskBtn');
         const taskList = document.getElementById('taskList');
@@ -677,7 +668,6 @@
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
 
-            // MENU DE CONTEXTO COM RATO (desktop)
             taskList.addEventListener('contextmenu', function(e) {
                 e.preventDefault();
                 e.stopImmediatePropagation();
@@ -688,7 +678,6 @@
                 return false;
             });
 
-            // CLIQUE NO MENU
             contextMenu.addEventListener('click', function(e) {
                 e.preventDefault();
                 e.stopPropagation();
@@ -700,32 +689,7 @@
                 }
             });
 
-            // NOVO: impedir que o scroll do menu vá para o fundo (Android)
-            contextMenu.addEventListener('touchstart', function(e) {
-                e.stopPropagation();
-            }, {passive: true});
-
-            contextMenu.addEventListener('touchmove', function(e) {
-                // deixamos rolar o menu (overflow-y: auto), mas não deixamos o evento "descer"
-                e.stopPropagation();
-            }, {passive: true});
-
-            // FECHAR AO CLICAR FORA
-            document.addEventListener('click', function(e) {
-                if (contextMenu.style.display === 'block' && !contextMenu.contains(e.target)) {
-                    hideContextMenu();
-                }
-            });
-
-            // ESC
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    hideContextMenu();
-                    closeModals();
-                }
-            });
-
-            // LONG PRESS (Android)
+            // TOQUE LONGO (Android)
             let longPressTimer;
             taskList.addEventListener('touchstart', function(e) {
                 const taskItem = e.target.closest('.task-item');
@@ -745,10 +709,54 @@
                 clearTimeout(longPressTimer);
             });
 
-            // IMPORTAÇÃO
+            // FECHAR AO CLICAR FORA
+            document.addEventListener('click', function(e) {
+                if (contextMenu.style.display === 'block' && !contextMenu.contains(e.target)) {
+                    hideContextMenu();
+                }
+            });
+
+            // ESC
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    hideContextMenu();
+                    closeModals();
+                }
+            });
+
+            // IMPEDIR QUE O SCROLL DO MENU “CAIA” NO FUNDO (Android)
+            let menuTouchStartY = 0;
+            contextMenu.addEventListener('touchstart', function(e) {
+                if (e.touches && e.touches.length === 1) {
+                    menuTouchStartY = e.touches[0].clientY;
+                }
+            }, {passive: true});
+
+            contextMenu.addEventListener('touchmove', function(e) {
+                // vamos controlar o “rubber band”
+                const menu = contextMenu;
+                const scrollTop = menu.scrollTop;
+                const scrollHeight = menu.scrollHeight;
+                const offsetHeight = menu.offsetHeight;
+
+                const currentY = e.touches[0].clientY;
+                const isScrollingDown = currentY < menuTouchStartY; // dedo para cima -> scroll para baixo
+                const isScrollingUp = currentY > menuTouchStartY;   // dedo para baixo -> scroll para cima
+
+                const atTop = scrollTop === 0;
+                const atBottom = scrollTop + offsetHeight >= scrollHeight - 1;
+
+                // se estamos no topo e o utilizador quer subir mais -> não deixamos
+                if ((atTop && isScrollingUp) || (atBottom && isScrollingDown)) {
+                    e.preventDefault(); // não passa para o elemento de baixo
+                }
+
+                // de qualquer forma, não propagamos para não fazer scroll na lista
+                e.stopPropagation();
+            }, {passive: false});
+
             fileInput.addEventListener('change', importFromJSON);
 
-            // ATALHOS
             document.addEventListener('keydown', function(e) {
                 if (e.ctrlKey && e.key === 'f') {
                     e.preventDefault();
@@ -812,7 +820,6 @@
             };
         }
 
-        // MOSTRAR MENU
         function showContextMenu(event, taskItem) {
             const index = Array.from(taskList.children).indexOf(taskItem);
             if (index === -1 || index >= tasks.length) return;
@@ -836,7 +843,7 @@
 
             updateDynamicSubmenus();
 
-            // Mostrar primeiro para podermos medir
+            // Mostrar para poder medir
             contextMenu.style.display = 'block';
 
             let x = event.clientX || (event.touches && event.touches[0].clientX) || 0;
@@ -853,16 +860,11 @@
 
             contextMenu.style.left = x + 'px';
             contextMenu.style.top = y + 'px';
-
-            // NOVO: bloquear scroll do fundo enquanto o menu estiver aberto
-            document.body.classList.add('no-scroll');
         }
 
         function hideContextMenu() {
             contextMenu.style.display = 'none';
             currentContextTaskIndex = -1;
-            // NOVO: voltar a permitir scroll
-            document.body.classList.remove('no-scroll');
         }
 
         function updateTaskList() {
@@ -1061,7 +1063,7 @@
                     data: task.date,
                     destaque: task.highlightColor === 'red',
                     destaque_cor: task.highlightColor === 'red' ? 'vermelho' :
-                                  task.highlightColor === 'blue' ? 'azul' : null
+                                    task.highlightColor === 'blue' ? 'azul' : null
                 })),
                 notas: notes,
                 ultimo_aviso_data: lastWarningDate,
@@ -1097,6 +1099,7 @@
             reader.onload = function(e) {
                 try {
                     const data = JSON.parse(e.target.result);
+
                     if (data.tarefas) {
                         tasks = data.tarefas.map(normalizeTask);
                         notes = data.notas || "";
@@ -1185,7 +1188,6 @@
 
         function nextSearchResult() {
             if (!searchResults.length) return;
-
             currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
             selectTask(searchResults[currentSearchIndex]);
         }
@@ -1206,33 +1208,27 @@
                     updateTaskList();
                     saveTasks();
                     break;
-
                 case 'edit':
                     openProperties();
                     break;
-
                 case 'remove':
                     removeTask();
                     break;
-
                 case 'highlightRed':
                     task.highlightColor = 'red';
                     updateTaskList();
                     saveTasks();
                     break;
-
                 case 'highlightBlue':
                     task.highlightColor = 'blue';
                     updateTaskList();
                     saveTasks();
                     break;
-
                 case 'removeHighlight':
                     task.highlightColor = null;
                     updateTaskList();
                     saveTasks();
                     break;
-
                 default:
                     alert(`Ação "${action}" - Em desenvolvimento`);
             }
