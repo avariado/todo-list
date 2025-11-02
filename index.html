@@ -125,7 +125,6 @@
 
         .task-item.completed {
             color: var(--completed-color) !important;
-            text-decoration: line-through;
             font-weight: normal !important;
         }
 
@@ -1058,7 +1057,7 @@
                     'Marcar como Não Completada' : 'Marcar como Completada';
             }
 
-            const removeDateItem = contextMenuBody.querySelector('[data-action="removeDate"]');
+            const removeDateItem = contextMenuBody.querySelector('[data-action="removeDate"]);
             if (removeDateItem) {
                 removeDateItem.textContent = task.date ?
                     `Remover Data (${task.date})` : 'Remover Data';
@@ -1459,7 +1458,8 @@
 
                 case 'openPersonalFolder':
                     if (task.personalFolder) {
-                        alert(`Pasta Pessoal: ${task.personalFolder}\n\nEm ambiente web, não é possível abrir pastas locais.`);
+                        copyToClipboard(task.personalFolder);
+                        alert(`Pasta Pessoal: ${task.personalFolder}\n\nEm ambiente web, não é possível abrir pastas locais. A localização foi copiada para a clipboard.`);
                     } else {
                         alert('Nenhuma pasta pessoal associada a esta tarefa.');
                     }
@@ -1467,7 +1467,8 @@
 
                 case 'openSharedFolder':
                     if (task.sharedFolder) {
-                        alert(`Pasta Partilhada: ${task.sharedFolder}\n\nEm ambiente web, não é possível abrir pastas locais.`);
+                        copyToClipboard(task.sharedFolder);
+                        alert(`Pasta Partilhada: ${task.sharedFolder}\n\nEm ambiente web, não é possível abrir pastas locais. A localização foi copiada para a clipboard.`);
                     } else {
                         alert('Nenhuma pasta partilhada associada a esta tarefa.');
                     }
@@ -1618,6 +1619,37 @@
                 default:
                     console.log(`Ação "${action}" não implementada`);
             }
+        }
+
+        function copyToClipboard(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(text).then(() => {
+                    console.log('Texto copiado para clipboard');
+                }).catch(err => {
+                    console.error('Erro ao copiar para clipboard:', err);
+                    fallbackCopyToClipboard(text);
+                });
+            } else {
+                fallbackCopyToClipboard(text);
+            }
+        }
+
+        function fallbackCopyToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                console.log('Texto copiado para clipboard (fallback)');
+            } catch (err) {
+                console.error('Erro ao copiar para clipboard (fallback):', err);
+            }
+            document.body.removeChild(textArea);
         }
 
         function generateReport() {
