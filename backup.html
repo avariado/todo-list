@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
@@ -123,9 +123,10 @@
             font-weight: bold;
         }
 
+        /* Alteração 1: tarefas completadas só cinzento, sem risco */
         .task-item.completed {
             color: var(--completed-color) !important;
-            text-decoration: line-through;
+            text-decoration: none;
             font-weight: normal !important;
         }
 
@@ -254,7 +255,7 @@
             border-radius: 4px;
         }
 
-        /* ====== MENU DE CONTEXTO (com corpo rolável) ====== */
+        /* ====== MENU DE CONTEXTO ====== */
         .context-menu {
             display: none;
             position: fixed;
@@ -312,6 +313,9 @@
 
         .notes-container {
             margin-top: 20px;
+        }
+
+        .notes-container {
             display: none;
         }
 
@@ -366,12 +370,12 @@
             pointer-events: none !important;
         }
 
-        .context-menu, 
+        .context-menu,
         .context-submenu {
             pointer-events: auto !important;
         }
 
-        /* ====== ANDROID / mobile ====== */
+        /* ====== Responsivo ====== */
         @media (max-width: 768px) {
             .container {
                 padding: 10px;
@@ -594,24 +598,13 @@
 
             <div class="context-menu-separator"></div>
 
+            <!-- Alteração 3: opção única "Gerir" com três submenus -->
             <div class="context-menu-item has-submenu">
-                Programas
-                <div class="context-submenu" id="programsSubmenu">
-                    <div class="context-menu-item" data-action="managePrograms">Gerir Programas</div>
-                </div>
-            </div>
-
-            <div class="context-menu-item has-submenu">
-                Documentos
-                <div class="context-submenu" id="documentsSubmenu">
-                    <div class="context-menu-item" data-action="manageDocuments">Gerir Documentos</div>
-                </div>
-            </div>
-
-            <div class="context-menu-item has-submenu">
-                Favoritos
-                <div class="context-submenu" id="favoritesSubmenu">
-                    <div class="context-menu-item" data-action="manageFavorites">Gerir Favoritos</div>
+                Gerir
+                <div class="context-submenu" id="manageSubmenu">
+                    <div class="context-menu-item" data-action="managePrograms">Programas</div>
+                    <div class="context-menu-item" data-action="manageDocuments">Documentos</div>
+                    <div class="context-menu-item" data-action="manageFavorites">Favoritos</div>
                 </div>
             </div>
         </div>
@@ -671,9 +664,7 @@
         const contextMenu = document.getElementById('contextMenu');
         const contextMenuBody = document.getElementById('contextMenuBody');
         const fileInput = document.getElementById('fileInput');
-        const programsSubmenu = document.getElementById('programsSubmenu');
-        const documentsSubmenu = document.getElementById('documentsSubmenu');
-        const favoritesSubmenu = document.getElementById('favoritesSubmenu');
+        const manageSubmenu = document.getElementById('manageSubmenu');
 
         document.addEventListener('DOMContentLoaded', () => {
             loadTasks();
@@ -715,13 +706,13 @@
                 return false;
             });
 
-            // CORREÇÃO: Event listener único para o menu de contexto
+            // listener único para o menu de contexto
             contextMenuBody.addEventListener('click', handleMenuClick);
             
-            // Event listener para submenus destacados
+            // cliques em submenus destacados
             document.addEventListener('click', handleDetachedSubmenuClick, true);
 
-            // Event listener para touch (Android)
+            // touch (Android)
             document.addEventListener('touchstart', handleMenuTouch, {capture: true, passive: false});
 
             // long press Android
@@ -750,7 +741,7 @@
                 clearTimeout(longPressTimer);
             });
 
-            // Event listener para cliques na lista de tarefas
+            // clique na lista
             taskList.addEventListener('click', function(e) {
                 if (document.body.classList.contains('context-menu-closing')) {
                     e.stopPropagation();
@@ -823,25 +814,21 @@
                 }
             });
 
-            // inicializar lógica dos submenus
+            // inicializar lógica de submenus
             initSubmenus();
         }
 
-        // ====== FUNÇÕES CORRIGIDAS PARA MENU DE CONTEXTO ======
-        
-        // Função principal para cliques no menu
+        // ====== FUNÇÕES DE MENU DE CONTEXTO ======
         function handleMenuClick(e) {
             const item = e.target.closest('.context-menu-item');
             if (!item) return;
 
-            // Se estamos no processo de fechar o menu, ignorar cliques
             if (document.body.classList.contains('context-menu-closing')) {
                 e.stopPropagation();
                 e.preventDefault();
                 return;
             }
 
-            // Se é um item que só abre submenu, não faz nada aqui
             if (item.classList.contains('has-submenu') && !item.dataset.action) {
                 return;
             }
@@ -854,16 +841,12 @@
             }
         }
 
-        // CORREÇÃO: Nova função para lidar com cliques em submenus destacados
         function handleDetachedSubmenuClick(e) {
             const item = e.target.closest('.context-menu-item');
             if (!item) return;
-
-            // Verificar se o clique foi em um submenu destacado
             const inDetachedSubmenu = openSubmenuEl && openSubmenuEl.contains(item);
             if (!inDetachedSubmenu) return;
 
-            // Se é um item que só abre submenu, não faz nada
             if (item.classList.contains('has-submenu') && !item.dataset.action) {
                 return;
             }
@@ -878,7 +861,6 @@
             }
         }
 
-        // Função para toques (Android)
         function handleMenuTouch(e) {
             const item = e.target.closest('.context-menu-item');
             if (!item) return;
@@ -888,7 +870,6 @@
 
             if (!menuVisible && !insideDetachedSubmenu) return;
 
-            // Se estamos no processo de fechar o menu, ignorar todos os toques
             if (document.body.classList.contains('context-menu-closing')) {
                 e.stopPropagation();
                 e.preventDefault();
@@ -902,16 +883,11 @@
             const action = item.dataset.action;
             if (action) {
                 const idx = currentContextTaskIndex !== -1 ? currentContextTaskIndex : selectedTaskIndex;
-                
-                // Prevenir imediatamente a propagação apenas para touch
                 e.stopPropagation();
                 e.preventDefault();
-                
-                // Pequeno delay para garantir que o menu seja fechado antes de processar a ação
                 setTimeout(() => {
                     handleContextMenuAction(action, idx, item);
                 }, 10);
-                
                 hideContextMenu();
             }
         }
@@ -925,17 +901,13 @@
         // ====== SUBMENUS ======
         function initSubmenus() {
             contextMenuBody.querySelectorAll('.context-menu-item.has-submenu').forEach(item => {
-                // desktop: hover abre
                 item.addEventListener('mouseenter', () => {
                     if (!isTouchDevice()) openSubmenu(item);
                 });
-                // desktop: sair agenda fecho
                 item.addEventListener('mouseleave', () => {
                     if (!isTouchDevice()) scheduleCloseSubmenu();
                 });
-                // touch/click: alterna
                 item.addEventListener('click', (e) => {
-                    // se for item com ação, não tratamos aqui
                     if (item.getAttribute('data-action')) return;
                     e.preventDefault();
                     e.stopPropagation();
@@ -952,13 +924,11 @@
             const submenu = item.querySelector('.context-submenu');
             if (!submenu) return;
 
-            // fecha eventual anterior
             closeSubmenu();
 
             openSubmenuParent = item;
             openSubmenuEl = submenu;
 
-            // destaca para o body
             document.body.appendChild(submenu);
             submenu.style.display = 'block';
             submenu.style.position = 'fixed';
@@ -973,7 +943,6 @@
 
             positionSubmenu(item, submenu);
 
-            // CORREÇÃO: Adicionar event listener para cliques no submenu destacado
             submenu.addEventListener('click', handleDetachedSubmenuClick);
 
             submenu.onmouseenter = cancelCloseSubmenu;
@@ -988,19 +957,16 @@
             let left = itemRect.right;
             let top = itemRect.top;
 
-            // posição inicial
             submenu.style.left = left + 'px';
             submenu.style.top = top + 'px';
 
             let subRect = submenu.getBoundingClientRect();
 
-            // se não couber à direita → esquerda
             if (left + subRect.width > vw) {
                 left = itemRect.left - subRect.width;
                 if (left < 5) left = 5;
             }
 
-            // se não couber em baixo → sobe
             if (top + subRect.height > vh) {
                 top = vh - subRect.height - 5;
                 if (top < 5) top = 5;
@@ -1032,7 +998,6 @@
         function closeSubmenu() {
             cancelCloseSubmenu();
             if (openSubmenuEl && openSubmenuParent) {
-                // CORREÇÃO: Remover event listener antes de mover o elemento
                 openSubmenuEl.removeEventListener('click', handleDetachedSubmenuClick);
                 openSubmenuParent.appendChild(openSubmenuEl);
                 openSubmenuEl.style.display = 'none';
@@ -1042,7 +1007,7 @@
         }
 
         // =========================
-        // RESTANTES FUNÇÕES
+        // FUNÇÕES PRINCIPAIS
         // =========================
         function showContextMenu(event, taskItem) {
             const index = Array.from(taskList.children).indexOf(taskItem);
@@ -1084,15 +1049,14 @@
             contextMenu.style.top = y + 'px';
 
             contextMenuBody.scrollTop = 0;
-            closeSubmenu(); // fecha eventual submenu aberto de antes
+            closeSubmenu();
         }
 
         function hideContextMenu() {
             contextMenu.style.display = 'none';
             currentContextTaskIndex = -1;
             closeSubmenu();
-            
-            // Prevenir que eventos de toque sejam processados imediatamente após fechar o menu
+
             if (isTouchDevice()) {
                 document.body.classList.add('context-menu-closing');
                 setTimeout(() => {
@@ -1426,10 +1390,33 @@
             selectTask(searchResults[currentSearchIndex]);
         }
 
+        // Atualiza o submenu "Gerir"
         function updateDynamicSubmenus() {
-            programsSubmenu.innerHTML = '<div class="context-menu-item" data-action="managePrograms">Gerir Programas</div>';
-            documentsSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageDocuments">Gerir Documentos</div>';
-            favoritesSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageFavorites">Gerir Favoritos</div>';
+            manageSubmenu.innerHTML = `
+                <div class="context-menu-item" data-action="managePrograms">Programas</div>
+                <div class="context-menu-item" data-action="manageDocuments">Documentos</div>
+                <div class="context-menu-item" data-action="manageFavorites">Favoritos</div>
+            `;
+        }
+
+        // Utilitário para copiar para a clipboard
+        function copyToClipboard(text) {
+            if (!text) return;
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).catch(() => {});
+            } else {
+                const textarea = document.createElement('textarea');
+                textarea.value = text;
+                textarea.style.position = 'fixed';
+                textarea.style.opacity = '0';
+                document.body.appendChild(textarea);
+                textarea.focus();
+                textarea.select();
+                try {
+                    document.execCommand('copy');
+                } catch (e) {}
+                document.body.removeChild(textarea);
+            }
         }
 
         function handleContextMenuAction(action, index, element) {
@@ -1459,7 +1446,8 @@
 
                 case 'openPersonalFolder':
                     if (task.personalFolder) {
-                        alert(`Pasta Pessoal: ${task.personalFolder}\n\nEm ambiente web, não é possível abrir pastas locais.`);
+                        copyToClipboard(task.personalFolder);
+                        alert(`Pasta Pessoal: ${task.personalFolder}\n\nEm ambiente web, não é possível abrir pastas locais. A localização foi copiada para a área de transferência.`);
                     } else {
                         alert('Nenhuma pasta pessoal associada a esta tarefa.');
                     }
@@ -1467,7 +1455,8 @@
 
                 case 'openSharedFolder':
                     if (task.sharedFolder) {
-                        alert(`Pasta Partilhada: ${task.sharedFolder}\n\nEm ambiente web, não é possível abrir pastas locais.`);
+                        copyToClipboard(task.sharedFolder);
+                        alert(`Pasta Partilhada: ${task.sharedFolder}\n\nEm ambiente web, não é possível abrir pastas locais. A localização foi copiada para a área de transferência.`);
                     } else {
                         alert('Nenhuma pasta partilhada associada a esta tarefa.');
                     }
