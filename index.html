@@ -287,6 +287,8 @@
             text-align: left;
             font-size: 14px;
             white-space: nowrap;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
         }
 
         .context-menu-item:hover {
@@ -359,6 +361,18 @@
 
         .folder-field {
             flex: 1;
+        }
+
+        /* ====== CORREÇÕES PARA ANDROID ====== */
+        /* Prevenir seleção de texto e comportamentos indesejados durante interação com menu */
+        .context-menu-closing * {
+            pointer-events: none !important;
+        }
+
+        /* Garantir que o menu de contexto tenha prioridade máxima */
+        .context-menu, 
+        .context-submenu {
+            pointer-events: auto !important;
         }
 
         /* ====== ANDROID / mobile ====== */
@@ -726,59 +740,19 @@
                 }
             });
 
-            // >>> NOVO: capturar cliques em submenus destacados (Windows e Android)
-            document.addEventListener('click', function(e) {
-                const item = e.target.closest('.context-menu-item');
-                if (!item) return;
-
-                // menu está visível?
-                const menuVisible = contextMenu.style.display === 'block';
-                const insideDetachedSubmenu = openSubmenuEl && openSubmenuEl.contains(item);
-
-                if (!menuVisible && !insideDetachedSubmenu) return;
-
-                // se for apenas "Pasta", "Link", etc. (só abre submenu), não fazemos nada
-                if (item.classList.contains('has-submenu') && !item.dataset.action) {
-                    return;
-                }
-
-                const action = item.dataset.action;
-                if (action) {
-                    const idx = currentContextTaskIndex !== -1 ? currentContextTaskIndex : selectedTaskIndex;
-                    handleContextMenuAction(action, idx, item);
-                    hideContextMenu();
-                    e.stopPropagation();
-                    e.preventDefault();
-                }
-            }, true);
-
-            // idem para toque (Android)
-            document.addEventListener('touchstart', function(e) {
-                const item = e.target.closest('.context-menu-item');
-                if (!item) return;
-
-                const menuVisible = contextMenu.style.display === 'block';
-                const insideDetachedSubmenu = openSubmenuEl && openSubmenuEl.contains(item);
-
-                if (!menuVisible && !insideDetachedSubmenu) return;
-
-                if (item.classList.contains('has-submenu') && !item.dataset.action) {
-                    return;
-                }
-
-                const action = item.dataset.action;
-                if (action) {
-                    const idx = currentContextTaskIndex !== -1 ? currentContextTaskIndex : selectedTaskIndex;
-                    handleContextMenuAction(action, idx, item);
-                    hideContextMenu();
-                    e.stopPropagation();
-                    e.preventDefault();
-                }
-            }, true);
+            // NOVO: Event listener melhorado para toque no menu de contexto
+            document.addEventListener('touchstart', handleMenuTouch, {capture: true, passive: false});
 
             // long press Android
             let longPressTimer;
             taskList.addEventListener('touchstart', function(e) {
+                // Se o menu estava aberto recentemente, ignorar este toque
+                if (document.body.classList.contains('context-menu-closing')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                }
+                
                 const taskItem = e.target.closest('.task-item');
                 if (taskItem) {
                     longPressTimer = setTimeout(() => {
@@ -795,6 +769,31 @@
             taskList.addEventListener('touchmove', function() {
                 clearTimeout(longPressTimer);
             });
+
+            // NOVO: Event listener para cliques na lista de tarefas (prevenir clique fantasma)
+            taskList.addEventListener('click', function(e) {
+                // Se o menu estava aberto recentemente, ignorar este clique
+                if (document.body.classList.contains('context-menu-closing')) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    return;
+                }
+                
+                const taskItem = e.target.closest('.task-item');
+                if (taskItem && !e.defaultPrevented) {
+                    const index = Array.from(taskList.children).indexOf(taskItem);
+                    selectTask(index);
+                }
+            });
+
+            // Versão para touch da lista de tarefas
+            taskList.addEventListener('touchstart', function(e) {
+                if (document.body.classList.contains('context-menu-closing')) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    return;
+                }
+            }, {passive: false});
 
             // fechar ao clicar fora
             document.addEventListener('click', function(e) {
@@ -858,11 +857,53 @@
             initSubmenus();
         }
 
-        // ====== SUBMENUS (versão simplificada) ======
-        function isTouchDevice() {
-            return ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+        // ====== NOVAS FUNÇÕES PARA CORRIGIR PROBLEMA ANDROID ======
+        
+        // Função para processar toques no menu de contexto
+        function handleMenuTouch(e) {
+            const item = e.target.closest('.context-menu-item');
+            if (!item) return;
+
+            const menuVisible = contextMenu.style.display === 'block';
+            const insideDetachedSubmenu = openSubmenuEl && openSubmenuEl.contains(item);
+
+            if (!menuVisible && !insideDetachedSubmenu) return;
+
+            // Se estamos no processo de fechar o menu, ignorar todos os toques
+            if (document.body.classList.contains('context-menu-closing')) {
+                e.stopPropagation();
+                e.preventDefault();
+                return;
+            }
+
+            if (item.classList.contains('has-submenu') && !item.dataset.action) {
+                return;
+            }
+
+            const action = item.dataset.action;
+            if (action) {
+                const idx = currentContextTaskIndex !== -1 ? currentContextTaskIndex : selectedTaskIndex;
+                
+                // Prevenir imediatamente a propagação
+                e.stopPropagation();
+                e.preventDefault();
+                
+                // Pequeno delay para garantir que o menu seja fechado antes de processar a ação
+                setTimeout(() => {
+                    handleContextMenuAction(action, idx, item);
+                }, 10);
+                
+                hideContextMenu();
+            }
         }
 
+        function isTouchDevice() {
+            return ('ontouchstart' in window) || 
+                   (navigator.maxTouchPoints > 0) || 
+                   (navigator.msMaxTouchPoints > 0);
+        }
+
+        // ====== SUBMENUS (versão simplificada) ======
         function initSubmenus() {
             contextMenuBody.querySelectorAll('.context-menu-item.has-submenu').forEach(item => {
                 // desktop: hover abre
@@ -1026,6 +1067,15 @@
             contextMenu.style.display = 'none';
             currentContextTaskIndex = -1;
             closeSubmenu();
+            
+            // NOVO: Prevenir que eventos de toque sejam processados imediatamente após fechar o menu
+            if (isTouchDevice()) {
+                // Adiciona uma classe temporária ao body para interceptar cliques
+                document.body.classList.add('context-menu-closing');
+                setTimeout(() => {
+                    document.body.classList.remove('context-menu-closing');
+                }, 300);
+            }
         }
 
         function updateTaskList() {
