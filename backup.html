@@ -1112,6 +1112,25 @@
             });
         }
 
+        function ensureTaskVisible(index) {
+            const container = document.querySelector('.list-section');
+            if (!container) return;
+            const item = taskList.children[index];
+            if (!item) return;
+
+            const containerRect = container.getBoundingClientRect();
+            const itemRect = item.getBoundingClientRect();
+
+            // Se o item estiver acima da área visível
+            if (itemRect.top < containerRect.top) {
+                container.scrollTop -= (containerRect.top - itemRect.top);
+            }
+            // Se o item estiver abaixo da área visível
+            else if (itemRect.bottom > containerRect.bottom) {
+                container.scrollTop += (itemRect.bottom - containerRect.bottom);
+            }
+        }
+
         function selectTask(index) {
             selectedTaskIndex = index;
             updateTaskList();
@@ -1121,6 +1140,11 @@
             moveDownBtn.disabled = !hasSelection || selectedTaskIndex === tasks.length - 1;
             propertiesBtn.disabled = !hasSelection;
             removeTaskBtn.disabled = !hasSelection;
+
+            if (hasSelection) {
+                // garantir visibilidade no scroll
+                ensureTaskVisible(selectedTaskIndex);
+            }
 
             updateStatus(hasSelection ? `Tarefa ${selectedTaskIndex + 1} de ${tasks.length} selecionada` : 'Pronto');
         }
@@ -1379,7 +1403,7 @@
 
             currentSearchIndex = 0;
             nextResultBtn.disabled = false;
-            selectTask(searchResults[currentSearchIndex]);
+            selectTask(searchResults[currentSearchIndex]); // isto já faz scroll
             updateStatus(`Encontradas ${searchResults.length} tarefas para '${term}'`);
         }
 
@@ -1387,6 +1411,7 @@
             if (!searchResults.length) return;
 
             currentSearchIndex = (currentSearchIndex + 1) % searchResults.length;
+            // selectTask já faz scroll até ao item
             selectTask(searchResults[currentSearchIndex]);
         }
 
