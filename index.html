@@ -715,14 +715,18 @@
                 return false;
             });
 
-            // NOVA ABORDAGEM: Separar eventos para mouse e touch
+            // CORREÇÃO: Event listener único para o menu de contexto
             contextMenuBody.addEventListener('click', handleMenuClick);
+            
+            // Event listener para submenus destacados
+            document.addEventListener('click', handleDetachedSubmenuClick, true);
+
+            // Event listener para touch (Android)
             document.addEventListener('touchstart', handleMenuTouch, {capture: true, passive: false});
 
             // long press Android
             let longPressTimer;
             taskList.addEventListener('touchstart', function(e) {
-                // Se o menu estava aberto recentemente, ignorar este toque
                 if (document.body.classList.contains('context-menu-closing')) {
                     e.preventDefault();
                     e.stopPropagation();
@@ -746,9 +750,8 @@
                 clearTimeout(longPressTimer);
             });
 
-            // Event listener para cliques na lista de tarefas (prevenir clique fantasma)
+            // Event listener para cliques na lista de tarefas
             taskList.addEventListener('click', function(e) {
-                // Se o menu estava aberto recentemente, ignorar este clique
                 if (document.body.classList.contains('context-menu-closing')) {
                     e.stopPropagation();
                     e.preventDefault();
@@ -761,15 +764,6 @@
                     selectTask(index);
                 }
             });
-
-            // Versão para touch da lista de tarefas
-            taskList.addEventListener('touchstart', function(e) {
-                if (document.body.classList.contains('context-menu-closing')) {
-                    e.stopPropagation();
-                    e.preventDefault();
-                    return;
-                }
-            }, {passive: false});
 
             // fechar ao clicar fora
             document.addEventListener('click', function(e) {
@@ -833,17 +827,12 @@
             initSubmenus();
         }
 
-        // ====== NOVAS FUNÇÕES CORRIGIDAS ======
+        // ====== FUNÇÕES CORRIGIDAS PARA MENU DE CONTEXTO ======
         
-        // Função para cliques com mouse (Windows)
+        // Função principal para cliques no menu
         function handleMenuClick(e) {
             const item = e.target.closest('.context-menu-item');
             if (!item) return;
-
-            const menuVisible = contextMenu.style.display === 'block';
-            const insideDetachedSubmenu = openSubmenuEl && openSubmenuEl.contains(item);
-
-            if (!menuVisible && !insideDetachedSubmenu) return;
 
             // Se estamos no processo de fechar o menu, ignorar cliques
             if (document.body.classList.contains('context-menu-closing')) {
@@ -862,6 +851,30 @@
                 const idx = currentContextTaskIndex !== -1 ? currentContextTaskIndex : selectedTaskIndex;
                 handleContextMenuAction(action, idx, item);
                 hideContextMenu();
+            }
+        }
+
+        // CORREÇÃO: Nova função para lidar com cliques em submenus destacados
+        function handleDetachedSubmenuClick(e) {
+            const item = e.target.closest('.context-menu-item');
+            if (!item) return;
+
+            // Verificar se o clique foi em um submenu destacado
+            const inDetachedSubmenu = openSubmenuEl && openSubmenuEl.contains(item);
+            if (!inDetachedSubmenu) return;
+
+            // Se é um item que só abre submenu, não faz nada
+            if (item.classList.contains('has-submenu') && !item.dataset.action) {
+                return;
+            }
+
+            const action = item.dataset.action;
+            if (action) {
+                const idx = currentContextTaskIndex !== -1 ? currentContextTaskIndex : selectedTaskIndex;
+                handleContextMenuAction(action, idx, item);
+                hideContextMenu();
+                e.stopPropagation();
+                e.preventDefault();
             }
         }
 
@@ -960,6 +973,9 @@
 
             positionSubmenu(item, submenu);
 
+            // CORREÇÃO: Adicionar event listener para cliques no submenu destacado
+            submenu.addEventListener('click', handleDetachedSubmenuClick);
+
             submenu.onmouseenter = cancelCloseSubmenu;
             submenu.onmouseleave = scheduleCloseSubmenu;
         }
@@ -1016,6 +1032,8 @@
         function closeSubmenu() {
             cancelCloseSubmenu();
             if (openSubmenuEl && openSubmenuParent) {
+                // CORREÇÃO: Remover event listener antes de mover o elemento
+                openSubmenuEl.removeEventListener('click', handleDetachedSubmenuClick);
                 openSubmenuParent.appendChild(openSubmenuEl);
                 openSubmenuEl.style.display = 'none';
             }
