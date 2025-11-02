@@ -13,6 +13,9 @@
             --highlight-red: #ff4444;
             --highlight-blue: #4444ff;
             --hover-color: #e9e9e9;
+            /* nova cor de seleção de tarefa, diferente dos botões */
+            --selected-task-bg: #dbeafe;
+            --selected-task-color: #0f172a;
         }
 
         * {
@@ -100,15 +103,21 @@
             display: flex;
             align-items: center;
             gap: 10px;
+            background-color: #fff;
         }
 
         .task-item:hover {
             background-color: var(--hover-color);
         }
 
+        /* selecionada — cor distinta dos botões */
         .task-item.selected {
-            background-color: var(--primary-color);
-            color: white;
+            background-color: var(--selected-task-bg);
+            color: var(--selected-task-color);
+        }
+
+        .task-item.selected .task-icons {
+            color: inherit;
         }
 
         .task-item.highlight-red {
@@ -243,6 +252,7 @@
             margin-bottom: 15px;
             display: flex;
             gap: 10px;
+            align-items: stretch;
         }
 
         .search-container input {
@@ -250,6 +260,16 @@
             padding: 8px;
             border: 1px solid var(--border-color);
             border-radius: 4px;
+        }
+
+        /* novo: container para os botões de pesquisa, para podermos alinhar no mobile */
+        .search-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-buttons button {
+            flex: 1 1 auto;
         }
 
         /* ====== MENU DE CONTEXTO (com corpo rolável) ====== */
@@ -268,7 +288,7 @@
             min-width: 200px;
             max-height: 70vh;
             overflow-y: auto;
-            overflow-x: hidden; /* sem scroll lateral */
+            overflow-x: hidden;
             -webkit-overflow-scrolling: touch;
             touch-action: pan-y;
         }
@@ -300,12 +320,6 @@
             height: 1px;
             background-color: var(--border-color);
             margin: 5px 0;
-        }
-
-        /* submenus ficam escondidos no HTML,
-           mas JS destaca-os para o body */
-        .context-submenu {
-            display: none;
         }
 
         .notes-container {
@@ -368,16 +382,19 @@
                 flex-direction: column;
             }
 
-            .controls-row {
-                flex-direction: column;
-            }
-
-            .controls button {
-                min-width: auto;
-            }
-
+            /* pesquisa: input numa linha, botões alinhados na linha seguinte (Procurar/Próximo) */
             .search-container {
                 flex-direction: column;
+            }
+
+            .search-buttons {
+                display: flex;
+                flex-direction: row;
+                gap: 10px;
+            }
+
+            .search-buttons button {
+                flex: 1 1 calc(50% - 5px);
             }
 
             .context-menu-body {
@@ -388,6 +405,33 @@
             .context-menu-item {
                 padding: 12px 15px;
             }
+
+            /* botões principais: pares por linha */
+            .controls-row {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .controls-row button {
+                flex: 1 1 calc(50% - 5px);
+                min-width: auto;
+            }
+
+            /* ordem pretendida no Android:
+               1. Subir / 2. Descer
+               3. Remover / 4. Limpar
+               5. Importar / 6. Exportar
+               7. Propriedades / 8. Notas
+               (os últimos já estão noutra .controls-row, mas garantimos a largura igual)
+            */
+            #moveUpBtn { order: 1; }
+            #moveDownBtn { order: 2; }
+            #removeTaskBtn { order: 3; }
+            #clearAllBtn { order: 4; }
+            #importBtn { order: 5; }
+            #exportBtn { order: 6; }
+            /* a segunda linha de controlos já tem 2 botões, ocupa 1 linha naturalmente */
         }
     </style>
 </head>
@@ -400,10 +444,13 @@
             <button id="addTaskBtn">Adicionar Tarefa</button>
         </div>
 
+        <!-- ajustado para permitir par Procurar/Próximo no Android -->
         <div class="search-container">
             <input type="text" id="searchInput" placeholder="Procurar tarefas...">
-            <button id="searchBtn">Procurar</button>
-            <button id="nextResultBtn" disabled>Próximo</button>
+            <div class="search-buttons">
+                <button id="searchBtn">Procurar</button>
+                <button id="nextResultBtn" disabled>Próximo</button>
+            </div>
         </div>
 
         <div class="list-section">
@@ -610,6 +657,9 @@
         let openSubmenuParent = null;
         let submenuCloseTimer = null;
 
+        // supressor de clique para Android (evita clicar em botões por baixo do menu)
+        let suppressClickThrough = false;
+
         // =========================
         // DOM
         // =========================
@@ -690,23 +740,52 @@
                 if (hasSubmenu && !action) return;
 
                 if (action) {
-                    handleContextMenuAction(action, currentContextTaskIndex, item);
-                    hideContextMenu();
+                    const idx = currentContextTaskIndex !== -1 ? currentContextTaskIndex : selectedTaskIndex;
+                    handleContextMenuAction(action, idx, item);
+                    // nova lógica: não esconder imediatamente → evita clique no botão por baixo
+                    suppressClickThrough = true;
+                    setTimeout(() => {
+                        hideContextMenu();
+                    }, 200);
                 }
             });
+
+            // captura global de cliques para suprimir o clique seguinte (Android)
+            document.addEventListener('click', function(e) {
+                if (suppressClickThrough) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    suppressClickThrough = false;
+                    return;
+                }
+
+                // fechar ao clicar fora
+                if (contextMenu.style.display === 'block'
+                    && !contextMenu.contains(e.target)
+                    && (!openSubmenuEl || !openSubmenuEl.contains(e.target))) {
+                    hideContextMenu();
+                }
+            }, true);
+
+            // idem para toque (Android) – capturar antes de tudo
+            document.addEventListener('touchend', function(e) {
+                if (suppressClickThrough) {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    suppressClickThrough = false;
+                }
+            }, true);
 
             // >>> NOVO: capturar cliques em submenus destacados (Windows e Android)
             document.addEventListener('click', function(e) {
                 const item = e.target.closest('.context-menu-item');
                 if (!item) return;
 
-                // menu está visível?
                 const menuVisible = contextMenu.style.display === 'block';
                 const insideDetachedSubmenu = openSubmenuEl && openSubmenuEl.contains(item);
 
                 if (!menuVisible && !insideDetachedSubmenu) return;
 
-                // se for apenas "Pasta", "Link", etc. (só abre submenu), não fazemos nada
                 if (item.classList.contains('has-submenu') && !item.dataset.action) {
                     return;
                 }
@@ -715,7 +794,10 @@
                 if (action) {
                     const idx = currentContextTaskIndex !== -1 ? currentContextTaskIndex : selectedTaskIndex;
                     handleContextMenuAction(action, idx, item);
-                    hideContextMenu();
+                    suppressClickThrough = true;
+                    setTimeout(() => {
+                        hideContextMenu();
+                    }, 200);
                     e.stopPropagation();
                     e.preventDefault();
                 }
@@ -739,7 +821,10 @@
                 if (action) {
                     const idx = currentContextTaskIndex !== -1 ? currentContextTaskIndex : selectedTaskIndex;
                     handleContextMenuAction(action, idx, item);
-                    hideContextMenu();
+                    suppressClickThrough = true;
+                    setTimeout(() => {
+                        hideContextMenu();
+                    }, 200);
                     e.stopPropagation();
                     e.preventDefault();
                 }
@@ -763,15 +848,6 @@
 
             taskList.addEventListener('touchmove', function() {
                 clearTimeout(longPressTimer);
-            });
-
-            // fechar ao clicar fora
-            document.addEventListener('click', function(e) {
-                if (contextMenu.style.display === 'block'
-                    && !contextMenu.contains(e.target)
-                    && (!openSubmenuEl || !openSubmenuEl.contains(e.target))) {
-                    hideContextMenu();
-                }
             });
 
             // ESC
@@ -844,7 +920,6 @@
                 });
                 // touch/click: alterna
                 item.addEventListener('click', (e) => {
-                    // se for item com ação, não tratamos aqui
                     if (item.getAttribute('data-action')) return;
                     e.preventDefault();
                     e.stopPropagation();
@@ -861,13 +936,11 @@
             const submenu = item.querySelector('.context-submenu');
             if (!submenu) return;
 
-            // fecha eventual anterior
             closeSubmenu();
 
             openSubmenuParent = item;
             openSubmenuEl = submenu;
 
-            // destaca para o body
             document.body.appendChild(submenu);
             submenu.style.display = 'block';
             submenu.style.position = 'fixed';
@@ -894,19 +967,16 @@
             let left = itemRect.right;
             let top = itemRect.top;
 
-            // posição inicial
             submenu.style.left = left + 'px';
             submenu.style.top = top + 'px';
 
             let subRect = submenu.getBoundingClientRect();
 
-            // se não couber à direita → esquerda
             if (left + subRect.width > vw) {
                 left = itemRect.left - subRect.width;
                 if (left < 5) left = 5;
             }
 
-            // se não couber em baixo → sobe
             if (top + subRect.height > vh) {
                 top = vh - subRect.height - 5;
                 if (top < 5) top = 5;
@@ -988,7 +1058,7 @@
             contextMenu.style.top = y + 'px';
 
             contextMenuBody.scrollTop = 0;
-            closeSubmenu(); // fecha eventual submenu aberto de antes
+            closeSubmenu();
         }
 
         function hideContextMenu() {
@@ -1323,7 +1393,6 @@
         }
 
         function updateDynamicSubmenus() {
-            // Implementação básica - manter estrutura original
             programsSubmenu.innerHTML = '<div class="context-menu-item" data-action="managePrograms">Gerir Programas</div>';
             documentsSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageDocuments">Gerir Documentos</div>';
             favoritesSubmenu.innerHTML = '<div class="context-menu-item" data-action="manageFavorites">Gerir Favoritos</div>';
@@ -1337,7 +1406,6 @@
                 case 'toggleComplete':
                     task.completed = !task.completed;
                     if (task.completed) {
-                        // Mover para o final se estiver completada (como no Python)
                         const completedTask = tasks.splice(index, 1)[0];
                         tasks.push(completedTask);
                         selectTask(tasks.length - 1);
@@ -1357,7 +1425,6 @@
 
                 case 'openPersonalFolder':
                     if (task.personalFolder) {
-                        // Em ambiente web, não podemos abrir pastas locais
                         alert(`Pasta Pessoal: ${task.personalFolder}\n\nEm ambiente web, não é possível abrir pastas locais.`);
                     } else {
                         alert('Nenhuma pasta pessoal associada a esta tarefa.');
@@ -1521,41 +1588,40 @@
 
         function generateReport() {
             const activeTasks = tasks.filter(t => !t.completed && t.text !== '┈┈');
-            
+
             if (!activeTasks.length) {
                 alert('Não existem tarefas ativas para gerar relatório.');
                 return;
             }
 
             let report = `RELATÓRIO DE TAREFAS - ${new Date().toLocaleDateString('pt-PT')}\n\n`;
-            
+
             activeTasks.forEach((task, index) => {
                 report += `Tarefa ${index + 1}:\n`;
                 report += `Tarefa: ${task.text}\n`;
-                
+
                 if (task.personalFolder) {
                     report += `Pasta Pessoal: ${task.personalFolder}\n`;
                 }
                 if (task.sharedFolder) {
                     report += `Pasta Partilhada: ${task.sharedFolder}\n`;
                 }
-                
+
                 if (task.link) {
                     report += `Link: ${task.link}\n`;
                 } else {
                     report += `Link: \n`;
                 }
-                
+
                 if (task.date) {
                     report += `Data: ${task.date}\n`;
                 } else {
                     report += `Data: n/a\n`;
                 }
-                
+
                 report += `\n`;
             });
 
-            // Criar e fazer download do relatório
             const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
