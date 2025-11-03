@@ -1499,7 +1499,7 @@
         function updateDocumentsList() {
             documentsList.innerHTML = '';
             
-            execMenu.documents.forEach((document, index) => {
+            execMenu.documents.forEach((doc, index) => {
                 const div = document.createElement('div');
                 div.className = 'document-item';
                 if (index === selectedDocumentIndex) {
@@ -1507,8 +1507,8 @@
                 }
                 
                 div.innerHTML = `
-                    <div class="document-label">${document.label || 'Sem nome'}</div>
-                    <div class="document-path">${document.path || 'Sem caminho'}</div>
+                    <div class="document-label">${doc.label || 'Sem nome'}</div>
+                    <div class="document-path">${doc.path || 'Sem caminho'}</div>
                 `;
                 
                 // Clique simples para selecionar
@@ -1595,9 +1595,9 @@
         function editDocument() {
             if (selectedDocumentIndex === -1) return;
             
-            const document = execMenu.documents[selectedDocumentIndex];
-            documentLabel.value = document.label || '';
-            documentPath.value = document.path || '';
+            const doc = execMenu.documents[selectedDocumentIndex];
+            documentLabel.value = doc.label || '';
+            documentPath.value = doc.path || '';
             isEditingDocument = true;
             documentForm.style.display = 'block';
             documentLabel.focus();
@@ -1606,19 +1606,19 @@
         function openDocument() {
             if (selectedDocumentIndex === -1) return;
             
-            const document = execMenu.documents[selectedDocumentIndex];
-            if (document.path) {
+            const doc = execMenu.documents[selectedDocumentIndex];
+            if (doc.path) {
                 // *** MODIFICAÇÃO SOLICITADA: Abrir PDF e TXT no browser, descarregar outros ***
-                const fileExtension = document.path.toLowerCase().split('.').pop();
+                const fileExtension = doc.path.toLowerCase().split('.').pop();
                 
                 if (fileExtension === 'pdf' || fileExtension === 'txt') {
                     // Abrir PDF e TXT numa nova aba
-                    window.open(document.path, '_blank');
+                    window.open(doc.path, '_blank');
                 } else {
                     // Descarregar outros tipos de documentos
                     const link = document.createElement('a');
-                    link.href = document.path;
-                    link.download = document.label || 'documento';
+                    link.href = doc.path;
+                    link.download = doc.label || 'documento';
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
@@ -1629,8 +1629,8 @@
         function removeDocument() {
             if (selectedDocumentIndex === -1) return;
             
-            const document = execMenu.documents[selectedDocumentIndex];
-            if (confirm(`Tem a certeza que pretende eliminar o documento "${document.label}"?`)) {
+            const doc = execMenu.documents[selectedDocumentIndex];
+            if (confirm(`Tem a certeza que pretende eliminar o documento "${doc.label}"?`)) {
                 execMenu.documents.splice(selectedDocumentIndex, 1);
                 selectedDocumentIndex = Math.min(selectedDocumentIndex, execMenu.documents.length - 1);
                 updateDocumentsList();
