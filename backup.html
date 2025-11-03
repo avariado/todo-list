@@ -377,7 +377,9 @@
         }
 
         /* ====== MODAL GERIR FAVORITOS ====== */
-        .favorites-list {
+        .favorites-list,
+        .programs-list,
+        .documents-list {
             max-height: 300px;
             overflow-y: auto;
             border: 1px solid var(--border-color);
@@ -385,7 +387,9 @@
             margin-bottom: 15px;
         }
 
-        .favorite-item {
+        .favorite-item,
+        .program-item,
+        .document-item {
             padding: 10px;
             border-bottom: 1px solid var(--border-color);
             display: flex;
@@ -394,20 +398,28 @@
             cursor: pointer;
         }
 
-        .favorite-item:last-child {
+        .favorite-item:last-child,
+        .program-item:last-child,
+        .document-item:last-child {
             border-bottom: none;
         }
 
-        .favorite-item.selected {
+        .favorite-item.selected,
+        .program-item.selected,
+        .document-item.selected {
             background-color: var(--selected-task-bg);
         }
 
-        .favorite-label {
+        .favorite-label,
+        .program-label,
+        .document-label {
             flex: 1;
             font-weight: bold;
         }
 
-        .favorite-url {
+        .favorite-url,
+        .program-path,
+        .document-path {
             flex: 2;
             color: #666;
             font-size: 12px;
@@ -416,17 +428,23 @@
             white-space: nowrap;
         }
 
-        .favorites-controls {
+        .favorites-controls,
+        .programs-controls,
+        .documents-controls {
             display: flex;
             gap: 10px;
             margin-bottom: 15px;
         }
 
-        .favorites-controls button {
+        .favorites-controls button,
+        .programs-controls button,
+        .documents-controls button {
             flex: 1;
         }
 
-        .favorite-form {
+        .favorite-form,
+        .program-form,
+        .document-form {
             background-color: var(--secondary-color);
             padding: 15px;
             border-radius: 4px;
@@ -488,23 +506,33 @@
                 padding: 12px 15px;
             }
 
-            .favorite-item {
+            .favorite-item,
+            .program-item,
+            .document-item {
                 flex-direction: column;
                 align-items: flex-start;
                 gap: 5px;
             }
 
             .favorite-label,
-            .favorite-url {
+            .favorite-url,
+            .program-label,
+            .program-path,
+            .document-label,
+            .document-path {
                 flex: none;
                 width: 100%;
             }
 
-            .favorites-controls {
+            .favorites-controls,
+            .programs-controls,
+            .documents-controls {
                 flex-wrap: wrap;
             }
 
-            .favorites-controls button {
+            .favorites-controls button,
+            .programs-controls button,
+            .documents-controls button {
                 flex: 1 1 calc(50% - 5px);
             }
         }
@@ -646,6 +674,82 @@
         </div>
     </div>
 
+    <!-- MODAL GERIR PROGRAMAS -->
+    <div id="programsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Gerir Programas</div>
+                <button class="close-btn">&times;</button>
+            </div>
+            
+            <div class="programs-controls">
+                <button id="programUpBtn">▲ Cima</button>
+                <button id="programDownBtn">▼ Baixo</button>
+                <button id="newProgramBtn">Novo</button>
+                <button id="openProgramBtn">Abrir</button>
+                <button id="editProgramBtn">Editar</button>
+                <button id="removeProgramBtn">Remover</button>
+            </div>
+
+            <div class="programs-list" id="programsList">
+                <!-- Lista de programas será gerada dinamicamente -->
+            </div>
+
+            <div class="program-form" id="programForm" style="display: none;">
+                <div class="form-group">
+                    <label for="programLabel">Nome:</label>
+                    <input type="text" id="programLabel" placeholder="Nome do programa">
+                </div>
+                <div class="form-group">
+                    <label for="programPath">Caminho:</label>
+                    <input type="text" id="programPath" placeholder="C:\Programas\exemplo.exe">
+                </div>
+                <div class="modal-actions">
+                    <button id="saveProgramBtn">Salvar</button>
+                    <button id="cancelProgramBtn">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL GERIR DOCUMENTOS -->
+    <div id="documentsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Gerir Documentos</div>
+                <button class="close-btn">&times;</button>
+            </div>
+            
+            <div class="documents-controls">
+                <button id="documentUpBtn">▲ Cima</button>
+                <button id="documentDownBtn">▼ Baixo</button>
+                <button id="newDocumentBtn">Novo</button>
+                <button id="openDocumentBtn">Abrir</button>
+                <button id="editDocumentBtn">Editar</button>
+                <button id="removeDocumentBtn">Remover</button>
+            </div>
+
+            <div class="documents-list" id="documentsList">
+                <!-- Lista de documentos será gerada dinamicamente -->
+            </div>
+
+            <div class="document-form" id="documentForm" style="display: none;">
+                <div class="form-group">
+                    <label for="documentLabel">Nome:</label>
+                    <input type="text" id="documentLabel" placeholder="Nome do documento">
+                </div>
+                <div class="form-group">
+                    <label for="documentPath">Caminho:</label>
+                    <input type="text" id="documentPath" placeholder="C:\Documentos\exemplo.pdf">
+                </div>
+                <div class="modal-actions">
+                    <button id="saveDocumentBtn">Salvar</button>
+                    <button id="cancelDocumentBtn">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- MENU DE CONTEXTO -->
     <div id="contextMenu" class="context-menu">
         <div id="contextMenuBody" class="context-menu-body">
@@ -760,6 +864,14 @@
         let selectedFavoriteIndex = -1;
         let isEditingFavorite = false;
 
+        // estado para gestão de programas
+        let selectedProgramIndex = -1;
+        let isEditingProgram = false;
+
+        // estado para gestão de documentos
+        let selectedDocumentIndex = -1;
+        let isEditingDocument = false;
+
         // =========================
         // DOM
         // =========================
@@ -801,6 +913,36 @@
         const saveFavoriteBtn = document.getElementById('saveFavoriteBtn');
         const cancelFavoriteBtn = document.getElementById('cancelFavoriteBtn');
 
+        // Elementos do modal de programas
+        const programsModal = document.getElementById('programsModal');
+        const programsList = document.getElementById('programsList');
+        const programUpBtn = document.getElementById('programUpBtn');
+        const programDownBtn = document.getElementById('programDownBtn');
+        const newProgramBtn = document.getElementById('newProgramBtn');
+        const openProgramBtn = document.getElementById('openProgramBtn');
+        const editProgramBtn = document.getElementById('editProgramBtn');
+        const removeProgramBtn = document.getElementById('removeProgramBtn');
+        const programForm = document.getElementById('programForm');
+        const programLabel = document.getElementById('programLabel');
+        const programPath = document.getElementById('programPath');
+        const saveProgramBtn = document.getElementById('saveProgramBtn');
+        const cancelProgramBtn = document.getElementById('cancelProgramBtn');
+
+        // Elementos do modal de documentos
+        const documentsModal = document.getElementById('documentsModal');
+        const documentsList = document.getElementById('documentsList');
+        const documentUpBtn = document.getElementById('documentUpBtn');
+        const documentDownBtn = document.getElementById('documentDownBtn');
+        const newDocumentBtn = document.getElementById('newDocumentBtn');
+        const openDocumentBtn = document.getElementById('openDocumentBtn');
+        const editDocumentBtn = document.getElementById('editDocumentBtn');
+        const removeDocumentBtn = document.getElementById('removeDocumentBtn');
+        const documentForm = document.getElementById('documentForm');
+        const documentLabel = document.getElementById('documentLabel');
+        const documentPath = document.getElementById('documentPath');
+        const saveDocumentBtn = document.getElementById('saveDocumentBtn');
+        const cancelDocumentBtn = document.getElementById('cancelDocumentBtn');
+
         document.addEventListener('DOMContentLoaded', () => {
             loadTasks();
             updateTaskList();
@@ -841,6 +983,26 @@
             removeFavoriteBtn.addEventListener('click', removeFavorite);
             saveFavoriteBtn.addEventListener('click', saveFavorite);
             cancelFavoriteBtn.addEventListener('click', cancelFavoriteEdit);
+
+            // Event listeners para gestão de programas
+            programUpBtn.addEventListener('click', moveProgramUp);
+            programDownBtn.addEventListener('click', moveProgramDown);
+            newProgramBtn.addEventListener('click', newProgram);
+            openProgramBtn.addEventListener('click', openProgram);
+            editProgramBtn.addEventListener('click', editProgram);
+            removeProgramBtn.addEventListener('click', removeProgram);
+            saveProgramBtn.addEventListener('click', saveProgram);
+            cancelProgramBtn.addEventListener('click', cancelProgramEdit);
+
+            // Event listeners para gestão de documentos
+            documentUpBtn.addEventListener('click', moveDocumentUp);
+            documentDownBtn.addEventListener('click', moveDocumentDown);
+            newDocumentBtn.addEventListener('click', newDocument);
+            openDocumentBtn.addEventListener('click', openDocument);
+            editDocumentBtn.addEventListener('click', editDocument);
+            removeDocumentBtn.addEventListener('click', removeDocument);
+            saveDocumentBtn.addEventListener('click', saveDocument);
+            cancelDocumentBtn.addEventListener('click', cancelDocumentEdit);
 
             // MENU DE CONTEXTO - rato
             taskList.addEventListener('contextmenu', function(e) {
@@ -1144,6 +1306,364 @@
 
         function cancelFavoriteEdit() {
             favoriteForm.style.display = 'none';
+        }
+
+        // ====== FUNÇÕES DE GESTÃO DE PROGRAMAS ======
+        function openManagePrograms() {
+            updateProgramsList();
+            programsModal.style.display = 'flex';
+            selectedProgramIndex = -1;
+            updateProgramControls();
+            programForm.style.display = 'none';
+        }
+
+        function updateProgramsList() {
+            programsList.innerHTML = '';
+            
+            execMenu.programs.forEach((program, index) => {
+                const div = document.createElement('div');
+                div.className = 'program-item';
+                if (index === selectedProgramIndex) {
+                    div.classList.add('selected');
+                }
+                
+                div.innerHTML = `
+                    <div class="program-label">${program.label || 'Sem nome'}</div>
+                    <div class="program-path">${program.path || 'Sem caminho'}</div>
+                `;
+                
+                // Clique simples para selecionar
+                div.addEventListener('click', () => {
+                    selectedProgramIndex = index;
+                    updateProgramsList();
+                    updateProgramControls();
+                });
+                
+                // *** MODIFICAÇÃO SOLICITADA: Duplo clique/duplo tap para abrir programa ***
+                div.addEventListener('dblclick', () => {
+                    selectedProgramIndex = index;
+                    updateProgramsList();
+                    updateProgramControls();
+                    openProgram();
+                });
+                
+                // Para Android: duplo tap
+                let tapCount = 0;
+                let tapTimer;
+                div.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    tapCount++;
+                    if (tapCount === 1) {
+                        tapTimer = setTimeout(() => {
+                            tapCount = 0;
+                            // Clique simples
+                            selectedProgramIndex = index;
+                            updateProgramsList();
+                            updateProgramControls();
+                        }, 300);
+                    } else if (tapCount === 2) {
+                        clearTimeout(tapTimer);
+                        tapCount = 0;
+                        // Duplo tap - abrir programa
+                        selectedProgramIndex = index;
+                        updateProgramsList();
+                        updateProgramControls();
+                        openProgram();
+                    }
+                }, {passive: false});
+                
+                programsList.appendChild(div);
+            });
+        }
+
+        function updateProgramControls() {
+            const hasSelection = selectedProgramIndex !== -1;
+            const hasPrograms = execMenu.programs.length > 0;
+            
+            programUpBtn.disabled = !hasSelection || selectedProgramIndex === 0;
+            programDownBtn.disabled = !hasSelection || selectedProgramIndex === execMenu.programs.length - 1;
+            openProgramBtn.disabled = !hasSelection;
+            editProgramBtn.disabled = !hasSelection;
+            removeProgramBtn.disabled = !hasSelection;
+        }
+
+        function moveProgramUp() {
+            if (selectedProgramIndex <= 0) return;
+            [execMenu.programs[selectedProgramIndex], execMenu.programs[selectedProgramIndex - 1]] = 
+            [execMenu.programs[selectedProgramIndex - 1], execMenu.programs[selectedProgramIndex]];
+            selectedProgramIndex--;
+            updateProgramsList();
+            saveTasks();
+        }
+
+        function moveProgramDown() {
+            if (selectedProgramIndex >= execMenu.programs.length - 1) return;
+            [execMenu.programs[selectedProgramIndex], execMenu.programs[selectedProgramIndex + 1]] = 
+            [execMenu.programs[selectedProgramIndex + 1], execMenu.programs[selectedProgramIndex]];
+            selectedProgramIndex++;
+            updateProgramsList();
+            saveTasks();
+        }
+
+        function newProgram() {
+            isEditingProgram = false;
+            programLabel.value = '';
+            programPath.value = '';
+            programForm.style.display = 'block';
+            programLabel.focus();
+        }
+
+        function editProgram() {
+            if (selectedProgramIndex === -1) return;
+            
+            const program = execMenu.programs[selectedProgramIndex];
+            programLabel.value = program.label || '';
+            programPath.value = program.path || '';
+            isEditingProgram = true;
+            programForm.style.display = 'block';
+            programLabel.focus();
+        }
+
+        function openProgram() {
+            if (selectedProgramIndex === -1) return;
+            
+            const program = execMenu.programs[selectedProgramIndex];
+            if (program.path) {
+                // *** MODIFICAÇÃO SOLICITADA: Emitir aviso de indisponibilidade e copiar caminho ***
+                copyToClipboard(program.path);
+                alert(`Funcionalidade indisponível na versão web.\n\nO caminho do programa foi copiado para a área de transferência:\n${program.path}`);
+            }
+        }
+
+        function removeProgram() {
+            if (selectedProgramIndex === -1) return;
+            
+            const program = execMenu.programs[selectedProgramIndex];
+            if (confirm(`Tem a certeza que pretende eliminar o programa "${program.label}"?`)) {
+                execMenu.programs.splice(selectedProgramIndex, 1);
+                selectedProgramIndex = Math.min(selectedProgramIndex, execMenu.programs.length - 1);
+                updateProgramsList();
+                updateProgramControls();
+                saveTasks();
+            }
+        }
+
+        function saveProgram() {
+            const label = programLabel.value.trim();
+            const path = programPath.value.trim();
+            
+            if (!label) {
+                alert('Por favor, introduza um nome para o programa.');
+                return;
+            }
+            
+            if (!path) {
+                alert('Por favor, introduza um caminho para o programa.');
+                return;
+            }
+            
+            if (isEditingProgram) {
+                // Editar programa existente
+                execMenu.programs[selectedProgramIndex] = {
+                    label: label,
+                    path: path
+                };
+            } else {
+                // Novo programa
+                execMenu.programs.push({
+                    label: label,
+                    path: path
+                });
+                selectedProgramIndex = execMenu.programs.length - 1;
+            }
+            
+            updateProgramsList();
+            updateProgramControls();
+            programForm.style.display = 'none';
+            saveTasks();
+        }
+
+        function cancelProgramEdit() {
+            programForm.style.display = 'none';
+        }
+
+        // ====== FUNÇÕES DE GESTÃO DE DOCUMENTOS ======
+        function openManageDocuments() {
+            updateDocumentsList();
+            documentsModal.style.display = 'flex';
+            selectedDocumentIndex = -1;
+            updateDocumentControls();
+            documentForm.style.display = 'none';
+        }
+
+        function updateDocumentsList() {
+            documentsList.innerHTML = '';
+            
+            execMenu.documents.forEach((doc, index) => {
+                const div = document.createElement('div');
+                div.className = 'document-item';
+                if (index === selectedDocumentIndex) {
+                    div.classList.add('selected');
+                }
+                
+                div.innerHTML = `
+                    <div class="document-label">${doc.label || 'Sem nome'}</div>
+                    <div class="document-path">${doc.path || 'Sem caminho'}</div>
+                `;
+                
+                // Clique simples para selecionar
+                div.addEventListener('click', () => {
+                    selectedDocumentIndex = index;
+                    updateDocumentsList();
+                    updateDocumentControls();
+                });
+                
+                // *** MODIFICAÇÃO SOLICITADA: Duplo clique/duplo tap para abrir documento ***
+                div.addEventListener('dblclick', () => {
+                    selectedDocumentIndex = index;
+                    updateDocumentsList();
+                    updateDocumentControls();
+                    openDocument();
+                });
+                
+                // Para Android: duplo tap
+                let tapCount = 0;
+                let tapTimer;
+                div.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    tapCount++;
+                    if (tapCount === 1) {
+                        tapTimer = setTimeout(() => {
+                            tapCount = 0;
+                            // Clique simples
+                            selectedDocumentIndex = index;
+                            updateDocumentsList();
+                            updateDocumentControls();
+                        }, 300);
+                    } else if (tapCount === 2) {
+                        clearTimeout(tapTimer);
+                        tapCount = 0;
+                        // Duplo tap - abrir documento
+                        selectedDocumentIndex = index;
+                        updateDocumentsList();
+                        updateDocumentControls();
+                        openDocument();
+                    }
+                }, {passive: false});
+                
+                documentsList.appendChild(div);
+            });
+        }
+
+        function updateDocumentControls() {
+            const hasSelection = selectedDocumentIndex !== -1;
+            const hasDocuments = execMenu.documents.length > 0;
+            
+            documentUpBtn.disabled = !hasSelection || selectedDocumentIndex === 0;
+            documentDownBtn.disabled = !hasSelection || selectedDocumentIndex === execMenu.documents.length - 1;
+            openDocumentBtn.disabled = !hasSelection;
+            editDocumentBtn.disabled = !hasSelection;
+            removeDocumentBtn.disabled = !hasSelection;
+        }
+
+        function moveDocumentUp() {
+            if (selectedDocumentIndex <= 0) return;
+            [execMenu.documents[selectedDocumentIndex], execMenu.documents[selectedDocumentIndex - 1]] = 
+            [execMenu.documents[selectedDocumentIndex - 1], execMenu.documents[selectedDocumentIndex]];
+            selectedDocumentIndex--;
+            updateDocumentsList();
+            saveTasks();
+        }
+
+        function moveDocumentDown() {
+            if (selectedDocumentIndex >= execMenu.documents.length - 1) return;
+            [execMenu.documents[selectedDocumentIndex], execMenu.documents[selectedDocumentIndex + 1]] = 
+            [execMenu.documents[selectedDocumentIndex + 1], execMenu.documents[selectedDocumentIndex]];
+            selectedDocumentIndex++;
+            updateDocumentsList();
+            saveTasks();
+        }
+
+        function newDocument() {
+            isEditingDocument = false;
+            documentLabel.value = '';
+            documentPath.value = '';
+            documentForm.style.display = 'block';
+            documentLabel.focus();
+        }
+
+        function editDocument() {
+            if (selectedDocumentIndex === -1) return;
+            
+            const doc = execMenu.documents[selectedDocumentIndex];
+            documentLabel.value = doc.label || '';
+            documentPath.value = doc.path || '';
+            isEditingDocument = true;
+            documentForm.style.display = 'block';
+            documentLabel.focus();
+        }
+
+        function openDocument() {
+            if (selectedDocumentIndex === -1) return;
+            
+            const doc = execMenu.documents[selectedDocumentIndex];
+            if (doc.path) {
+                // *** CORREÇÃO: Emitir aviso de indisponibilidade e copiar caminho ***
+                copyToClipboard(doc.path);
+                alert(`Funcionalidade indisponível na versão web.\n\nO caminho do documento foi copiado para a área de transferência:\n${doc.path}`);
+            }
+        }
+
+        function removeDocument() {
+            if (selectedDocumentIndex === -1) return;
+            
+            const doc = execMenu.documents[selectedDocumentIndex];
+            if (confirm(`Tem a certeza que pretende eliminar o documento "${doc.label}"?`)) {
+                execMenu.documents.splice(selectedDocumentIndex, 1);
+                selectedDocumentIndex = Math.min(selectedDocumentIndex, execMenu.documents.length - 1);
+                updateDocumentsList();
+                updateDocumentControls();
+                saveTasks();
+            }
+        }
+
+        function saveDocument() {
+            const label = documentLabel.value.trim();
+            const path = documentPath.value.trim();
+            
+            if (!label) {
+                alert('Por favor, introduza um nome para o documento.');
+                return;
+            }
+            
+            if (!path) {
+                alert('Por favor, introduza um caminho para o documento.');
+                return;
+            }
+            
+            if (isEditingDocument) {
+                // Editar documento existente
+                execMenu.documents[selectedDocumentIndex] = {
+                    label: label,
+                    path: path
+                };
+            } else {
+                // Novo documento
+                execMenu.documents.push({
+                    label: label,
+                    path: path
+                });
+                selectedDocumentIndex = execMenu.documents.length - 1;
+            }
+            
+            updateDocumentsList();
+            updateDocumentControls();
+            documentForm.style.display = 'none';
+            saveTasks();
+        }
+
+        function cancelDocumentEdit() {
+            documentForm.style.display = 'none';
         }
 
         // ====== FUNÇÕES DE MENU DE CONTEXTO ======
@@ -1705,6 +2225,8 @@
         function closeModals() {
             propertiesModal.style.display = 'none';
             favoritesModal.style.display = 'none';
+            programsModal.style.display = 'none';
+            documentsModal.style.display = 'none';
         }
 
         function executeSearch() {
@@ -1953,11 +2475,11 @@
                     break;
 
                 case 'managePrograms':
-                    alert(`Funcionalidade "Gerir Programas" - indisponível na versão web.`);
+                    openManagePrograms();
                     break;
 
                 case 'manageDocuments':
-                    alert(`Funcionalidade "Gerir Documentos" - indisponível na versão web.`);
+                    openManageDocuments();
                     break;
 
                 case 'manageFavorites':
