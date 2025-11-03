@@ -391,6 +391,7 @@
             display: flex;
             justify-content: between;
             align-items: center;
+            cursor: pointer;
         }
 
         .favorite-item:last-child {
@@ -986,11 +987,45 @@
                     <div class="favorite-url">${favorite.url || 'Sem URL'}</div>
                 `;
                 
+                // Clique simples para selecionar
                 div.addEventListener('click', () => {
                     selectedFavoriteIndex = index;
                     updateFavoritesList();
                     updateFavoriteControls();
                 });
+                
+                // *** MODIFICAÇÃO SOLICITADA: Duplo clique/duplo tap para abrir o link ***
+                div.addEventListener('dblclick', () => {
+                    selectedFavoriteIndex = index;
+                    updateFavoritesList();
+                    updateFavoriteControls();
+                    openFavorite();
+                });
+                
+                // Para Android: duplo tap
+                let tapCount = 0;
+                let tapTimer;
+                div.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    tapCount++;
+                    if (tapCount === 1) {
+                        tapTimer = setTimeout(() => {
+                            tapCount = 0;
+                            // Clique simples
+                            selectedFavoriteIndex = index;
+                            updateFavoritesList();
+                            updateFavoriteControls();
+                        }, 300);
+                    } else if (tapCount === 2) {
+                        clearTimeout(tapTimer);
+                        tapCount = 0;
+                        // Duplo tap - abrir link
+                        selectedFavoriteIndex = index;
+                        updateFavoritesList();
+                        updateFavoriteControls();
+                        openFavorite();
+                    }
+                }, {passive: false});
                 
                 favoritesList.appendChild(div);
             });
