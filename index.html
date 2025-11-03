@@ -376,6 +376,62 @@
             pointer-events: auto !important;
         }
 
+        /* ====== MODAL GERIR FAVORITOS ====== */
+        .favorites-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+
+        .favorite-item {
+            padding: 10px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: between;
+            align-items: center;
+        }
+
+        .favorite-item:last-child {
+            border-bottom: none;
+        }
+
+        .favorite-item.selected {
+            background-color: var(--selected-task-bg);
+        }
+
+        .favorite-label {
+            flex: 1;
+            font-weight: bold;
+        }
+
+        .favorite-url {
+            flex: 2;
+            color: #666;
+            font-size: 12px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .favorites-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .favorites-controls button {
+            flex: 1;
+        }
+
+        .favorite-form {
+            background-color: var(--secondary-color);
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 15px;
+        }
+
         /* ====== Responsivo ====== */
         @media (max-width: 768px) {
             .container {
@@ -429,6 +485,26 @@
 
             .context-menu-item {
                 padding: 12px 15px;
+            }
+
+            .favorite-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+
+            .favorite-label,
+            .favorite-url {
+                flex: none;
+                width: 100%;
+            }
+
+            .favorites-controls {
+                flex-wrap: wrap;
+            }
+
+            .favorites-controls button {
+                flex: 1 1 calc(50% - 5px);
             }
         }
     </style>
@@ -527,6 +603,44 @@
             <div class="modal-actions">
                 <button id="savePropertiesBtn">Salvar</button>
                 <button id="cancelPropertiesBtn">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL GERIR FAVORITOS -->
+    <div id="favoritesModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">Gerir Favoritos</div>
+                <button class="close-btn">&times;</button>
+            </div>
+            
+            <div class="favorites-controls">
+                <button id="favoriteUpBtn">▲ Subir</button>
+                <button id="favoriteDownBtn">▼ Descer</button>
+                <button id="newFavoriteBtn">Novo</button>
+                <button id="openFavoriteBtn">Abrir</button>
+                <button id="editFavoriteBtn">Editar</button>
+                <button id="removeFavoriteBtn">Remover</button>
+            </div>
+
+            <div class="favorites-list" id="favoritesList">
+                <!-- Lista de favoritos será gerada dinamicamente -->
+            </div>
+
+            <div class="favorite-form" id="favoriteForm" style="display: none;">
+                <div class="form-group">
+                    <label for="favoriteLabel">Nome:</label>
+                    <input type="text" id="favoriteLabel" placeholder="Nome do favorito">
+                </div>
+                <div class="form-group">
+                    <label for="favoriteUrl">URL:</label>
+                    <input type="text" id="favoriteUrl" placeholder="https://exemplo.com">
+                </div>
+                <div class="modal-actions">
+                    <button id="saveFavoriteBtn">Salvar</button>
+                    <button id="cancelFavoriteBtn">Cancelar</button>
+                </div>
             </div>
         </div>
     </div>
@@ -641,6 +755,10 @@
         let openSubmenuParent = null;
         let submenuCloseTimer = null;
 
+        // estado para gestão de favoritos
+        let selectedFavoriteIndex = -1;
+        let isEditingFavorite = false;
+
         // =========================
         // DOM
         // =========================
@@ -667,6 +785,21 @@
         const fileInput = document.getElementById('fileInput');
         const manageSubmenu = document.getElementById('manageSubmenu');
 
+        // Elementos do modal de favoritos
+        const favoritesModal = document.getElementById('favoritesModal');
+        const favoritesList = document.getElementById('favoritesList');
+        const favoriteUpBtn = document.getElementById('favoriteUpBtn');
+        const favoriteDownBtn = document.getElementById('favoriteDownBtn');
+        const newFavoriteBtn = document.getElementById('newFavoriteBtn');
+        const openFavoriteBtn = document.getElementById('openFavoriteBtn');
+        const editFavoriteBtn = document.getElementById('editFavoriteBtn');
+        const removeFavoriteBtn = document.getElementById('removeFavoriteBtn');
+        const favoriteForm = document.getElementById('favoriteForm');
+        const favoriteLabel = document.getElementById('favoriteLabel');
+        const favoriteUrl = document.getElementById('favoriteUrl');
+        const saveFavoriteBtn = document.getElementById('saveFavoriteBtn');
+        const cancelFavoriteBtn = document.getElementById('cancelFavoriteBtn');
+
         document.addEventListener('DOMContentLoaded', () => {
             loadTasks();
             updateTaskList();
@@ -691,12 +824,22 @@
                 if (e.key === 'Enter') executeSearch();
             });
 
-            // Fechar modal
+            // Fechar modais
             document.querySelectorAll('.close-btn').forEach(btn => {
                 btn.addEventListener('click', closeModals);
             });
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
+
+            // Event listeners para gestão de favoritos
+            favoriteUpBtn.addEventListener('click', moveFavoriteUp);
+            favoriteDownBtn.addEventListener('click', moveFavoriteDown);
+            newFavoriteBtn.addEventListener('click', newFavorite);
+            openFavoriteBtn.addEventListener('click', openFavorite);
+            editFavoriteBtn.addEventListener('click', editFavorite);
+            removeFavoriteBtn.addEventListener('click', removeFavorite);
+            saveFavoriteBtn.addEventListener('click', saveFavorite);
+            cancelFavoriteBtn.addEventListener('click', cancelFavoriteEdit);
 
             // MENU DE CONTEXTO - rato
             taskList.addEventListener('contextmenu', function(e) {
@@ -817,6 +960,155 @@
 
             // inicializar lógica de submenus
             initSubmenus();
+        }
+
+        // ====== FUNÇÕES DE GESTÃO DE FAVORITOS ======
+        function openManageFavorites() {
+            updateFavoritesList();
+            favoritesModal.style.display = 'flex';
+            selectedFavoriteIndex = -1;
+            updateFavoriteControls();
+            favoriteForm.style.display = 'none';
+        }
+
+        function updateFavoritesList() {
+            favoritesList.innerHTML = '';
+            
+            execMenu.favorites.forEach((favorite, index) => {
+                const div = document.createElement('div');
+                div.className = 'favorite-item';
+                if (index === selectedFavoriteIndex) {
+                    div.classList.add('selected');
+                }
+                
+                div.innerHTML = `
+                    <div class="favorite-label">${favorite.label || 'Sem nome'}</div>
+                    <div class="favorite-url">${favorite.url || 'Sem URL'}</div>
+                `;
+                
+                div.addEventListener('click', () => {
+                    selectedFavoriteIndex = index;
+                    updateFavoritesList();
+                    updateFavoriteControls();
+                });
+                
+                favoritesList.appendChild(div);
+            });
+        }
+
+        function updateFavoriteControls() {
+            const hasSelection = selectedFavoriteIndex !== -1;
+            const hasFavorites = execMenu.favorites.length > 0;
+            
+            favoriteUpBtn.disabled = !hasSelection || selectedFavoriteIndex === 0;
+            favoriteDownBtn.disabled = !hasSelection || selectedFavoriteIndex === execMenu.favorites.length - 1;
+            openFavoriteBtn.disabled = !hasSelection;
+            editFavoriteBtn.disabled = !hasSelection;
+            removeFavoriteBtn.disabled = !hasSelection;
+        }
+
+        function moveFavoriteUp() {
+            if (selectedFavoriteIndex <= 0) return;
+            [execMenu.favorites[selectedFavoriteIndex], execMenu.favorites[selectedFavoriteIndex - 1]] = 
+            [execMenu.favorites[selectedFavoriteIndex - 1], execMenu.favorites[selectedFavoriteIndex]];
+            selectedFavoriteIndex--;
+            updateFavoritesList();
+            saveTasks();
+        }
+
+        function moveFavoriteDown() {
+            if (selectedFavoriteIndex >= execMenu.favorites.length - 1) return;
+            [execMenu.favorites[selectedFavoriteIndex], execMenu.favorites[selectedFavoriteIndex + 1]] = 
+            [execMenu.favorites[selectedFavoriteIndex + 1], execMenu.favorites[selectedFavoriteIndex]];
+            selectedFavoriteIndex++;
+            updateFavoritesList();
+            saveTasks();
+        }
+
+        function newFavorite() {
+            isEditingFavorite = false;
+            favoriteLabel.value = '';
+            favoriteUrl.value = '';
+            favoriteForm.style.display = 'block';
+            favoriteLabel.focus();
+        }
+
+        function editFavorite() {
+            if (selectedFavoriteIndex === -1) return;
+            
+            const favorite = execMenu.favorites[selectedFavoriteIndex];
+            favoriteLabel.value = favorite.label || '';
+            favoriteUrl.value = favorite.url || '';
+            isEditingFavorite = true;
+            favoriteForm.style.display = 'block';
+            favoriteLabel.focus();
+        }
+
+        function openFavorite() {
+            if (selectedFavoriteIndex === -1) return;
+            
+            const favorite = execMenu.favorites[selectedFavoriteIndex];
+            if (favorite.url) {
+                window.open(favorite.url, '_blank');
+            }
+        }
+
+        function removeFavorite() {
+            if (selectedFavoriteIndex === -1) return;
+            
+            const favorite = execMenu.favorites[selectedFavoriteIndex];
+            if (confirm(`Tem a certeza que pretende eliminar o favorito "${favorite.label}"?`)) {
+                execMenu.favorites.splice(selectedFavoriteIndex, 1);
+                selectedFavoriteIndex = Math.min(selectedFavoriteIndex, execMenu.favorites.length - 1);
+                updateFavoritesList();
+                updateFavoriteControls();
+                saveTasks();
+            }
+        }
+
+        function saveFavorite() {
+            const label = favoriteLabel.value.trim();
+            const url = favoriteUrl.value.trim();
+            
+            if (!label) {
+                alert('Por favor, introduza um nome para o favorito.');
+                return;
+            }
+            
+            if (!url) {
+                alert('Por favor, introduza um URL para o favorito.');
+                return;
+            }
+            
+            // Validar URL básica
+            let finalUrl = url;
+            if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                finalUrl = 'https://' + url;
+            }
+            
+            if (isEditingFavorite) {
+                // Editar favorito existente
+                execMenu.favorites[selectedFavoriteIndex] = {
+                    label: label,
+                    url: finalUrl
+                };
+            } else {
+                // Novo favorito
+                execMenu.favorites.push({
+                    label: label,
+                    url: finalUrl
+                });
+                selectedFavoriteIndex = execMenu.favorites.length - 1;
+            }
+            
+            updateFavoritesList();
+            updateFavoriteControls();
+            favoriteForm.style.display = 'none';
+            saveTasks();
+        }
+
+        function cancelFavoriteEdit() {
+            favoriteForm.style.display = 'none';
         }
 
         // ====== FUNÇÕES DE MENU DE CONTEXTO ======
@@ -1377,6 +1669,7 @@
 
         function closeModals() {
             propertiesModal.style.display = 'none';
+            favoritesModal.style.display = 'none';
         }
 
         function executeSearch() {
@@ -1625,9 +1918,15 @@
                     break;
 
                 case 'managePrograms':
+                    alert(`Funcionalidade "Gerir Programas" - indisponível na versão web`);
+                    break;
+
                 case 'manageDocuments':
+                    alert(`Funcionalidade "Gerir Documentos" - indisponível na versão web`);
+                    break;
+
                 case 'manageFavorites':
-                    alert(`Funcionalidade "${action}" - Em desenvolvimento`);
+                    openManageFavorites();
                     break;
 
                 default:
