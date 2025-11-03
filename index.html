@@ -1608,21 +1608,9 @@
             
             const doc = execMenu.documents[selectedDocumentIndex];
             if (doc.path) {
-                // *** MODIFICAÇÃO SOLICITADA: Abrir PDF e TXT no browser, descarregar outros ***
-                const fileExtension = doc.path.toLowerCase().split('.').pop();
-                
-                if (fileExtension === 'pdf' || fileExtension === 'txt') {
-                    // Abrir PDF e TXT numa nova aba
-                    window.open(doc.path, '_blank');
-                } else {
-                    // Descarregar outros tipos de documentos
-                    const link = document.createElement('a');
-                    link.href = doc.path;
-                    link.download = doc.label || 'documento';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                }
+                // *** CORREÇÃO: Emitir aviso de indisponibilidade e copiar caminho ***
+                copyToClipboard(doc.path);
+                alert(`Funcionalidade indisponível na versão web.\n\nO caminho do documento foi copiado para a área de transferência:\n${doc.path}`);
             }
         }
 
