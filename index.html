@@ -776,7 +776,7 @@
                 Link
                 <div class="context-submenu">
                     <div class="context-menu-item" data-action="openLink">Abrir Link</div>
-                    <div class="context-menu-item" data-action="associateLink">Definir Link</div>
+                    <!-- ALTERAÇÃO 3: Opção "Definir Link" removida -->
                     <div class="context-menu-item" data-action="removeLink">Remover Link</div>
                 </div>
             </div>
@@ -818,7 +818,6 @@
 
             <div class="context-menu-separator"></div>
 
-            <!-- Alteração 3: opção única "Gerir" com três submenus -->
             <div class="context-menu-item has-submenu">
                 Gerir
                 <div class="context-submenu" id="manageSubmenu">
@@ -1156,7 +1155,7 @@
                     updateFavoriteControls();
                 });
                 
-                // *** MODIFICAÇÃO SOLICITADA: Duplo clique/duplo tap para abrir o link ***
+                // Duplo clique/duplo tap para abrir o link
                 div.addEventListener('dblclick', () => {
                     selectedFavoriteIndex = index;
                     updateFavoritesList();
@@ -1339,7 +1338,7 @@
                     updateProgramControls();
                 });
                 
-                // *** MODIFICAÇÃO SOLICITADA: Duplo clique/duplo tap para abrir programa ***
+                // Duplo clique/duplo tap para abrir programa
                 div.addEventListener('dblclick', () => {
                     selectedProgramIndex = index;
                     updateProgramsList();
@@ -1429,7 +1428,7 @@
             
             const program = execMenu.programs[selectedProgramIndex];
             if (program.path) {
-                // *** MODIFICAÇÃO SOLICITADA: Emitir aviso de indisponibilidade e copiar caminho ***
+                // Emitir aviso de indisponibilidade e copiar caminho
                 copyToClipboard(program.path);
                 alert(`Funcionalidade indisponível na versão web.\n\nO caminho do programa foi copiado para a área de transferência:\n${program.path}`);
             }
@@ -1518,7 +1517,7 @@
                     updateDocumentControls();
                 });
                 
-                // *** MODIFICAÇÃO SOLICITADA: Duplo clique/duplo tap para abrir documento ***
+                // Duplo clique/duplo tap para abrir documento
                 div.addEventListener('dblclick', () => {
                     selectedDocumentIndex = index;
                     updateDocumentsList();
@@ -1608,7 +1607,7 @@
             
             const doc = execMenu.documents[selectedDocumentIndex];
             if (doc.path) {
-                // *** CORREÇÃO: Emitir aviso de indisponibilidade e copiar caminho ***
+                // Emitir aviso de indisponibilidade e copiar caminho
                 copyToClipboard(doc.path);
                 alert(`Funcionalidade indisponível na versão web.\n\nO caminho do documento foi copiado para a área de transferência:\n${doc.path}`);
             }
@@ -2321,20 +2320,34 @@
                     break;
 
                 case 'openPersonalFolder':
+                    // ALTERAÇÃO 1: Se não existir pasta pessoal, abrir janela para definir
                     if (task.personalFolder) {
                         copyToClipboard(task.personalFolder);
                         alert(`Pasta Pessoal: ${task.personalFolder}\n\nEm ambiente web, não é possível abrir pastas locais. A localização foi copiada para a área de transferência.`);
                     } else {
-                        alert('Nenhuma pasta pessoal associada a esta tarefa.');
+                        const folderPath = prompt('Defina o caminho da pasta pessoal para esta tarefa:');
+                        if (folderPath && folderPath.trim()) {
+                            task.personalFolder = folderPath.trim();
+                            updateTaskList();
+                            saveTasks();
+                            updateStatus(`Pasta pessoal definida: ${task.personalFolder}`);
+                        }
                     }
                     break;
 
                 case 'openSharedFolder':
+                    // ALTERAÇÃO 1: Se não existir pasta partilhada, abrir janela para definir
                     if (task.sharedFolder) {
                         copyToClipboard(task.sharedFolder);
                         alert(`Pasta Partilhada: ${task.sharedFolder}\n\nEm ambiente web, não é possível abrir pastas locais. A localização foi copiada para a área de transferência.`);
                     } else {
-                        alert('Nenhuma pasta partilhada associada a esta tarefa.');
+                        const folderPath = prompt('Defina o caminho da pasta partilhada para esta tarefa:');
+                        if (folderPath && folderPath.trim()) {
+                            task.sharedFolder = folderPath.trim();
+                            updateTaskList();
+                            saveTasks();
+                            updateStatus(`Pasta partilhada definida: ${task.sharedFolder}`);
+                        }
                     }
                     break;
 
@@ -2361,24 +2374,21 @@
                     break;
 
                 case 'openLink':
+                    // ALTERAÇÃO 2: Se não existir link, abrir janela para definir
                     if (task.link) {
                         window.open(task.link, '_blank');
                     } else {
-                        alert('Nenhum link associado a esta tarefa.');
-                    }
-                    break;
-
-                case 'associateLink':
-                    const link = prompt('Indique o URL para associar à tarefa:', 'https://');
-                    if (link && link.trim()) {
-                        let finalLink = link.trim();
-                        if (!finalLink.startsWith('http://') && !finalLink.startsWith('https://')) {
-                            finalLink = 'https://' + finalLink;
+                        const link = prompt('Indique o URL para associar à tarefa:', 'https://');
+                        if (link && link.trim()) {
+                            let finalLink = link.trim();
+                            if (!finalLink.startsWith('http://') && !finalLink.startsWith('https://')) {
+                                finalLink = 'https://' + finalLink;
+                            }
+                            task.link = finalLink;
+                            updateTaskList();
+                            saveTasks();
+                            updateStatus(`Link associado à tarefa: ${finalLink}`);
                         }
-                        task.link = finalLink;
-                        updateTaskList();
-                        saveTasks();
-                        updateStatus(`Link associado à tarefa: ${finalLink}`);
                     }
                     break;
 
@@ -2505,9 +2515,6 @@
                 report += `Tarefa ${index + 1}:\n`;
                 report += `Tarefa: ${task.text}\n`;
                 
-                // if (task.personalFolder) {
-                //     report += `Pasta Pessoal: ${task.personalFolder}\n`;
-                // }
                 if (task.sharedFolder) {
                     report += `Pasta Partilhada: ${task.sharedFolder}\n`;
                 }
