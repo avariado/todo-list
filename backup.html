@@ -2121,44 +2121,57 @@
             }
         }
 
-        function exportToJSON() {
-            const data = {
-                tarefas: tasks.map(task => ({
-                    texto: task.text,
-                    completada: task.completed,
-                    pasta_pessoal: task.personalFolder,
-                    pasta_partilhada: task.sharedFolder,
-                    link: task.link,
-                    data: task.date,
-                    destaque: task.highlightColor === 'red',
-                    destaque_cor: task.highlightColor === 'red' ? 'vermelho' :
-                                  task.highlightColor === 'blue' ? 'azul' : null
-                })),
-                notas: notes,
-                ultimo_aviso_data: lastWarningDate,
-                executar_menu: {
-                    programas: execMenu.programs,
-                    pasta_programas: execMenu.programsFolder,
-                    favoritos: execMenu.favorites,
-                    pasta_links: execMenu.linksFolder,
-                    documentos: execMenu.documents,
-                    pasta_documentos: execMenu.documentsFolder
-                }
-            };
+		function exportToJSON() {
+			const data = {
+				tarefas: tasks.map(task => ({
+					texto: task.text,
+					completada: task.completed,
+					pasta_pessoal: task.personalFolder,
+					pasta_partilhada: task.sharedFolder,
+					link: task.link,
+					data: task.date,
+					destaque: task.highlightColor === 'red',
+					destaque_cor: task.highlightColor === 'red' ? 'vermelho' :
+								  task.highlightColor === 'blue' ? 'azul' : null
+				})),
+				notas: notes,
+				ultimo_aviso_data: lastWarningDate,
+				executar_menu: {
+					programas: execMenu.programs,
+					pasta_programas: execMenu.programsFolder,
+					favoritos: execMenu.favorites,
+					pasta_links: execMenu.linksFolder,
+					documentos: execMenu.documents,
+					pasta_documentos: execMenu.documentsFolder
+				}
+			};
 
-            const dataStr = JSON.stringify(data, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
-            const url = URL.createObjectURL(dataBlob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = 'tarefas.json';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
+			const dataStr = JSON.stringify(data, null, 2);
 
-            updateStatus('Dados exportados com sucesso');
-        }
+			// ► No Android (WebView), gravar em /Downloads via ponte nativa
+			if (window.Android && typeof window.Android.saveJSON === 'function') {
+				const ok = window.Android.saveJSON('tarefas.json', dataStr);
+				if (ok) {
+					updateStatus('Dados exportados para a pasta Downloads');
+				} else {
+					updateStatus('Falha na exportação (verifique permissões/armazenamento)');
+				}
+				return;
+			}
+
+			// ► Fallback (navegador desktop): descarga normal
+			const dataBlob = new Blob([dataStr], {type: 'application/json'});
+			const url = URL.createObjectURL(dataBlob);
+			const link = document.createElement('a');
+			link.href = url;
+			link.download = 'tarefas.json';
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+
+			updateStatus('Dados exportados (download do navegador)');
+		}
 
         function importFromJSON(event) {
             const file = event.target.files[0];
