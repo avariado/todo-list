@@ -2547,15 +2547,24 @@
                 report += `\n`;
             });
 
-            const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `Relatório_${new Date().toLocaleDateString('pt-PT').replace(/\//g, '_')}.txt`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
+			// Se correr dentro do APK → guardar na pasta Downloads
+			if (typeof Android !== "undefined" && Android.saveReport) {
+				Android.saveReport(
+					`Relatório_${new Date().toLocaleDateString('pt-PT').replace(/\//g, '_')}.txt`,
+					report
+				);
+			} else {
+				// Se correr no PC → download normal (mantém funcionalidade)
+				const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+				const url = URL.createObjectURL(blob);
+				const link = document.createElement('a');
+				link.href = url;
+				link.download = `Relatório_${new Date().toLocaleDateString('pt-PT').replace(/\//g, '_')}.txt`;
+				document.body.appendChild(link);
+				link.click();
+				document.body.removeChild(link);
+				URL.revokeObjectURL(url);
+			}
 
             updateStatus('Relatório gerado com sucesso');
         }
