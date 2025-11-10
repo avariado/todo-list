@@ -1040,23 +1040,14 @@
             });
         }
 
-        // Função para verificar alertas do dia
+        // Função para verificar alertas do dia - CORRIGIDA
         function checkDayAlerts() {
-            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-            const lastAlert = localStorage.getItem('lastDayAlert');
-            
-            // Se já mostrou alerta hoje, não mostrar novamente
-            if (lastAlert === today) {
-                return;
-            }
-
             const todayTasks = tasks.filter(task => 
                 task.date && isScheduledDay(task.date) && !task.completed
             );
 
             if (todayTasks.length > 0) {
                 showDayAlert(todayTasks);
-                localStorage.setItem('lastDayAlert', today);
             }
         }
 
@@ -1073,8 +1064,17 @@
             dayAlertModal.style.display = 'flex';
         }
 
+        // NOVA FUNÇÃO: Chamar checkDayAlerts quando uma data é definida
+        function triggerDayAlertCheck() {
+            // Pequeno delay para garantir que a tarefa já foi salva
+            setTimeout(() => {
+                checkDayAlerts();
+                applyDayBeforeStyles(); // Também atualizar os estilos
+            }, 100);
+        }
+
         // =========================
-        // FUNÇÕES EXISTENTES (INALTERADAS)
+        // FUNÇÕES EXISTENTES (MODIFICADAS)
         // =========================
 
         function setupEventListeners() {
@@ -2222,6 +2222,9 @@
             saveTasks();
             closeModals();
             updateStatus('Propriedades da tarefa atualizadas com sucesso');
+            
+            // NOVO: Verificar se deve mostrar alerta do dia
+            triggerDayAlertCheck();
         }
 
         function removeTask() {
@@ -2342,6 +2345,9 @@
                     saveTasks();
 
                     updateStatus('Dados importados com sucesso');
+                    
+                    // NOVO: Verificar se deve mostrar alerta do dia após importação
+                    triggerDayAlertCheck();
                 } catch (error) {
                     alert('Erro ao importar ficheiro: ' + error.message);
                     updateStatus('Erro ao importar ficheiro');
@@ -2563,6 +2569,9 @@
                             updateTaskList();
                             saveTasks();
                             updateStatus(`Data ${task.date} associada à tarefa`);
+                            
+                            // NOVO: Verificar se deve mostrar alerta do dia
+                            triggerDayAlertCheck();
                         } else {
                             alert('Formato inválido. Utilize DD-MM-AAAA (ex.: 05-11-2025).');
                         }
