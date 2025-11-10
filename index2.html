@@ -2327,52 +2327,55 @@
 			updateStatus('Dados exportados (download do navegador)');
 		}
 
-        function importFromJSON(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (data.tarefas) {
-                        tasks = data.tarefas.map(normalizeTask);
-                        notes = data.notas || "";
-                        lastWarningDate = data.ultimo_aviso_data || null;
-
-                        if (data.executar_menu) {
-                            execMenu = {
-                                programs: data.executar_menu.programas || [],
-                                programsFolder: data.executar_menu.pasta_programas || null,
-                                favorites: data.executar_menu.favoritos || [],
-                                linksFolder: data.executar_menu.pasta_links || null,
-                                documents: data.executar_menu.documentos || [],
-                                documentsFolder: data.executar_menu.pasta_documentos || null
-                            };
-                        }
-                    } else {
-                        throw new Error('Formato de JSON inválido');
-                    }
-
-                    selectTask(-1);
-                    updateTaskList();
-                    notesTextarea.value = notes;
-                    saveTasks();
-
-                    updateStatus('Dados importados com sucesso');
-                    
-                    // ALTERAÇÃO SOLICITADA: Verificar tarefas agendadas após importação
-                    resetDayAlert();
-                    triggerDayAlertCheck();
-                } catch (error) {
-                    alert('Erro ao importar ficheiro: ' + error.message);
-                    updateStatus('Erro ao importar ficheiro');
-                }
-            };
-
-            reader.readAsText(file);
-            fileInput.value = '';
-        }
+		function importFromJSON(event) {
+		    const file = event.target.files[0];
+		    if (!file) return;
+		
+		    const reader = new FileReader();
+		    reader.onload = function(e) {
+		        try {
+		            const data = JSON.parse(e.target.result);
+		            if (data.tarefas) {
+		                tasks = data.tarefas.map(normalizeTask);
+		                notes = data.notas || "";
+		                lastWarningDate = data.ultimo_aviso_data || null;
+		
+		                if (data.executar_menu) {
+		                    execMenu = {
+		                        programs: data.executar_menu.programas || [],
+		                        programsFolder: data.executar_menu.pasta_programas || null,
+		                        favorites: data.executar_menu.favoritos || [],
+		                        linksFolder: data.executar_menu.pasta_links || null,
+		                        documents: data.executar_menu.documentos || [],
+		                        documentsFolder: data.executar_menu.pasta_documentos || null
+		                    };
+		                }
+		            } else {
+		                throw new Error('Formato de JSON inválido');
+		            }
+		
+		            selectTask(-1);
+		            updateTaskList();
+		            notesTextarea.value = notes;
+		            saveTasks();
+		
+		            updateStatus('Dados importados com sucesso');
+		            
+		            // CORREÇÃO: Verificar tarefas agendadas após importação
+		            setTimeout(() => {
+		                resetDayAlert();
+		                checkDayAlerts();
+		            }, 500);
+		            
+		        } catch (error) {
+		            alert('Erro ao importar ficheiro: ' + error.message);
+		            updateStatus('Erro ao importar ficheiro');
+		        }
+		    };
+		
+		    reader.readAsText(file);
+		    fileInput.value = '';
+		}
 
         function toggleNotes() {
             notesVisible = !notesVisible;
