@@ -124,12 +124,11 @@
             font-weight: bold;
         }
 
-        /* NOVA CLASSE: tarefa vermelha no dia anterior */
+        /* NOVA CLASSE: tarefa vermelha no dia anterior e no próprio dia */
         .task-item.red-day-before {
             color: #dc3545 !important;
             font-weight: 600;
             background: #fff5f5 !important;
-            border-left: 4px solid #dc3545 !important;
         }
 
         /* Alteração 1: tarefas completadas só cinzento, sem risco */
@@ -1035,7 +1034,7 @@
                 const index = Array.from(taskList.children).indexOf(item);
                 if (index !== -1 && index < tasks.length) {
                     const task = tasks[index];
-                    if (task.date && isDayBefore(task.date)) {
+                    if (task.date && (isDayBefore(task.date) || isScheduledDay(task.date))) {
                         item.classList.add('red-day-before');
                     }
                 }
@@ -2057,8 +2056,8 @@
                 if (task.completed) li.classList.add('completed');
                 if (index === selectedTaskIndex) li.classList.add('selected');
 
-                // NOVO: Aplicar estilo vermelho se for dia anterior
-                if (task.date && isDayBefore(task.date)) {
+                // ALTERAÇÃO: Aplicar estilo vermelho se for dia anterior ou próprio dia
+                if (task.date && (isDayBefore(task.date) || isScheduledDay(task.date))) {
                     li.classList.add('red-day-before');
                 }
 
