@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Organizador de Tarefas</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            opacity: 0.8;
+            font-size: 1.1em;
+        }
+
+        .main-content {
+            padding: 30px;
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 30px;
+        }
+
+        .tasks-section {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+        }
+
+        .new-task {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+        }
+
+        .new-task h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .task-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 80px;
+            transition: border-color 0.3s;
+        }
+
+        .task-input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .add-btn {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            margin-top: 10px;
+        }
+
+        .add-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .tasks-list {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .task-item {
+            padding: 20px;
+            border-bottom: 1px solid #e9ecef;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .task-item:hover {
+            background: #f8f9fa;
+        }
+
+        .task-item:last-child {
+            border-bottom: none;
+        }
+
+        .task-item.completed {
+            opacity: 0.6;
+            background: #f8f9fa;
+        }
+
+        .task-item.completed .task-text {
+            text-decoration: line-through;
+        }
+
+        .task-text {
+            font-size: 16px;
+            line-height: 1.5;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .task-meta {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 14px;
+            color: #6c757d;
+        }
+
+        .task-date {
+            background: #e3f2fd;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-weight: 500;
+        }
+
+        .task-icons {
+            display: flex;
+            gap: 8px;
+            margin-left: auto;
+        }
+
+        .icon {
+            font-size: 16px;
+        }
+
+        /* Cores para datas */
+        .task-item.red-alert {
+            border-left: 4px solid #e74c3c;
+            background: #ffeaea;
+        }
+
+        .task-item.blue-alert {
+            border-left: 4px solid #3498db;
+            background: #e3f2fd;
+        }
+
+        .sidebar {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 25px;
+        }
+
+        .stats {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            margin-bottom: 25px;
+        }
+
+        .stats h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: between;
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            margin-left: auto;
+        }
+
+        .quick-actions {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .quick-actions h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .action-btn {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 10px;
+            border: 2px solid #e9ecef;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 14px;
+        }
+
+        .action-btn:hover {
+            border-color: #3498db;
+            background: #f8f9fa;
+        }
+
+        .separator {
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .modal-btn.primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .modal-btn.secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📝 Organizador de Tarefas</h1>
+            <p>Gerencie suas tarefas de forma eficiente e organizada</p>
+        </div>
+
+        <div class="main-content">
+            <div class="tasks-section">
+                <div class="new-task">
+                    <h3>➕ Nova Tarefa</h3>
+                    <textarea class="task-input" placeholder="Descreva sua tarefa aqui..."></textarea>
+                    <button class="add-btn" onclick="addTask()">Adicionar Tarefa</button>
+                </div>
+
+                <div class="tasks-list" id="tasksList">
+                    <!-- Tarefas serão carregadas aqui -->
+                </div>
+            </div>
+
+            <div class="sidebar">
+                <div class="stats">
+                    <h3>📊 Estatísticas</h3>
+                    <div class="stat-item">
+                        <span>Total de Tarefas:</span>
+                        <span class="stat-value" id="totalTasks">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Concluídas:</span>
+                        <span class="stat-value" id="completedTasks">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Pendentes:</span>
+                        <span class="stat-value" id="pendingTasks">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span>Com Data:</span>
+                        <span class="stat-value" id="tasksWithDate">0</span>
+                    </div>
+                </div>
+
+                <div class="quick-actions">
+                    <h3>⚡ Ações Rápidas</h3>
+                    <button class="action-btn" onclick="clearCompleted()">🗑️ Limpar Concluídas</button>
+                    <button class="action-btn" onclick="exportTasks()">📤 Exportar Tarefas</button>
+                    <button class="action-btn" onclick="showTodayTasks()">📅 Ver Tarefas de Hoje</button>
+                    <button class="action-btn" onclick="loadSampleData()">🔄 Carregar Dados de Exemplo</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para tarefas de hoje -->
+    <div class="modal" id="todayTasksModal">
+        <div class="modal-content">
+            <h3>📅 Tarefas para Hoje</h3>
+            <div id="todayTasksList"></div>
+            <div class="modal-buttons">
+                <button class="modal-btn primary" onclick="closeModal('todayTasksModal')">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variáveis globais
+        let tasks = [];
+        let lastWarningDate = null;
+
+        // Função para verificar se é o dia anterior
+        function isDayBefore(taskDate) {
+            if (!taskDate) return false;
+            
+            const today = new Date();
+            const taskDay = parseDate(taskDate);
+            if (!taskDay) return false;
+            
+            const dayBefore = new Date(taskDay);
+            dayBefore.setDate(dayBefore.getDate() - 1);
+            
+            return today.toDateString() === dayBefore.toDateString();
+        }
+
+        // Função para verificar se é o dia da tarefa
+        function isTaskDay(taskDate) {
+            if (!taskDate) return false;
+            
+            const today = new Date();
+            const taskDay = parseDate(taskDate);
+            if (!taskDay) return false;
+            
+            return today.toDateString() === taskDay.toDateString();
+        }
+
+        // Função para parse de datas no formato DD-MM-AAAA
+        function parseDate(dateString) {
+            if (!dateString) return null;
+            
+            const parts = dateString.split('-');
+            if (parts.length !== 3) return null;
+            
+            const day = parseInt(parts[0]);
+            const month = parseInt(parts[1]) - 1;
+            const year = parseInt(parts[2]);
+            
+            if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+            
+            return new Date(year, month, day);
+        }
+
+        // Função para formatar data
+        function formatDate(date) {
+            if (!date) return '';
+            return date.toLocaleDateString('pt-PT');
+        }
+
+        // Função para verificar e mostrar alertas de tarefas do dia
+        function checkTodayTasksAlerts() {
+            const today = new Date().toDateString();
+            
+            // Verificar se já mostramos o alerta hoje
+            if (lastWarningDate === today) {
+                return;
+            }
+            
+            const todayTasks = tasks.filter(task => 
+                !task.completada && 
+                isTaskDay(task.data)
+            );
+            
+            if (todayTasks.length > 0) {
+                showTodayTasksAlert(todayTasks);
+                lastWarningDate = today;
+            }
+        }
+
+        // Função para mostrar alerta de tarefas do dia
+        function showTodayTasksAlert(todayTasks) {
+            const modal = document.getElementById('todayTasksModal');
+            const list = document.getElementById('todayTasksList');
+            
+            let html = '<p>Tarefas agendadas para hoje:</p><ul style="margin: 15px 0; padding-left: 20px;">';
+            todayTasks.forEach(task => {
+                html += `<li style="margin: 8px 0;">${task.texto}</li>`;
+            });
+            html += '</ul>';
+            
+            list.innerHTML = html;
+            modal.style.display = 'flex';
+        }
+
+        // Função para fechar modal
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        // Função para adicionar tarefa
+        function addTask() {
+            const input = document.querySelector('.task-input');
+            const text = input.value.trim();
+            
+            if (text) {
+                const newTask = {
+                    texto: text,
+                    completada: false,
+                    pasta_pessoal: null,
+                    pasta_partilhada: null,
+                    link: null,
+                    data: null,
+                    destaque: false,
+                    destaque_cor: null
+                };
+                
+                tasks.unshift(newTask);
+                input.value = '';
+                renderTasks();
+                updateStats();
+            }
+        }
+
+        // Função para renderizar tarefas
+        function renderTasks() {
+            const container = document.getElementById('tasksList');
+            let html = '';
+            
+            tasks.forEach((task, index) => {
+                const isSeparator = task.texto === '┈┈';
+                const isCompleted = task.completada;
+                const hasDate = task.data;
+                const isDayBeforeTask = isDayBefore(task.data);
+                const isTodayTask = isTaskDay(task.data);
+                
+                let taskClass = 'task-item';
+                if (isCompleted) taskClass += ' completed';
+                if (isSeparator) taskClass += ' separator';
+                
+                // Aplicar cor vermelha se for dia anterior OU se tiver destaque vermelho
+                if ((isDayBeforeTask || isTodayTask) || task.destaque_cor === 'vermelho') {
+                    taskClass += ' red-alert';
+                } else if (task.destaque_cor === 'azul') {
+                    taskClass += ' blue-alert';
+                }
+                
+                if (isSeparator) {
+                    html += `
+                        <div class="${taskClass}">
+                            <div class="task-text" style="text-align: center; color: #6c757d; font-size: 18px;">
+                                ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    html += `
+                        <div class="${taskClass}" onclick="toggleTask(${index})">
+                            <div class="task-text">${task.texto}</div>
+                            <div class="task-meta">
+                                ${hasDate ? `<span class="task-date">📅 ${task.data}</span>` : ''}
+                                <div class="task-icons">
+                                    ${task.pasta_pessoal ? '<span class="icon">📁</span>' : ''}
+                                    ${task.pasta_partilhada ? '<span class="icon">👥</span>' : ''}
+                                    ${task.link ? '<span class="icon">🔗</span>' : ''}
+                                    ${isCompleted ? '<span class="icon">✅</span>' : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }
+            });
+            
+            container.innerHTML = html;
+        }
+
+        // Função para alternar estado da tarefa
+        function toggleTask(index) {
+            tasks[index].completada = !tasks[index].completada;
+            renderTasks();
+            updateStats();
+        }
+
+        // Função para atualizar estatísticas
+        function updateStats() {
+            const total = tasks.filter(t => t.texto !== '┈┈').length;
+            const completed = tasks.filter(t => t.completada && t.texto !== '┈┈').length;
+            const pending = total - completed;
+            const withDate = tasks.filter(t => t.data && t.texto !== '┈┈').length;
+            
+            document.getElementById('totalTasks').textContent = total;
+            document.getElementById('completedTasks').textContent = completed;
+            document.getElementById('pendingTasks').textContent = pending;
+            document.getElementById('tasksWithDate').textContent = withDate;
+        }
+
+        // Função para limpar tarefas concluídas
+        function clearCompleted() {
+            tasks = tasks.filter(task => !task.completada || task.texto === '┈┈');
+            renderTasks();
+            updateStats();
+        }
+
+        // Função para exportar tarefas
+        function exportTasks() {
+            const dataStr = JSON.stringify(tasks, null, 2);
+            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+            
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(dataBlob);
+            link.download = 'tarefas_exportadas.json';
+            link.click();
+        }
+
+        // Função para mostrar tarefas de hoje
+        function showTodayTasks() {
+            const todayTasks = tasks.filter(task => 
+                !task.completada && 
+                task.texto !== '┈┈' &&
+                isTaskDay(task.data)
+            );
+            
+            const modal = document.getElementById('todayTasksModal');
+            const list = document.getElementById('todayTasksList');
+            
+            if (todayTasks.length === 0) {
+                list.innerHTML = '<p>Não há tarefas agendadas para hoje.</p>';
+            } else {
+                let html = '<p>Tarefas para hoje:</p><ul style="margin: 15px 0; padding-left: 20px;">';
+                todayTasks.forEach(task => {
+                    html += `<li style="margin: 8px 0;">${task.texto}</li>`;
+                });
+                html += '</ul>';
+                list.innerHTML = html;
+            }
+            
+            modal.style.display = 'flex';
+        }
+
+        // Função para carregar dados de exemplo
+        function loadSampleData() {
+            // Esta função seria substituída pelo carregamento do JSON real
+            // Por enquanto, vamos usar alguns dados de exemplo
+            tasks = [
+                {
+                    texto: "Reunião com a equipa - 10:00",
+                    completada: false,
+                    data: getFormattedDate(0), // Hoje
+                    destaque_cor: null
+                },
+                {
+                    texto: "Relatório trimestral - Entrega urgente",
+                    completada: false,
+                    data: getFormattedDate(1), // Amanhã
+                    destaque_cor: "vermelho"
+                },
+                {
+                    texto: "┈┈",
+                    completada: false,
+                    data: null,
+                    destaque_cor: null
+                },
+                {
+                    texto: "Revisão de documentos",
+                    completada: true,
+                    data: null,
+                    destaque_cor: null
+                }
+            ];
+            
+            renderTasks();
+            updateStats();
+            
+            // Verificar alertas após carregar dados
+            setTimeout(checkTodayTasksAlerts, 1000);
+        }
+
+        // Função auxiliar para obter data formatada
+        function getFormattedDate(daysFromToday) {
+            const date = new Date();
+            date.setDate(date.getDate() + daysFromToday);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}-${month}-${year}`;
+        }
+
+        // Inicialização
+        document.addEventListener('DOMContentLoaded', function() {
+            renderTasks();
+            updateStats();
+            
+            // Verificar alertas após um breve delay
+            setTimeout(checkTodayTasksAlerts, 2000);
+            
+            // Adicionar listener para Enter no textarea
+            document.querySelector('.task-input').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                    addTask();
+                }
+            });
+        });
+
+        // Função para carregar JSON externo (para uso futuro)
+        function loadJSONData(jsonData) {
+            if (jsonData && jsonData.tarefas) {
+                tasks = jsonData.tarefas;
+                lastWarningDate = jsonData.ultimo_aviso_data || null;
+                renderTasks();
+                updateStats();
+                checkTodayTasksAlerts();
+            }
+        }
+    </script>
+</body>
+</html>
