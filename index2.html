@@ -52,62 +52,73 @@
             gap: 30px;
         }
 
-        .tasks-section {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 25px;
-        }
-
+        /* Nova Tarefa */
         .new-task {
-            background: white;
+            background: #f8f9fa;
             padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            margin-bottom: 25px;
+            border-radius: 12px;
+            border: 2px dashed #dee2e6;
         }
 
-        .new-task h3 {
+        .new-task h2 {
             color: #2c3e50;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             font-weight: 500;
         }
 
         .task-input {
             width: 100%;
+            min-height: 120px;
             padding: 15px;
             border: 2px solid #e9ecef;
             border-radius: 8px;
             font-size: 16px;
+            font-family: inherit;
             resize: vertical;
-            min-height: 80px;
             transition: border-color 0.3s;
         }
 
         .task-input:focus {
             outline: none;
-            border-color: #3498db;
+            border-color: #667eea;
         }
 
         .add-btn {
-            background: linear-gradient(135deg, #3498db, #2980b9);
+            background: linear-gradient(135deg, #667eea, #764ba2);
             color: white;
             border: none;
             padding: 12px 30px;
             border-radius: 8px;
             font-size: 16px;
             cursor: pointer;
+            margin-top: 15px;
             transition: transform 0.2s;
-            margin-top: 10px;
         }
 
         .add-btn:hover {
             transform: translateY(-2px);
         }
 
-        .tasks-list {
+        /* Lista de Tarefas */
+        .task-list {
             background: white;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-radius: 12px;
+            border: 2px solid #e9ecef;
+            overflow: hidden;
+        }
+
+        .task-list-header {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .task-list-header h2 {
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        .tasks-container {
             max-height: 600px;
             overflow-y: auto;
         }
@@ -124,10 +135,6 @@
             background: #f8f9fa;
         }
 
-        .task-item:last-child {
-            border-bottom: none;
-        }
-
         .task-item.completed {
             opacity: 0.6;
             background: #f8f9fa;
@@ -137,61 +144,86 @@
             text-decoration: line-through;
         }
 
+        .task-item.red-alert {
+            color: #dc3545;
+            font-weight: 600;
+            background: #fff5f5;
+            border-left: 4px solid #dc3545;
+        }
+
+        .task-item.blue-highlight {
+            color: #007bff;
+            background: #f0f8ff;
+            border-left: 4px solid #007bff;
+        }
+
         .task-text {
             font-size: 16px;
             line-height: 1.5;
-            color: #2c3e50;
             margin-bottom: 8px;
         }
 
         .task-meta {
             display: flex;
-            align-items: center;
             gap: 15px;
             font-size: 14px;
             color: #6c757d;
         }
 
         .task-date {
-            background: #e3f2fd;
-            padding: 4px 8px;
-            border-radius: 4px;
+            color: #28a745;
             font-weight: 500;
         }
 
         .task-icons {
             display: flex;
-            gap: 8px;
-            margin-left: auto;
+            gap: 10px;
+            margin-top: 10px;
         }
 
         .icon {
-            font-size: 16px;
+            font-size: 14px;
         }
 
-        /* Cores para datas */
-        .task-item.red-alert {
-            border-left: 4px solid #e74c3c;
-            background: #ffeaea;
-        }
-
-        .task-item.blue-alert {
-            border-left: 4px solid #3498db;
-            background: #e3f2fd;
-        }
-
+        /* Sidebar */
         .sidebar {
             background: #f8f9fa;
-            border-radius: 10px;
+            border-radius: 12px;
             padding: 25px;
         }
 
-        .stats {
+        .quick-actions h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: 500;
+        }
+
+        .action-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .action-btn {
             background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            margin-bottom: 25px;
+            border: 2px solid #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            font-size: 14px;
+        }
+
+        .action-btn:hover {
+            border-color: #667eea;
+            transform: translateX(5px);
+        }
+
+        .stats {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e9ecef;
         }
 
         .stats h3 {
@@ -202,56 +234,12 @@
 
         .stat-item {
             display: flex;
-            justify-content: between;
-            margin-bottom: 8px;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e9ecef;
         }
 
-        .stat-value {
-            font-weight: 600;
-            margin-left: auto;
-        }
-
-        .quick-actions {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-        }
-
-        .quick-actions h3 {
-            color: #2c3e50;
-            margin-bottom: 15px;
-            font-weight: 500;
-        }
-
-        .action-btn {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 10px;
-            border: 2px solid #e9ecef;
-            background: white;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-size: 14px;
-        }
-
-        .action-btn:hover {
-            border-color: #3498db;
-            background: #f8f9fa;
-        }
-
-        .separator {
-            text-align: center;
-            color: #6c757d;
-            font-size: 14px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 5px;
-            margin: 10px 0;
-        }
-
-        /* Modal styles */
+        /* Modal */
         .modal {
             display: none;
             position: fixed;
@@ -268,42 +256,34 @@
         .modal-content {
             background: white;
             padding: 30px;
-            border-radius: 15px;
+            border-radius: 12px;
             max-width: 500px;
             width: 90%;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            text-align: center;
         }
 
-        .modal h3 {
+        .modal h2 {
             color: #2c3e50;
             margin-bottom: 15px;
         }
 
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 20px;
+        .modal p {
+            color: #6c757d;
+            margin-bottom: 25px;
+            line-height: 1.5;
         }
 
         .modal-btn {
-            padding: 10px 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
             border: none;
-            border-radius: 6px;
+            padding: 12px 30px;
+            border-radius: 8px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 16px;
         }
 
-        .modal-btn.primary {
-            background: #3498db;
-            color: white;
-        }
-
-        .modal-btn.secondary {
-            background: #6c757d;
-            color: white;
-        }
-
+        /* Responsive */
         @media (max-width: 768px) {
             .main-content {
                 grid-template-columns: 1fr;
@@ -318,94 +298,99 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>📝 Organizador de Tarefas</h1>
+            <h1>📋 Organizador de Tarefas</h1>
             <p>Gerencie suas tarefas de forma eficiente e organizada</p>
         </div>
 
         <div class="main-content">
-            <div class="tasks-section">
+            <div class="left-column">
                 <div class="new-task">
-                    <h3>➕ Nova Tarefa</h3>
+                    <h2>➕ Nova Tarefa</h2>
                     <textarea class="task-input" placeholder="Descreva sua tarefa aqui..."></textarea>
                     <button class="add-btn" onclick="addTask()">Adicionar Tarefa</button>
                 </div>
 
-                <div class="tasks-list" id="tasksList">
-                    <!-- Tarefas serão carregadas aqui -->
+                <div class="task-list">
+                    <div class="task-list-header">
+                        <h2>📝 Lista de Tarefas</h2>
+                    </div>
+                    <div class="tasks-container" id="tasksContainer">
+                        <!-- Tarefas serão inseridas aqui via JavaScript -->
+                    </div>
                 </div>
             </div>
 
             <div class="sidebar">
+                <div class="quick-actions">
+                    <h3>⚡ Ações Rápidas</h3>
+                    <div class="action-buttons">
+                        <button class="action-btn" onclick="markAllCompleted()">✅ Marcar Todas como Concluídas</button>
+                        <button class="action-btn" onclick="clearCompleted()">🗑️ Limpar Concluídas</button>
+                        <button class="action-btn" onclick="exportTasks()">📤 Exportar Tarefas</button>
+                        <button class="action-btn" onclick="importTasks()">📥 Importar Tarefas</button>
+                    </div>
+                </div>
+
                 <div class="stats">
                     <h3>📊 Estatísticas</h3>
                     <div class="stat-item">
                         <span>Total de Tarefas:</span>
-                        <span class="stat-value" id="totalTasks">0</span>
+                        <span id="totalTasks">0</span>
                     </div>
                     <div class="stat-item">
                         <span>Concluídas:</span>
-                        <span class="stat-value" id="completedTasks">0</span>
+                        <span id="completedTasks">0</span>
                     </div>
                     <div class="stat-item">
                         <span>Pendentes:</span>
-                        <span class="stat-value" id="pendingTasks">0</span>
+                        <span id="pendingTasks">0</span>
                     </div>
                     <div class="stat-item">
                         <span>Com Data:</span>
-                        <span class="stat-value" id="tasksWithDate">0</span>
+                        <span id="tasksWithDate">0</span>
                     </div>
-                </div>
-
-                <div class="quick-actions">
-                    <h3>⚡ Ações Rápidas</h3>
-                    <button class="action-btn" onclick="clearCompleted()">🗑️ Limpar Concluídas</button>
-                    <button class="action-btn" onclick="exportTasks()">📤 Exportar Tarefas</button>
-                    <button class="action-btn" onclick="showTodayTasks()">📅 Ver Tarefas de Hoje</button>
-                    <button class="action-btn" onclick="loadSampleData()">🔄 Carregar Dados de Exemplo</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal para tarefas de hoje -->
-    <div class="modal" id="todayTasksModal">
+    <!-- Modal de Alerta -->
+    <div class="modal" id="alertModal">
         <div class="modal-content">
-            <h3>📅 Tarefas para Hoje</h3>
-            <div id="todayTasksList"></div>
-            <div class="modal-buttons">
-                <button class="modal-btn primary" onclick="closeModal('todayTasksModal')">Fechar</button>
-            </div>
+            <h2>📅 Lembrete de Tarefas</h2>
+            <p id="modalMessage">Você tem tarefas agendadas para hoje!</p>
+            <button class="modal-btn" onclick="closeModal()">Entendido</button>
         </div>
     </div>
 
     <script>
         // Variáveis globais
         let tasks = [];
-        let lastWarningDate = null;
+        let alertShownToday = false;
 
         // Função para verificar se é o dia anterior
-        function isDayBefore(taskDate) {
-            if (!taskDate) return false;
-            
+        function isDayBefore(targetDate) {
             const today = new Date();
-            const taskDay = parseDate(taskDate);
-            if (!taskDay) return false;
+            const target = parseDate(targetDate);
+            if (!target) return false;
             
-            const dayBefore = new Date(taskDay);
-            dayBefore.setDate(dayBefore.getDate() - 1);
+            const tomorrow = new Date(today);
+            tomorrow.setDate(today.getDate() + 1);
             
-            return today.toDateString() === dayBefore.toDateString();
+            return target.getDate() === tomorrow.getDate() &&
+                   target.getMonth() === tomorrow.getMonth() &&
+                   target.getFullYear() === tomorrow.getFullYear();
         }
 
-        // Função para verificar se é o dia da tarefa
-        function isTaskDay(taskDate) {
-            if (!taskDate) return false;
-            
+        // Função para verificar se é o dia agendado
+        function isScheduledDay(targetDate) {
             const today = new Date();
-            const taskDay = parseDate(taskDate);
-            if (!taskDay) return false;
+            const target = parseDate(targetDate);
+            if (!target) return false;
             
-            return today.toDateString() === taskDay.toDateString();
+            return target.getDate() === today.getDate() &&
+                   target.getMonth() === today.getMonth() &&
+                   target.getFullYear() === today.getFullYear();
         }
 
         // Função para parse de datas no formato DD-MM-AAAA
@@ -424,52 +409,6 @@
             return new Date(year, month, day);
         }
 
-        // Função para formatar data
-        function formatDate(date) {
-            if (!date) return '';
-            return date.toLocaleDateString('pt-PT');
-        }
-
-        // Função para verificar e mostrar alertas de tarefas do dia
-        function checkTodayTasksAlerts() {
-            const today = new Date().toDateString();
-            
-            // Verificar se já mostramos o alerta hoje
-            if (lastWarningDate === today) {
-                return;
-            }
-            
-            const todayTasks = tasks.filter(task => 
-                !task.completada && 
-                isTaskDay(task.data)
-            );
-            
-            if (todayTasks.length > 0) {
-                showTodayTasksAlert(todayTasks);
-                lastWarningDate = today;
-            }
-        }
-
-        // Função para mostrar alerta de tarefas do dia
-        function showTodayTasksAlert(todayTasks) {
-            const modal = document.getElementById('todayTasksModal');
-            const list = document.getElementById('todayTasksList');
-            
-            let html = '<p>Tarefas agendadas para hoje:</p><ul style="margin: 15px 0; padding-left: 20px;">';
-            todayTasks.forEach(task => {
-                html += `<li style="margin: 8px 0;">${task.texto}</li>`;
-            });
-            html += '</ul>';
-            
-            list.innerHTML = html;
-            modal.style.display = 'flex';
-        }
-
-        // Função para fechar modal
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-
         // Função para adicionar tarefa
         function addTask() {
             const input = document.querySelector('.task-input');
@@ -477,195 +416,316 @@
             
             if (text) {
                 const newTask = {
-                    texto: text,
-                    completada: false,
-                    pasta_pessoal: null,
-                    pasta_partilhada: null,
-                    link: null,
-                    data: null,
-                    destaque: false,
-                    destaque_cor: null
+                    id: Date.now(),
+                    text: text,
+                    completed: false,
+                    date: null,
+                    highlight: null
                 };
                 
                 tasks.unshift(newTask);
                 input.value = '';
                 renderTasks();
                 updateStats();
+                saveToLocalStorage();
             }
         }
 
         // Função para renderizar tarefas
         function renderTasks() {
-            const container = document.getElementById('tasksList');
-            let html = '';
-            
-            tasks.forEach((task, index) => {
-                const isSeparator = task.texto === '┈┈';
-                const isCompleted = task.completada;
-                const hasDate = task.data;
-                const isDayBeforeTask = isDayBefore(task.data);
-                const isTodayTask = isTaskDay(task.data);
+            const container = document.getElementById('tasksContainer');
+            container.innerHTML = '';
+
+            tasks.forEach(task => {
+                const taskElement = document.createElement('div');
+                taskElement.className = 'task-item';
                 
-                let taskClass = 'task-item';
-                if (isCompleted) taskClass += ' completed';
-                if (isSeparator) taskClass += ' separator';
-                
-                // Aplicar cor vermelha se for dia anterior OU se tiver destaque vermelho
-                if ((isDayBeforeTask || isTodayTask) || task.destaque_cor === 'vermelho') {
-                    taskClass += ' red-alert';
-                } else if (task.destaque_cor === 'azul') {
-                    taskClass += ' blue-alert';
+                if (task.completed) {
+                    taskElement.classList.add('completed');
                 }
                 
-                if (isSeparator) {
-                    html += `
-                        <div class="${taskClass}">
-                            <div class="task-text" style="text-align: center; color: #6c757d; font-size: 18px;">
-                                ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    html += `
-                        <div class="${taskClass}" onclick="toggleTask(${index})">
-                            <div class="task-text">${task.texto}</div>
-                            <div class="task-meta">
-                                ${hasDate ? `<span class="task-date">📅 ${task.data}</span>` : ''}
-                                <div class="task-icons">
-                                    ${task.pasta_pessoal ? '<span class="icon">📁</span>' : ''}
-                                    ${task.pasta_partilhada ? '<span class="icon">👥</span>' : ''}
-                                    ${task.link ? '<span class="icon">🔗</span>' : ''}
-                                    ${isCompleted ? '<span class="icon">✅</span>' : ''}
-                                </div>
-                            </div>
-                        </div>
-                    `;
+                // Verificar se deve ficar vermelha (dia anterior)
+                if (task.date && isDayBefore(task.date)) {
+                    taskElement.classList.add('red-alert');
                 }
+                
+                // Aplicar destaque azul se especificado
+                if (task.highlight === 'azul') {
+                    taskElement.classList.add('blue-highlight');
+                }
+
+                const icons = [];
+                if (task.completed) icons.push('✅');
+                if (task.folder) icons.push('📁');
+                if (task.link) icons.push('🔗');
+                if (task.date) icons.push('📅');
+
+                taskElement.innerHTML = `
+                    <div class="task-text">${task.text}</div>
+                    <div class="task-meta">
+                        ${task.date ? `<span class="task-date">📅 ${task.date}</span>` : ''}
+                    </div>
+                    ${icons.length ? `<div class="task-icons">${icons.join(' ')}</div>` : ''}
+                `;
+
+                taskElement.onclick = () => toggleTask(task.id);
+                container.appendChild(taskElement);
             });
-            
-            container.innerHTML = html;
         }
 
-        // Função para alternar estado da tarefa
-        function toggleTask(index) {
-            tasks[index].completada = !tasks[index].completada;
+        // Função para alternar conclusão da tarefa
+        function toggleTask(id) {
+            tasks = tasks.map(task => 
+                task.id === id ? { ...task, completed: !task.completed } : task
+            );
             renderTasks();
             updateStats();
+            saveToLocalStorage();
         }
 
         // Função para atualizar estatísticas
         function updateStats() {
-            const total = tasks.filter(t => t.texto !== '┈┈').length;
-            const completed = tasks.filter(t => t.completada && t.texto !== '┈┈').length;
-            const pending = total - completed;
-            const withDate = tasks.filter(t => t.data && t.texto !== '┈┈').length;
-            
-            document.getElementById('totalTasks').textContent = total;
-            document.getElementById('completedTasks').textContent = completed;
-            document.getElementById('pendingTasks').textContent = pending;
-            document.getElementById('tasksWithDate').textContent = withDate;
+            document.getElementById('totalTasks').textContent = tasks.length;
+            document.getElementById('completedTasks').textContent = tasks.filter(t => t.completed).length;
+            document.getElementById('pendingTasks').textContent = tasks.filter(t => !t.completed).length;
+            document.getElementById('tasksWithDate').textContent = tasks.filter(t => t.date).length;
         }
 
-        // Função para limpar tarefas concluídas
-        function clearCompleted() {
-            tasks = tasks.filter(task => !task.completada || task.texto === '┈┈');
-            renderTasks();
-            updateStats();
-        }
-
-        // Função para exportar tarefas
-        function exportTasks() {
-            const dataStr = JSON.stringify(tasks, null, 2);
-            const dataBlob = new Blob([dataStr], {type: 'application/json'});
+        // Função para verificar alertas do dia
+        function checkDailyAlerts() {
+            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            const lastAlert = localStorage.getItem('lastAlertDate');
             
-            const link = document.createElement('a');
-            link.href = URL.createObjectURL(dataBlob);
-            link.download = 'tarefas_exportadas.json';
-            link.click();
-        }
-
-        // Função para mostrar tarefas de hoje
-        function showTodayTasks() {
-            const todayTasks = tasks.filter(task => 
-                !task.completada && 
-                task.texto !== '┈┈' &&
-                isTaskDay(task.data)
-            );
-            
-            const modal = document.getElementById('todayTasksModal');
-            const list = document.getElementById('todayTasksList');
-            
-            if (todayTasks.length === 0) {
-                list.innerHTML = '<p>Não há tarefas agendadas para hoje.</p>';
-            } else {
-                let html = '<p>Tarefas para hoje:</p><ul style="margin: 15px 0; padding-left: 20px;">';
-                todayTasks.forEach(task => {
-                    html += `<li style="margin: 8px 0;">${task.texto}</li>`;
-                });
-                html += '</ul>';
-                list.innerHTML = html;
+            // Se já mostrou alerta hoje, não mostrar novamente
+            if (lastAlert === today) {
+                return;
             }
+
+            const todayTasks = tasks.filter(task => 
+                task.date && isScheduledDay(task.date) && !task.completed
+            );
+
+            if (todayTasks.length > 0) {
+                showAlertModal(todayTasks);
+                localStorage.setItem('lastAlertDate', today);
+            }
+        }
+
+        // Função para mostrar modal de alerta
+        function showAlertModal(todayTasks) {
+            const modal = document.getElementById('alertModal');
+            const message = document.getElementById('modalMessage');
             
+            let taskList = '';
+            todayTasks.forEach((task, index) => {
+                const shortText = task.text.length > 50 ? task.text.substring(0, 47) + '...' : task.text;
+                taskList += `${index + 1}. ${shortText}\n`;
+            });
+
+            message.textContent = `Você tem ${todayTasks.length} tarefa(s) agendada(s) para hoje:\n\n${taskList}`;
             modal.style.display = 'flex';
         }
 
-        // Função para carregar dados de exemplo
-        function loadSampleData() {
-            // Esta função seria substituída pelo carregamento do JSON real
-            // Por enquanto, vamos usar alguns dados de exemplo
-            tasks = [
-                {
-                    texto: "Reunião com a equipa - 10:00",
-                    completada: false,
-                    data: getFormattedDate(0), // Hoje
-                    destaque_cor: null
-                },
-                {
-                    texto: "Relatório trimestral - Entrega urgente",
-                    completada: false,
-                    data: getFormattedDate(1), // Amanhã
-                    destaque_cor: "vermelho"
-                },
-                {
-                    texto: "┈┈",
-                    completada: false,
-                    data: null,
-                    destaque_cor: null
-                },
-                {
-                    texto: "Revisão de documentos",
-                    completada: true,
-                    data: null,
-                    destaque_cor: null
-                }
-            ];
-            
-            renderTasks();
-            updateStats();
-            
-            // Verificar alertas após carregar dados
-            setTimeout(checkTodayTasksAlerts, 1000);
+        // Função para fechar modal
+        function closeModal() {
+            document.getElementById('alertModal').style.display = 'none';
         }
 
-        // Função auxiliar para obter data formatada
-        function getFormattedDate(daysFromToday) {
-            const date = new Date();
-            date.setDate(date.getDate() + daysFromToday);
-            const day = String(date.getDate()).padStart(2, '0');
-            const month = String(date.getMonth() + 1).padStart(2, '0');
-            const year = date.getFullYear();
-            return `${day}-${month}-${year}`;
+        // Funções de ação
+        function markAllCompleted() {
+            tasks = tasks.map(task => ({ ...task, completed: true }));
+            renderTasks();
+            updateStats();
+            saveToLocalStorage();
+        }
+
+        function clearCompleted() {
+            tasks = tasks.filter(task => !task.completed);
+            renderTasks();
+            updateStats();
+            saveToLocalStorage();
+        }
+
+        function exportTasks() {
+            const dataStr = JSON.stringify(tasks, null, 2);
+            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            
+            const exportFileDefaultName = `tarefas-${new Date().toISOString().split('T')[0]}.json`;
+            
+            const linkElement = document.createElement('a');
+            linkElement.setAttribute('href', dataUri);
+            linkElement.setAttribute('download', exportFileDefaultName);
+            linkElement.click();
+        }
+
+        function importTasks() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                
+                reader.onload = event => {
+                    try {
+                        const importedTasks = JSON.parse(event.target.result);
+                        if (Array.isArray(importedTasks)) {
+                            tasks = importedTasks;
+                            renderTasks();
+                            updateStats();
+                            saveToLocalStorage();
+                            alert('Tarefas importadas com sucesso!');
+                        }
+                    } catch (error) {
+                        alert('Erro ao importar arquivo. Verifique o formato.');
+                    }
+                };
+                
+                reader.readAsText(file);
+            };
+            
+            input.click();
+        }
+
+        // Local Storage
+        function saveToLocalStorage() {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        }
+
+        function loadFromLocalStorage() {
+            const saved = localStorage.getItem('tasks');
+            if (saved) {
+                tasks = JSON.parse(saved);
+                renderTasks();
+                updateStats();
+            }
+        }
+
+        // Carregar dados do JSON fornecido
+        function loadProvidedJSON() {
+            const providedData = {
+                "tarefas": [
+                    {
+                        "texto": "Carla Cristina Pereira - Comunicação de pontos [Ação+RH - Falta PA - Lapso dos RH na notificação da homologação?]",
+                        "completada": false,
+                        "pasta_pessoal": "C:\\BACKUP\\Downloads\\OneDrive - asae.pt\\Ricardo Vitorino\\0180 - Carla Cristina Saraiva Pereira - Comunicação de Pontos",
+                        "link": "https://asae-economiadoc.sgeconomia.gov.pt/#/Task/31277344/Metadata",
+                        "data": null,
+                        "destaque": true,
+                        "pasta_partilhada": "\\\\ASAELXFL02\\Share_Asae\\DAJC\\Assuntos Jurídicos\\Respostas_Secretaria-Geral-CEJURE\\SIADAP Comunicação de pontos acumulados SIADAP 2021-2022 Carla Cristina Saraiva Pereira  DAJCPROC1169232025",
+                        "destaque_cor": "vermelho"
+                    },
+                    {
+                        "texto": "Margarida Correia - Comunicação de pontos [RH - Já tem aditamento ao PA - Aguardar ou declarar nulidade?]",
+                        "completada": false,
+                        "pasta_pessoal": "C:\\Users\\rnvitorino\\OneDrive - asae.pt\\Ricardo Vitorino\\0185 - Margarida Isabel Bravo Correia - RH",
+                        "link": "https://asae-economiadoc.sgeconomia.gov.pt/#/Task/31289715/Metadata",
+                        "data": null,
+                        "destaque": true,
+                        "destaque_cor": "vermelho",
+                        "pasta_partilhada": "\\\\ASAELXFL02\\Share_Asae\\DAJC\\Assuntos Jurídicos\\Respostas_Secretaria-Geral-CEJURE\\SIADAP _ Margarida Isabel Bravo Santos Correia"
+                    },
+                    {
+                        "texto": "Maria Pereira [Aguarda notificação da resposta à reclamação e retificação do PA]",
+                        "completada": false,
+                        "pasta_pessoal": "C:\\Users\\rnvitorino\\OneDrive - asae.pt\\Ricardo Vitorino\\0137 - RH SIADAP 2021-22\\Maria João Batista Vicente Pereira",
+                        "link": "https://asae-economiadoc.sgeconomia.gov.pt/#/Task/30372181/Metadata",
+                        "data": null,
+                        "destaque": false,
+                        "destaque_cor": "azul",
+                        "pasta_partilhada": "\\\\ASAELXFL02\\Share_Asae\\DAJC\\Assuntos Jurídicos\\Respostas_Secretaria-Geral-CEJURE\\SIADAP_2021-2022_Maria João Batista Vicente Pereira"
+                    },
+                    {
+                        "texto": "Parecer - Burlas Online [Analisar a aclaração do pedido de parecer - Nota Técnica?]",
+                        "completada": false,
+                        "pasta_pessoal": "C:\\Users\\rnvitorino\\OneDrive - asae.pt\\Ricardo Vitorino\\0192 - Burlas Online",
+                        "link": "https://asae-economiadoc.sgeconomia.gov.pt/#/Task/31668091/Metadata",
+                        "data": null,
+                        "destaque": false,
+                        "destaque_cor": "azul"
+                    },
+                    {
+                        "texto": "Parecer - Delimitação de Competências entre ASAE e Municípios [Defender posição, colocar à consideração 1.º Min]",
+                        "completada": false,
+                        "pasta_pessoal": "C:\\BACKUP\\Downloads\\OneDrive - asae.pt\\Ricardo Vitorino\\0191 - Parecer - Competências da ASAE e Municípios",
+                        "link": null,
+                        "data": null,
+                        "destaque": false,
+                        "destaque_cor": "azul"
+                    },
+                    {
+                        "texto": "José Dias - RH SIADAP [Falta o PA]",
+                        "completada": false,
+                        "pasta_pessoal": "C:\\BACKUP\\Downloads\\OneDrive - asae.pt\\Ricardo Vitorino\\0137 - RH SIADAP 2021-22\\José Carlos da Nova Dias",
+                        "link": "https://asae-economiadoc.sgeconomia.gov.pt/#/Task/30372196/Metadata",
+                        "data": null,
+                        "destaque": false,
+                        "pasta_partilhada": "\\\\ASAELXFL02\\Share_Asae\\DAJC\\Assuntos Jurídicos\\Respostas_Secretaria-Geral-CEJURE\\SIADAP_ José Carlos da Nova Dias"
+                    },
+                    {
+                        "texto": "Maria Gameira - RH SIADAP [Falta o PA]",
+                        "completada": false,
+                        "pasta_pessoal": "D:\\BACKUP\\FTP\\OneDrive - asae.pt\\Ricardo Vitorino\\0186 - Maria Alexandra Cunha Gameira - RH",
+                        "link": "https://asae-economiadoc.sgeconomia.gov.pt/#/Task/31406054/Metadata",
+                        "data": null,
+                        "destaque": false,
+                        "pasta_partilhada": "\\\\asaelxfl02\\Share_Asae\\DAJC\\Assuntos Jurídicos\\Respostas_Secretaria-Geral-CEJURE\\SIADAP_2021-2022_Maria Alexandra Cunha Gameira"
+                    },
+                    {
+                        "texto": "12 NOV, 14h30 - Sessão de Gestão de Resíduos e Economia Circular [ASAE 6.º andar]",
+                        "completada": false,
+                        "pasta_pessoal": "C:\\Users\\rnvitorino\\OneDrive - asae.pt\\Ricardo Vitorino\\_FORMAÇÃO, AVALIAÇÃO E FÉRIAS\\2025 - Formações",
+                        "pasta_partilhada": null,
+                        "link": null,
+                        "data": "12-11-2025",
+                        "destaque": false,
+                        "destaque_cor": null
+                    },
+                    {
+                        "texto": "┈┈",
+                        "completada": false,
+                        "pasta_pessoal": null,
+                        "link": null,
+                        "data": null,
+                        "destaque": false,
+                        "destaque_cor": null
+                    },
+                    {
+                        "texto": "LEGISLAÇÃO",
+                        "completada": true,
+                        "pasta_pessoal": "D:\\BACKUP\\FTP\\OneDrive - asae.pt\\Ricardo Vitorino\\_LEGISLAÇÃO",
+                        "link": null,
+                        "data": null,
+                        "destaque": false
+                    }
+                ]
+            };
+
+            // Converter dados fornecidos para o formato interno
+            tasks = providedData.tarefas.map(task => ({
+                id: Date.now() + Math.random(),
+                text: task.texto,
+                completed: task.completada,
+                date: task.data,
+                highlight: task.destaque_cor,
+                folder: task.pasta_pessoal || task.pasta_partilhada,
+                link: task.link
+            }));
+
+            renderTasks();
+            updateStats();
         }
 
         // Inicialização
         document.addEventListener('DOMContentLoaded', function() {
-            renderTasks();
-            updateStats();
+            // Carregar dados do JSON fornecido
+            loadProvidedJSON();
             
-            // Verificar alertas após um breve delay
-            setTimeout(checkTodayTasksAlerts, 2000);
+            // Verificar alertas
+            setTimeout(checkDailyAlerts, 1000);
             
-            // Adicionar listener para Enter no textarea
+            // Adicionar evento de Enter no textarea
             document.querySelector('.task-input').addEventListener('keypress', function(e) {
                 if (e.key === 'Enter' && e.ctrlKey) {
                     addTask();
@@ -673,16 +733,33 @@
             });
         });
 
-        // Função para carregar JSON externo (para uso futuro)
-        function loadJSONData(jsonData) {
-            if (jsonData && jsonData.tarefas) {
-                tasks = jsonData.tarefas;
-                lastWarningDate = jsonData.ultimo_aviso_data || null;
-                renderTasks();
-                updateStats();
-                checkTodayTasksAlerts();
+        // Permitir importação via arrastar e soltar
+        document.addEventListener('dragover', function(e) {
+            e.preventDefault();
+        });
+
+        document.addEventListener('drop', function(e) {
+            e.preventDefault();
+            const files = e.dataTransfer.files;
+            if (files.length && files[0].type === 'application/json') {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const importedTasks = JSON.parse(e.target.result);
+                        if (Array.isArray(importedTasks)) {
+                            tasks = importedTasks;
+                            renderTasks();
+                            updateStats();
+                            saveToLocalStorage();
+                            alert('Tarefas importadas com sucesso!');
+                        }
+                    } catch (error) {
+                        alert('Erro ao importar arquivo. Verifique o formato.');
+                    }
+                };
+                reader.readAsText(files[0]);
             }
-        }
+        });
     </script>
 </body>
 </html>
