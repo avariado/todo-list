@@ -124,6 +124,12 @@
             font-weight: bold;
         }
 
+		/* NOVA CLASSE: tarefa vermelha no dia anterior e no próprio dia */
+		.task-item.red-day-before {
+		    color: #dc3545 !important;
+		    font-weight: bold !important;
+		}
+
         /* Alteração 1: tarefas completadas só cinzento, sem risco */
         .task-item.completed {
             color: var(--completed-color) !important;
@@ -829,6 +835,22 @@
         </div>
     </div>
 
+    <!-- MODAL DE ALERTA DO DIA (NOVO) -->
+    <div id="dayAlertModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">📅 Lembrete de Tarefas</div>
+                <button class="close-btn">&times;</button>
+            </div>
+            <div class="form-group">
+                <p id="dayAlertMessage">Você tem tarefas agendadas para hoje!</p>
+            </div>
+            <div class="modal-actions">
+                <button id="closeDayAlertBtn">Entendido</button>
+            </div>
+        </div>
+    </div>
+
     <input type="file" id="fileInput" class="file-input" accept=".json">
 
     <script>
@@ -896,6 +918,9 @@
         const contextMenuBody = document.getElementById('contextMenuBody');
         const fileInput = document.getElementById('fileInput');
         const manageSubmenu = document.getElementById('manageSubmenu');
+        const dayAlertModal = document.getElementById('dayAlertModal');
+        const dayAlertMessage = document.getElementById('dayAlertMessage');
+        const closeDayAlertBtn = document.getElementById('closeDayAlertBtn');
 
         // Elementos do modal de favoritos
         const favoritesModal = document.getElementById('favoritesModal');
@@ -947,7 +972,124 @@
             updateTaskList();
             setupEventListeners();
             updateStatus('Pronto');
+            
+            // NOVO: Verificar alertas do dia após carregar
+            setTimeout(checkDayAlerts, 1000);
         });
+
+        // =========================
+        // NOVAS FUNCIONALIDADES
+        // =========================
+
+        // Função para verificar se é o dia anterior
+        function isDayBefore(targetDate) {
+            const today = new Date();
+            const target = parseDate(targetDate);
+            if (!target) return false;
+            
+            const tomorrow = new Date(today);
+            tomorrow.setDate(today.getDate() + 1);
+            
+            return target.getDate() === tomorrow.getDate() &&
+                   target.getMonth() === tomorrow.getMonth() &&
+                   target.getFullYear() === tomorrow.getFullYear();
+        }
+
+        // Função para verificar se é o dia agendado
+        function isScheduledDay(targetDate) {
+            const today = new Date();
+            const target = parseDate(targetDate);
+            if (!target) return false;
+            
+            return target.getDate() === today.getDate() &&
+                   target.getMonth() === today.getMonth() &&
+                   target.getFullYear() === today.getFullYear();
+        }
+
+        // Função para parse de datas no formato DD-MM-AAAA
+        function parseDate(dateString) {
+            if (!dateString) return null;
+            
+            const parts = dateString.split('-');
+            if (parts.length !== 3) return null;
+            
+            const day = parseInt(parts[0]);
+            const month = parseInt(parts[1]) - 1;
+            const year = parseInt(parts[2]);
+            
+            if (isNaN(day) || isNaN(month) || isNaN(year)) return null;
+            
+            return new Date(year, month, day);
+        }
+
+        // Função para aplicar estilos de véspera
+        function applyDayBeforeStyles() {
+            const taskItems = document.querySelectorAll('.task-item');
+            taskItems.forEach(item => {
+                // Remover classe anterior
+                item.classList.remove('red-day-before');
+                
+                // Encontrar o índice da tarefa
+                const index = Array.from(taskList.children).indexOf(item);
+                if (index !== -1 && index < tasks.length) {
+                    const task = tasks[index];
+                    if (task.date && (isDayBefore(task.date) || isScheduledDay(task.date))) {
+                        item.classList.add('red-day-before');
+                    }
+                }
+            });
+        }
+
+        // Função para verificar alertas do dia - CORRIGIDA
+        function checkDayAlerts() {
+            const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+            const lastAlert = localStorage.getItem('lastDayAlert');
+            
+            // Se já mostrou alerta hoje, não mostrar
+            if (lastAlert === today) {
+                return;
+            }
+
+            const todayTasks = tasks.filter(task => 
+                task.date && isScheduledDay(task.date) && !task.completed
+            );
+
+            if (todayTasks.length > 0) {
+                showDayAlert(todayTasks);
+                localStorage.setItem('lastDayAlert', today);
+            }
+        }
+
+        // Função para mostrar alerta do dia
+        function showDayAlert(todayTasks) {
+            let message = `Você tem ${todayTasks.length} tarefa(s) agendada(s) para hoje:\n\n`;
+            
+            todayTasks.forEach((task, index) => {
+                const shortText = task.text.length > 50 ? task.text.substring(0, 47) + '...' : task.text;
+                message += `${index + 1}. ${shortText}\n`;
+            });
+
+            dayAlertMessage.textContent = message;
+            dayAlertModal.style.display = 'flex';
+        }
+
+        // NOVA FUNÇÃO: Resetar o alerta quando uma data é definida
+        function resetDayAlert() {
+            localStorage.removeItem('lastDayAlert');
+        }
+
+        // NOVA FUNÇÃO: Chamar checkDayAlerts quando uma data é definida
+        function triggerDayAlertCheck() {
+            // Pequeno delay para garantir que a tarefa já foi salva
+            setTimeout(() => {
+                resetDayAlert(); // RESET: permite que o alerta apareça novamente
+                applyDayBeforeStyles();
+            }, 100);
+        }
+
+        // =========================
+        // FUNÇÕES EXISTENTES (MODIFICADAS)
+        // =========================
 
         function setupEventListeners() {
             addTaskBtn.addEventListener('click', addTask);
@@ -972,6 +1114,9 @@
             });
             document.getElementById('savePropertiesBtn').addEventListener('click', saveProperties);
             document.getElementById('cancelPropertiesBtn').addEventListener('click', closeModals);
+            closeDayAlertBtn.addEventListener('click', () => {
+                dayAlertModal.style.display = 'none';
+            });
 
             // Event listeners para gestão de favoritos
             favoriteUpBtn.addEventListener('click', moveFavoriteUp);
@@ -1924,6 +2069,11 @@
                 if (task.completed) li.classList.add('completed');
                 if (index === selectedTaskIndex) li.classList.add('selected');
 
+                // ALTERAÇÃO: Aplicar estilo vermelho se for dia anterior ou próprio dia
+                if (task.date && (isDayBefore(task.date) || isScheduledDay(task.date))) {
+                    li.classList.add('red-day-before');
+                }
+
                 if (task.text === '┈┈') {
                     li.classList.add('separator');
                     li.textContent = '┈'.repeat(50);
@@ -2086,6 +2236,10 @@
             saveTasks();
             closeModals();
             updateStatus('Propriedades da tarefa atualizadas com sucesso');
+            
+            // NOVO: Resetar alerta quando data é modificada
+            resetDayAlert();
+            triggerDayAlertCheck();
         }
 
         function removeTask() {
@@ -2173,48 +2327,55 @@
 			updateStatus('Dados exportados (download do navegador)');
 		}
 
-        function importFromJSON(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (data.tarefas) {
-                        tasks = data.tarefas.map(normalizeTask);
-                        notes = data.notas || "";
-                        lastWarningDate = data.ultimo_aviso_data || null;
-
-                        if (data.executar_menu) {
-                            execMenu = {
-                                programs: data.executar_menu.programas || [],
-                                programsFolder: data.executar_menu.pasta_programas || null,
-                                favorites: data.executar_menu.favoritos || [],
-                                linksFolder: data.executar_menu.pasta_links || null,
-                                documents: data.executar_menu.documentos || [],
-                                documentsFolder: data.executar_menu.pasta_documentos || null
-                            };
-                        }
-                    } else {
-                        throw new Error('Formato de JSON inválido');
-                    }
-
-                    selectTask(-1);
-                    updateTaskList();
-                    notesTextarea.value = notes;
-                    saveTasks();
-
-                    updateStatus('Dados importados com sucesso');
-                } catch (error) {
-                    alert('Erro ao importar ficheiro: ' + error.message);
-                    updateStatus('Erro ao importar ficheiro');
-                }
-            };
-
-            reader.readAsText(file);
-            fileInput.value = '';
-        }
+		function importFromJSON(event) {
+		    const file = event.target.files[0];
+		    if (!file) return;
+		
+		    const reader = new FileReader();
+		    reader.onload = function(e) {
+		        try {
+		            const data = JSON.parse(e.target.result);
+		            if (data.tarefas) {
+		                tasks = data.tarefas.map(normalizeTask);
+		                notes = data.notas || "";
+		                lastWarningDate = data.ultimo_aviso_data || null;
+		
+		                if (data.executar_menu) {
+		                    execMenu = {
+		                        programs: data.executar_menu.programas || [],
+		                        programsFolder: data.executar_menu.pasta_programas || null,
+		                        favorites: data.executar_menu.favoritos || [],
+		                        linksFolder: data.executar_menu.pasta_links || null,
+		                        documents: data.executar_menu.documentos || [],
+		                        documentsFolder: data.executar_menu.pasta_documentos || null
+		                    };
+		                }
+		            } else {
+		                throw new Error('Formato de JSON inválido');
+		            }
+		
+		            selectTask(-1);
+		            updateTaskList();
+		            notesTextarea.value = notes;
+		            saveTasks();
+		
+		            updateStatus('Dados importados com sucesso');
+		            
+		            // CORREÇÃO: Verificar tarefas agendadas após importação
+		            setTimeout(() => {
+		                resetDayAlert();
+		                checkDayAlerts();
+		            }, 500);
+		            
+		        } catch (error) {
+		            alert('Erro ao importar ficheiro: ' + error.message);
+		            updateStatus('Erro ao importar ficheiro');
+		        }
+		    };
+		
+		    reader.readAsText(file);
+		    fileInput.value = '';
+		}
 
         function toggleNotes() {
             notesVisible = !notesVisible;
@@ -2239,6 +2400,7 @@
             favoritesModal.style.display = 'none';
             programsModal.style.display = 'none';
             documentsModal.style.display = 'none';
+            dayAlertModal.style.display = 'none';
         }
 
         function executeSearch() {
@@ -2426,6 +2588,10 @@
                             updateTaskList();
                             saveTasks();
                             updateStatus(`Data ${task.date} associada à tarefa`);
+                            
+                            // NOVO: Resetar alerta quando data é adicionada
+                            resetDayAlert();
+                            triggerDayAlertCheck();
                         } else {
                             alert('Formato inválido. Utilize DD-MM-AAAA (ex.: 05-11-2025).');
                         }
