@@ -387,10 +387,14 @@
         .programs-list,
         .documents-list {
             max-height: 300px;
+            min-height: 200px;
+            height: 300px;
             overflow-y: auto;
+            overflow-x: hidden;
             border: 1px solid var(--border-color);
             border-radius: 4px;
             margin-bottom: 15px;
+            position: relative;
         }
 
         .favorite-item,
@@ -399,9 +403,11 @@
             padding: 10px;
             border-bottom: 1px solid var(--border-color);
             display: flex;
-            justify-content: between;
+            justify-content: space-between;
             align-items: center;
             cursor: pointer;
+            min-height: 44px;
+            box-sizing: border-box;
         }
 
         .favorite-item:last-child,
@@ -421,6 +427,9 @@
         .document-label {
             flex: 1;
             font-weight: bold;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .favorite-url,
@@ -432,6 +441,7 @@
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            margin-left: 10px;
         }
 
         .favorites-controls,
@@ -455,6 +465,41 @@
             padding: 15px;
             border-radius: 4px;
             margin-top: 15px;
+        }
+
+        /* ====== MELHORIAS PARA SCROLL NO ANDROID ====== */
+        .favorites-list::-webkit-scrollbar,
+        .programs-list::-webkit-scrollbar,
+        .documents-list::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .favorites-list::-webkit-scrollbar-track,
+        .programs-list::-webkit-scrollbar-track,
+        .documents-list::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 3px;
+        }
+
+        .favorites-list::-webkit-scrollbar-thumb,
+        .programs-list::-webkit-scrollbar-thumb,
+        .documents-list::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+
+        .favorites-list::-webkit-scrollbar-thumb:hover,
+        .programs-list::-webkit-scrollbar-thumb:hover,
+        .documents-list::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+
+        /* Garantir que o scroll funciona em dispositivos touch */
+        .favorites-list,
+        .programs-list,
+        .documents-list {
+            -webkit-overflow-scrolling: touch;
+            touch-action: pan-y;
         }
 
         /* ====== Responsivo ====== */
@@ -545,6 +590,13 @@
             .documents-controls button {
                 flex: 1 1 calc(50% - 5px);
             }
+
+            .favorites-list,
+            .programs-list,
+            .documents-list {
+                height: 250px;
+                min-height: 150px;
+            }
         }
     </style>
 </head>
@@ -605,11 +657,11 @@
                 <label>Pastas:</label>
                 <div class="folder-fields">
                     <div class="folder-field">
-                        <label for="propertiesPersonalFolder">Pasta Pessoal:</label>
+                        <label for="propertiesPersonalFolder">Pessoal:</label>
                         <input type="text" id="propertiesPersonalFolder">
                     </div>
                     <div class="folder-field">
-                        <label for="propertiesSharedFolder">Pasta Partilhada:</label>
+                        <label for="propertiesSharedFolder">Partilhada:</label>
                         <input type="text" id="propertiesSharedFolder">
                     </div>
                 </div>
@@ -1304,19 +1356,18 @@
                     updateFavoriteControls();
                 });
                 
-                // Duplo clique/duplo tap para abrir o link
+                // Duplo clique/duplo tap para abrir o link NO BROWSER
                 div.addEventListener('dblclick', () => {
                     selectedFavoriteIndex = index;
                     updateFavoritesList();
                     updateFavoriteControls();
-                    openFavorite();
+                    openFavoriteInBrowser(favorite.url);
                 });
                 
-                // Para Android: duplo tap
+                // ✅ CORREÇÃO: Para Android: duplo tap - SÓ bloqueia no segundo toque
                 let tapCount = 0;
                 let tapTimer;
                 div.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
                     tapCount++;
                     if (tapCount === 1) {
                         tapTimer = setTimeout(() => {
@@ -1329,11 +1380,11 @@
                     } else if (tapCount === 2) {
                         clearTimeout(tapTimer);
                         tapCount = 0;
-                        // Duplo tap - abrir link
+                        e.preventDefault(); // só aqui se bloqueia
                         selectedFavoriteIndex = index;
                         updateFavoritesList();
                         updateFavoriteControls();
-                        openFavorite();
+                        openFavoriteInBrowser(favorite.url);
                     }
                 }, {passive: false});
                 
@@ -1389,12 +1440,36 @@
             favoriteLabel.focus();
         }
 
+        // NOVA FUNÇÃO: Abrir favoritos no browser externo
+        function openFavoriteInBrowser(url) {
+            if (!url) return;
+            
+            // CORREÇÃO: Forçar abertura no browser externo
+            if (typeof Android !== "undefined") {
+                // No APK - usar a ponte Java para abrir no browser
+                try {
+                    if (typeof Android.openInBrowser === 'function') {
+                        Android.openInBrowser(url);
+                    } else {
+                        // Fallback para método alternativo
+                        window.open(url, '_system');
+                    }
+                } catch (e) {
+                    // Fallback final
+                    window.open(url, '_blank');
+                }
+            } else {
+                // No browser web
+                window.open(url, '_blank', 'noopener,noreferrer');
+            }
+        }
+
         function openFavorite() {
             if (selectedFavoriteIndex === -1) return;
             
             const favorite = execMenu.favorites[selectedFavoriteIndex];
             if (favorite.url) {
-                window.open(favorite.url, '_blank');
+                openFavoriteInBrowser(favorite.url);
             }
         }
 
@@ -1495,11 +1570,10 @@
                     openProgram();
                 });
                 
-                // Para Android: duplo tap
+                // ✅ CORREÇÃO: Para Android: duplo tap - SÓ bloqueia no segundo toque
                 let tapCount = 0;
                 let tapTimer;
                 div.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
                     tapCount++;
                     if (tapCount === 1) {
                         tapTimer = setTimeout(() => {
@@ -1512,7 +1586,7 @@
                     } else if (tapCount === 2) {
                         clearTimeout(tapTimer);
                         tapCount = 0;
-                        // Duplo tap - abrir programa
+                        e.preventDefault(); // só aqui se bloqueia
                         selectedProgramIndex = index;
                         updateProgramsList();
                         updateProgramControls();
@@ -1674,11 +1748,10 @@
                     openDocument();
                 });
                 
-                // Para Android: duplo tap
+                // ✅ CORREÇÃO: Para Android: duplo tap - SÓ bloqueia no segundo toque
                 let tapCount = 0;
                 let tapTimer;
                 div.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
                     tapCount++;
                     if (tapCount === 1) {
                         tapTimer = setTimeout(() => {
@@ -1691,7 +1764,7 @@
                     } else if (tapCount === 2) {
                         clearTimeout(tapTimer);
                         tapCount = 0;
-                        // Duplo tap - abrir documento
+                        e.preventDefault(); // só aqui se bloqueia
                         selectedDocumentIndex = index;
                         updateDocumentsList();
                         updateDocumentControls();
