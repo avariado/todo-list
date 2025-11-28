@@ -2628,9 +2628,9 @@
                     break;
 
                 case 'openLink':
-                    // ALTERAÇÃO 2: Se não existir link, abrir janela para definir
+                    // ALTERAÇÃO: Usar o mesmo método dos favoritos para abrir no browser
                     if (task.link) {
-                        window.open(task.link, '_blank');
+                        openFavoriteInBrowser(task.link);
                     } else {
                         const link = prompt('Indique o URL para associar à tarefa:', 'https://');
                         if (link && link.trim()) {
