@@ -83,6 +83,17 @@
             cursor: not-allowed;
         }
 
+        /* NOVA CLASSE: Botão Exportar com alterações não gravadas */
+        #exportBtn.unsaved-changes {
+            background-color: #dc3545 !important;  /* Vermelho mais suave */
+            color: white !important;
+            font-weight: bold;
+        }
+
+        #exportBtn.unsaved-changes:hover {
+            background-color: #c82333 !important;  /* Vermelho escuro para hover */
+        }
+
         .list-section {
             border: 1px solid var(--border-color);
             border-radius: 4px;
@@ -925,6 +936,9 @@
             documentsFolder: null
         };
 
+        // NOVA VARIÁVEL: Estado de alterações não gravadas
+        let hasUnsavedChanges = false;
+
         let selectedTaskIndex = -1;
         let searchResults = [];
         let currentSearchIndex = -1;
@@ -1029,6 +1043,9 @@
             setupEventListeners();
             updateStatus('Pronto');
             
+            // Inicializa o estado do botão Exportar
+            updateExportButtonStyle();
+            
             // NOVO: Verificar alertas do dia após carregar
             setTimeout(checkDayAlerts, 1000);
         });
@@ -1036,6 +1053,27 @@
         // =========================
         // NOVAS FUNCIONALIDADES
         // =========================
+
+        // NOVA FUNÇÃO: Marcar que há alterações não gravadas
+        function markUnsavedChanges() {
+            hasUnsavedChanges = true;
+            updateExportButtonStyle();
+        }
+
+        // NOVA FUNÇÃO: Limpar o estado de alterações não gravadas
+        function clearUnsavedChanges() {
+            hasUnsavedChanges = false;
+            updateExportButtonStyle();
+        }
+
+        // NOVA FUNÇÃO: Atualizar o estilo do botão Exportar
+        function updateExportButtonStyle() {
+            if (hasUnsavedChanges) {
+                exportBtn.classList.add('unsaved-changes');
+            } else {
+                exportBtn.classList.remove('unsaved-changes');
+            }
+        }
 
         // Função para verificar se é o dia anterior
         function isDayBefore(targetDate) {
@@ -1223,30 +1261,55 @@
             document.addEventListener('touchstart', handleMenuTouch, {capture: true, passive: false});
 
             // long press Android
-            let longPressTimer;
-            taskList.addEventListener('touchstart', function(e) {
-                if (document.body.classList.contains('context-menu-closing')) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return;
-                }
-                
-                const taskItem = e.target.closest('.task-item');
-                if (taskItem) {
-                    longPressTimer = setTimeout(() => {
-                        e.preventDefault();
-                        showContextMenu(e, taskItem);
-                    }, 500);
-                }
-            }, {passive: false});
 
-            taskList.addEventListener('touchend', function() {
-                clearTimeout(longPressTimer);
-            });
+			let longPressTimer = null;
+			let taskStartX = 0;
+			let taskStartY = 0;
+			let taskMoved = false;
 
-            taskList.addEventListener('touchmove', function() {
-                clearTimeout(longPressTimer);
-            });
+			taskList.addEventListener('touchstart', function(e) {
+
+				if (document.body.classList.contains('context-menu-closing')) {
+					e.preventDefault();
+					e.stopPropagation();
+					return;
+				}
+
+				const taskItem = e.target.closest('.task-item');
+				if (!taskItem) return;
+
+				const t = e.touches[0];
+				taskStartX = t.clientX;
+				taskStartY = t.clientY;
+				taskMoved = false;
+
+				longPressTimer = setTimeout(() => {
+					if (!taskMoved) {
+						e.preventDefault();
+						showContextMenu(e, taskItem);
+					}
+				}, 500);
+
+			}, { passive: false });
+
+
+			taskList.addEventListener('touchmove', function(e) {
+
+				const t = e.touches[0];
+				const dx = Math.abs(t.clientX - taskStartX);
+				const dy = Math.abs(t.clientY - taskStartY);
+
+				if (dx > 12 || dy > 12) {
+					taskMoved = true;
+					clearTimeout(longPressTimer);
+				}
+
+			}, { passive: true });
+
+
+			taskList.addEventListener('touchend', function() {
+				clearTimeout(longPressTimer);
+			});
 
             // clique na lista
             taskList.addEventListener('click', function(e) {
@@ -1365,28 +1428,63 @@
                 });
                 
                 // ✅ CORREÇÃO: Para Android: duplo tap - SÓ bloqueia no segundo toque
-                let tapCount = 0;
-                let tapTimer;
-                div.addEventListener('touchstart', (e) => {
-                    tapCount++;
-                    if (tapCount === 1) {
-                        tapTimer = setTimeout(() => {
-                            tapCount = 0;
-                            // Clique simples
-                            selectedFavoriteIndex = index;
-                            updateFavoritesList();
-                            updateFavoriteControls();
-                        }, 300);
-                    } else if (tapCount === 2) {
-                        clearTimeout(tapTimer);
-                        tapCount = 0;
-                        e.preventDefault(); // só aqui se bloqueia
-                        selectedFavoriteIndex = index;
-                        updateFavoritesList();
-                        updateFavoriteControls();
-                        openFavoriteInBrowser(favorite.url);
-                    }
-                }, {passive: false});
+				let tapCount = 0;
+				let tapTimer;
+				let startX = 0;
+				let startY = 0;
+				let moved = false;
+
+				div.addEventListener('touchstart', (e) => {
+					const t = e.touches[0];
+					startX = t.clientX;
+					startY = t.clientY;
+					moved = false;
+
+					tapCount++;
+
+					if (tapCount === 1) {
+						tapTimer = setTimeout(() => {
+							if (!moved) {
+								selectedFavoriteIndex = index;
+								updateFavoritesList();
+								updateFavoriteControls();
+							}
+							tapCount = 0;
+						}, 300);
+					}
+
+				}, { passive: true });
+
+				div.addEventListener('touchmove', (e) => {
+					const t = e.touches[0];
+					const dx = Math.abs(t.clientX - startX);
+					const dy = Math.abs(t.clientY - startY);
+
+					// se arrastou mais de 10px, considera scroll
+					if (dx > 10 || dy > 10) {
+						moved = true;
+						tapCount = 0;
+						clearTimeout(tapTimer);
+					}
+				}, { passive: true });
+
+				div.addEventListener('touchend', (e) => {
+
+					// duplo toque só se não arrastou
+					if (tapCount === 1 && !moved) return;
+
+					if (tapCount >= 2 && !moved) {
+						e.preventDefault();   // só aqui
+						tapCount = 0;
+						clearTimeout(tapTimer);
+
+						selectedFavoriteIndex = index;
+						updateFavoritesList();
+						updateFavoriteControls();
+						openFavoriteInBrowser(favorite.url);
+					}
+
+				}, { passive: false });
                 
                 favoritesList.appendChild(div);
             });
@@ -1410,6 +1508,7 @@
             selectedFavoriteIndex--;
             updateFavoritesList();
             saveTasks();
+            markUnsavedChanges(); // NOVO: Marcar alterações
         }
 
         function moveFavoriteDown() {
@@ -1419,6 +1518,7 @@
             selectedFavoriteIndex++;
             updateFavoritesList();
             saveTasks();
+            markUnsavedChanges(); // NOVO: Marcar alterações
         }
 
         function newFavorite() {
@@ -1483,6 +1583,7 @@
                 updateFavoritesList();
                 updateFavoriteControls();
                 saveTasks();
+                markUnsavedChanges(); // NOVO: Marcar alterações
             }
         }
 
@@ -1525,6 +1626,7 @@
             updateFavoriteControls();
             favoriteForm.style.display = 'none';
             saveTasks();
+            markUnsavedChanges(); // NOVO: Marcar alterações
         }
 
         function cancelFavoriteEdit() {
@@ -1557,6 +1659,7 @@
                 
                 // Clique simples para selecionar
                 div.addEventListener('click', () => {
+                    // ✅ CORREÇÃO CRÍTICA: Usar selectedProgramIndex em vez de selectedFavoriteIndex
                     selectedProgramIndex = index;
                     updateProgramsList();
                     updateProgramControls();
@@ -1564,35 +1667,73 @@
                 
                 // Duplo clique/duplo tap para abrir programa
                 div.addEventListener('dblclick', () => {
+                    // ✅ CORREÇÃO CRÍTICA: Usar selectedProgramIndex em vez de selectedFavoriteIndex
                     selectedProgramIndex = index;
                     updateProgramsList();
                     updateProgramControls();
-                    openProgram();
+                    openProgram(); // ✅ CORREÇÃO: Chamar openProgram() em vez de openFavoriteInBrowser()
                 });
                 
                 // ✅ CORREÇÃO: Para Android: duplo tap - SÓ bloqueia no segundo toque
-                let tapCount = 0;
-                let tapTimer;
-                div.addEventListener('touchstart', (e) => {
-                    tapCount++;
-                    if (tapCount === 1) {
-                        tapTimer = setTimeout(() => {
-                            tapCount = 0;
-                            // Clique simples
-                            selectedProgramIndex = index;
-                            updateProgramsList();
-                            updateProgramControls();
-                        }, 300);
-                    } else if (tapCount === 2) {
-                        clearTimeout(tapTimer);
-                        tapCount = 0;
-                        e.preventDefault(); // só aqui se bloqueia
-                        selectedProgramIndex = index;
-                        updateProgramsList();
-                        updateProgramControls();
-                        openProgram();
-                    }
-                }, {passive: false});
+				let tapCount = 0;
+				let tapTimer;
+				let startX = 0;
+				let startY = 0;
+				let moved = false;
+
+				div.addEventListener('touchstart', (e) => {
+					const t = e.touches[0];
+					startX = t.clientX;
+					startY = t.clientY;
+					moved = false;
+
+					tapCount++;
+
+					if (tapCount === 1) {
+						tapTimer = setTimeout(() => {
+							if (!moved) {
+								// ✅ CORREÇÃO CRÍTICA: Usar selectedProgramIndex em vez de selectedFavoriteIndex
+								selectedProgramIndex = index;
+								updateProgramsList();
+								updateProgramControls();
+							}
+							tapCount = 0;
+						}, 300);
+					}
+
+				}, { passive: true });
+
+				div.addEventListener('touchmove', (e) => {
+					const t = e.touches[0];
+					const dx = Math.abs(t.clientX - startX);
+					const dy = Math.abs(t.clientY - startY);
+
+					// se arrastou mais de 10px, considera scroll
+					if (dx > 10 || dy > 10) {
+						moved = true;
+						tapCount = 0;
+						clearTimeout(tapTimer);
+					}
+				}, { passive: true });
+
+				div.addEventListener('touchend', (e) => {
+
+					// duplo toque só se não arrastou
+					if (tapCount === 1 && !moved) return;
+
+					if (tapCount >= 2 && !moved) {
+						e.preventDefault();   // só aqui
+						tapCount = 0;
+						clearTimeout(tapTimer);
+
+						// ✅ CORREÇÃO CRÍTICA: Usar selectedProgramIndex em vez de selectedFavoriteIndex
+						selectedProgramIndex = index;
+						updateProgramsList();
+						updateProgramControls();
+						openProgram(); // ✅ CORREÇÃO: Chamar openProgram() em vez de openFavoriteInBrowser()
+					}
+
+				}, { passive: false });
                 
                 programsList.appendChild(div);
             });
@@ -1616,6 +1757,7 @@
             selectedProgramIndex--;
             updateProgramsList();
             saveTasks();
+            markUnsavedChanges(); // NOVO: Marcar alterações
         }
 
         function moveProgramDown() {
@@ -1625,6 +1767,7 @@
             selectedProgramIndex++;
             updateProgramsList();
             saveTasks();
+            markUnsavedChanges(); // NOVO: Marcar alterações
         }
 
         function newProgram() {
@@ -1667,6 +1810,7 @@
                 updateProgramsList();
                 updateProgramControls();
                 saveTasks();
+                markUnsavedChanges(); // NOVO: Marcar alterações
             }
         }
 
@@ -1703,6 +1847,7 @@
             updateProgramControls();
             programForm.style.display = 'none';
             saveTasks();
+            markUnsavedChanges(); // NOVO: Marcar alterações
         }
 
         function cancelProgramEdit() {
@@ -1735,6 +1880,7 @@
                 
                 // Clique simples para selecionar
                 div.addEventListener('click', () => {
+                    // ✅ CORREÇÃO CRÍTICA: Usar selectedDocumentIndex em vez de selectedFavoriteIndex
                     selectedDocumentIndex = index;
                     updateDocumentsList();
                     updateDocumentControls();
@@ -1742,35 +1888,73 @@
                 
                 // Duplo clique/duplo tap para abrir documento
                 div.addEventListener('dblclick', () => {
+                    // ✅ CORREÇÃO CRÍTICA: Usar selectedDocumentIndex em vez de selectedFavoriteIndex
                     selectedDocumentIndex = index;
                     updateDocumentsList();
                     updateDocumentControls();
-                    openDocument();
+                    openDocument(); // ✅ CORREÇÃO: Chamar openDocument() em vez de openFavoriteInBrowser()
                 });
                 
                 // ✅ CORREÇÃO: Para Android: duplo tap - SÓ bloqueia no segundo toque
-                let tapCount = 0;
-                let tapTimer;
-                div.addEventListener('touchstart', (e) => {
-                    tapCount++;
-                    if (tapCount === 1) {
-                        tapTimer = setTimeout(() => {
-                            tapCount = 0;
-                            // Clique simples
-                            selectedDocumentIndex = index;
-                            updateDocumentsList();
-                            updateDocumentControls();
-                        }, 300);
-                    } else if (tapCount === 2) {
-                        clearTimeout(tapTimer);
-                        tapCount = 0;
-                        e.preventDefault(); // só aqui se bloqueia
-                        selectedDocumentIndex = index;
-                        updateDocumentsList();
-                        updateDocumentControls();
-                        openDocument();
-                    }
-                }, {passive: false});
+				let tapCount = 0;
+				let tapTimer;
+				let startX = 0;
+				let startY = 0;
+				let moved = false;
+
+				div.addEventListener('touchstart', (e) => {
+					const t = e.touches[0];
+					startX = t.clientX;
+					startY = t.clientY;
+					moved = false;
+
+					tapCount++;
+
+					if (tapCount === 1) {
+						tapTimer = setTimeout(() => {
+							if (!moved) {
+								// ✅ CORREÇÃO CRÍTICA: Usar selectedDocumentIndex em vez de selectedFavoriteIndex
+								selectedDocumentIndex = index;
+								updateDocumentsList();
+								updateDocumentControls();
+							}
+							tapCount = 0;
+						}, 300);
+					}
+
+				}, { passive: true });
+
+				div.addEventListener('touchmove', (e) => {
+					const t = e.touches[0];
+					const dx = Math.abs(t.clientX - startX);
+					const dy = Math.abs(t.clientY - startY);
+
+					// se arrastou mais de 10px, considera scroll
+					if (dx > 10 || dy > 10) {
+						moved = true;
+						tapCount = 0;
+						clearTimeout(tapTimer);
+					}
+				}, { passive: true });
+
+				div.addEventListener('touchend', (e) => {
+
+					// duplo toque só se não arrastou
+					if (tapCount === 1 && !moved) return;
+
+					if (tapCount >= 2 && !moved) {
+						e.preventDefault();   // só aqui
+						tapCount = 0;
+						clearTimeout(tapTimer);
+
+						// ✅ CORREÇÃO CRÍTICA: Usar selectedDocumentIndex em vez de selectedFavoriteIndex
+						selectedDocumentIndex = index;
+						updateDocumentsList();
+						updateDocumentControls();
+						openDocument(); // ✅ CORREÇÃO: Chamar openDocument() em vez de openFavoriteInBrowser()
+					}
+
+				}, { passive: false });
                 
                 documentsList.appendChild(div);
             });
@@ -1794,6 +1978,7 @@
             selectedDocumentIndex--;
             updateDocumentsList();
             saveTasks();
+            markUnsavedChanges(); // NOVO: Marcar alterações
         }
 
         function moveDocumentDown() {
@@ -1803,6 +1988,7 @@
             selectedDocumentIndex++;
             updateDocumentsList();
             saveTasks();
+            markUnsavedChanges(); // NOVO: Marcar alterações
         }
 
         function newDocument() {
@@ -1845,6 +2031,7 @@
                 updateDocumentsList();
                 updateDocumentControls();
                 saveTasks();
+                markUnsavedChanges(); // NOVO: Marcar alterações
             }
         }
 
@@ -1881,6 +2068,7 @@
             updateDocumentControls();
             documentForm.style.display = 'none';
             saveTasks();
+            markUnsavedChanges(); // NOVO: Marcar alterações
         }
 
         function cancelDocumentEdit() {
@@ -2251,6 +2439,7 @@
             taskInput.value = '';
             updateTaskList();
             saveTasks();
+            markUnsavedChanges(); // NOVO: Marcar alterações
             updateStatus('Tarefa adicionada com sucesso');
         }
 
@@ -2260,6 +2449,7 @@
             selectTask(selectedTaskIndex - 1);
             updateTaskList();
             saveTasks();
+            markUnsavedChanges(); // NOVO: Marcar alterações
         }
 
         function moveTaskDown() {
@@ -2268,6 +2458,7 @@
             selectTask(selectedTaskIndex + 1);
             updateTaskList();
             saveTasks();
+            markUnsavedChanges(); // NOVO: Marcar alterações
         }
 
         function openProperties() {
@@ -2312,6 +2503,7 @@
             updateTaskList();
             saveTasks();
             closeModals();
+            markUnsavedChanges(); // NOVO: Marcar alterações
             updateStatus('Propriedades da tarefa atualizadas com sucesso');
             
             // NOVO: Resetar alerta quando data é modificada
@@ -2333,6 +2525,7 @@
                 selectTask(Math.min(selectedTaskIndex, tasks.length - 1));
                 updateTaskList();
                 saveTasks();
+                markUnsavedChanges(); // NOVO: Marcar alterações
                 updateStatus('Tarefa removida com sucesso');
             }
         }
@@ -2348,6 +2541,7 @@
                 selectTask(-1);
                 updateTaskList();
                 saveTasks();
+                markUnsavedChanges(); // NOVO: Marcar alterações
                 updateStatus('Todas as tarefas foram removidas');
             }
         }
@@ -2378,6 +2572,9 @@
 			};
 
 			const dataStr = JSON.stringify(data, null, 2);
+
+			// ► NOVO: Limpar alterações não gravadas após exportar
+			clearUnsavedChanges();
 
 			// ► No Android (WebView), gravar em /Downloads via ponte nativa
 			if (window.Android && typeof window.Android.saveJSON === 'function') {
@@ -2438,6 +2635,9 @@
 		            notesTextarea.value = notes;
 		            saveTasks();
 		
+		            // NOVO: Limpar alterações não gravadas após importação
+		            clearUnsavedChanges();
+		            
 		            updateStatus('Dados importados com sucesso');
 		            
 		            // CORREÇÃO: Verificar tarefas agendadas após importação
@@ -2471,6 +2671,7 @@
         function saveNotes() {
             notes = notesTextarea.value;
             saveTasks();
+            markUnsavedChanges(); // NOVO: Marcar alterações
             updateStatus('Notas salvas com sucesso');
         }
 
@@ -2562,6 +2763,7 @@
                     }
                     updateTaskList();
                     saveTasks();
+                    markUnsavedChanges(); // NOVO: Marcar alterações
                     updateStatus(`Tarefa ${task.completed ? 'completada' : 'não completada'}`);
                     break;
 
@@ -2584,6 +2786,7 @@
                             task.personalFolder = folderPath.trim();
                             updateTaskList();
                             saveTasks();
+                            markUnsavedChanges(); // NOVO: Marcar alterações
                             updateStatus(`Pasta pessoal definida: ${task.personalFolder}`);
                         }
                     }
@@ -2600,6 +2803,7 @@
                             task.sharedFolder = folderPath.trim();
                             updateTaskList();
                             saveTasks();
+                            markUnsavedChanges(); // NOVO: Marcar alterações
                             updateStatus(`Pasta partilhada definida: ${task.sharedFolder}`);
                         }
                     }
@@ -2610,6 +2814,7 @@
                         task.personalFolder = null;
                         updateTaskList();
                         saveTasks();
+                        markUnsavedChanges(); // NOVO: Marcar alterações
                         updateStatus('Pasta pessoal removida');
                     } else {
                         alert('A tarefa não tem pasta pessoal associada.');
@@ -2621,6 +2826,7 @@
                         task.sharedFolder = null;
                         updateTaskList();
                         saveTasks();
+                        markUnsavedChanges(); // NOVO: Marcar alterações
                         updateStatus('Pasta partilhada removida');
                     } else {
                         alert('A tarefa não tem pasta partilhada associada.');
@@ -2641,6 +2847,7 @@
                             task.link = finalLink;
                             updateTaskList();
                             saveTasks();
+                            markUnsavedChanges(); // NOVO: Marcar alterações
                             updateStatus(`Link associado à tarefa: ${finalLink}`);
                         }
                     }
@@ -2651,6 +2858,7 @@
                         task.link = null;
                         updateTaskList();
                         saveTasks();
+                        markUnsavedChanges(); // NOVO: Marcar alterações
                         updateStatus('Link removido');
                     } else {
                         alert('A tarefa não tem link associado.');
@@ -2666,6 +2874,7 @@
                             task.date = date.trim();
                             updateTaskList();
                             saveTasks();
+                            markUnsavedChanges(); // NOVO: Marcar alterações
                             updateStatus(`Data ${task.date} associada à tarefa`);
                             
                             // NOVO: Resetar alerta quando data é adicionada
@@ -2682,6 +2891,7 @@
                         task.date = null;
                         updateTaskList();
                         saveTasks();
+                        markUnsavedChanges(); // NOVO: Marcar alterações
                         updateStatus('Data removida');
                     } else {
                         alert('A tarefa não tem data associada.');
@@ -2692,6 +2902,7 @@
                     task.highlightColor = 'red';
                     updateTaskList();
                     saveTasks();
+                    markUnsavedChanges(); // NOVO: Marcar alterações
                     updateStatus('Tarefa destacada em vermelho');
                     break;
 
@@ -2699,6 +2910,7 @@
                     task.highlightColor = 'blue';
                     updateTaskList();
                     saveTasks();
+                    markUnsavedChanges(); // NOVO: Marcar alterações
                     updateStatus('Tarefa destacada em azul');
                     break;
 
@@ -2706,6 +2918,7 @@
                     task.highlightColor = null;
                     updateTaskList();
                     saveTasks();
+                    markUnsavedChanges(); // NOVO: Marcar alterações
                     updateStatus('Destaque removido');
                     break;
 
@@ -2723,6 +2936,7 @@
                     selectTask(index + 1);
                     updateTaskList();
                     saveTasks();
+                    markUnsavedChanges(); // NOVO: Marcar alterações
                     updateStatus('Separador inserido');
                     break;
 
@@ -2732,6 +2946,7 @@
                         selectTask(Math.min(index, tasks.length - 1));
                         updateTaskList();
                         saveTasks();
+                        markUnsavedChanges(); // NOVO: Marcar alterações
                         updateStatus('Separador removido');
                     } else {
                         alert('Esta não é uma tarefa separadora.');
